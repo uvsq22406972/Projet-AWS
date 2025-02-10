@@ -1,0 +1,60 @@
+.game-card {
+    border: 2px solid #D0D7DA;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    min-height: 250px;
+  }
+  .game-card img {
+    max-width: 120px;
+    display: block;
+    margin: 0 auto 1rem;
+  }
+
+  #main_container {
+    margin-bottom: 20px;
+  }
+
+  .footer-link {
+    color: white;
+    text-decoration: none;
+  }
+  .footer-link:hover {
+    text-decoration: underline;
+  }
+  
+  .user-hover-area {
+    cursor: pointer;
+  }
+
+  .hover-box {
+    display: none;
+    top: 100%;
+    right: 0;
+    z-index: 999;
+  }
+
+  .user-hover-area:hover .hover-box {
+    display: block;
+  }
+
+  .border-box-top {
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+  }
+  .border-box-bottom {
+    border-top: 0;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .btn{
+    background-color: #F48516;
+  }
+
+  .btn:hover{
+    background-color: #F48516D2;
+  }
+
+  .navbar-brand:hover{
+    cursor: pointer;
+  }
