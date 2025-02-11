@@ -20,3 +20,7 @@
   .custom-input {
     border: 2px solid #F48516;
   }
+
+  .footer-link{
+    cursor: pointer;
+  }

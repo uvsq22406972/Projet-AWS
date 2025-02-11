@@ -1,43 +1,64 @@
 import React, { useState } from 'react';
 import { FaUserCircle } from "react-icons/fa";
 import "./PagePrincipale.css";
-import axios from 'axios'
+import axios from 'axios';
 
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
 
-function PagePrincipale({onUserClick, setCurrentPage}) {
+function PagePrincipale({onUserClick, onLoginClick, setCurrentPage}) {
   
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+
   const gradientStyle = {
       background: "linear-gradient(to top, #3B7088, #4FE9DE)",
   };
-  
-  {/* CSS par ChatGPT, pour un bootstrap plus effectif. */}
+
+  //CSS par ChatGPT, pour un bootstrap plus effectif
   return (
     <div className="d-flex flex-column min-vh-100">
       {/* Haut de la page */}
       <nav className="navbar navbar-expand-lg sticky-top" style={gradientStyle}>
         <div className="container-fluid">
-          <a className="navbar-brand text-white fw-bold">
+          <div className="navbar-brand text-white fw-bold" onClick={() => setShowLogoutConfirmation(false)}>
             <img className="rounded-circle me-2" src="/images/logo-web.jpg" alt="Logo web" width="50" height="50"/>
             bran.fun
-          </a>
+          </div>
           {/* Hover menu choix utilisateur */}
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
-            <FaUserCircle size={35} className="me-2 text-white"/>
+            <FaUserCircle size={40} className="me-3 text-white"/>
             <span className="text-white">User A</span>
             {/* Affichage menu choix utilisateur */}
             <div className="hover-box position-absolute">
               <div className="menu-box border-box-top" onClick={onUserClick}>
                 Information du compte
               </div>
-              <div className="menu-box border-box-bottom">
+              <div className="menu-box border-box-bottom" onClick={() => setShowLogoutConfirmation(true)}>
                 Se déconnecter
               </div>
             </div>
           </div>
         </div>
       </nav>
+      {/* Confirmation logout: S'afficher lorsque showLogoutConfirmation = true */}
+      {showLogoutConfirmation && (
+        <div className="popup-overlay">
+          <div className="popup-box">
+            <button className="close-btn" onClick={() => setShowLogoutConfirmation(false)}>
+              X
+            </button>
+            <h4>Voulez-vous se déconnecter?</h4>
+            <div className="d-flex justify-content-center gap-3 mt-4">
+              <button onClick={onLoginClick} className="btn">
+                Oui
+              </button>
+              <button className="btn" onClick={() => setShowLogoutConfirmation(false)}>
+                Non
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* L'élément principale */}
       <div id="main_container" className="container py-5 flex-grow-1">
         <div className="row g-4">
@@ -77,9 +98,11 @@ function PagePrincipale({onUserClick, setCurrentPage}) {
       {/* Bas de la page */}
       <footer className="py-3 fixed-bottom w-100 d-flex align-items-center" style={gradientStyle}>
         <div className="ms-3">
+          {/* eslint-disable-next-line */}
           <a className="me-3 footer-link">
             Contactez-nous
           </a>
+          {/* eslint-disable-next-line */}
           <a className="footer-link">
             Aide
           </a>

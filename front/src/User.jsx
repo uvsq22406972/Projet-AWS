@@ -6,15 +6,15 @@ import axios from 'axios'
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
 
-function User({onBackToPagePrincipaleClick, setCurrentPage}) {
+function User({onBackToPagePrincipaleClick, onLoginClick, setCurrentPage}) {
   const [activeSection, setActiveSection] = useState('info');
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
-  // A simple gradient for navbar & footer
   const gradientStyle = {
     background: "linear-gradient(to top, #3B7088, #4FE9DE)",
   };
 
-  {/* CSS par ChatGPT, pour un bootstrap plus effectif. */}
+  //CSS par ChatGPT, pour un bootstrap plus effectif
   function renderRightContent() {
     if (activeSection === 'info') {
       return (
@@ -33,9 +33,6 @@ function User({onBackToPagePrincipaleClick, setCurrentPage}) {
               <label className="form-label fw-semibold">Mot de passe</label>
               <input type="password" className="form-control custom-input" />
             </div>
-            <button type="submit" className="btn btn-primary">
-              Enregistrer
-            </button>
           </form>
         </div>
       );
@@ -101,17 +98,41 @@ function User({onBackToPagePrincipaleClick, setCurrentPage}) {
       {/* Haut de la page */}
       <nav className="navbar navbar-expand-lg sticky-top" style={gradientStyle}>
         <div className="container-fluid">
-          <a className="navbar-brand text-white fw-bold" onClick={onBackToPagePrincipaleClick}>
+          <div className="navbar-brand text-white fw-bold" onClick={onBackToPagePrincipaleClick}>
             <img className="rounded-circle me-2" src="/images/logo-web.jpg" alt="Logo web" width="50" height="50"/>
             bran.fun
-          </a>
-          <div className="ms-auto me-4 d-flex align-items-center footer-link">
-            <FaUserCircle size={40} className="me-3" />
-            <span>User A</span>
+          </div>
+          <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
+            <FaUserCircle size={40} className="me-3 text-white"/>
+            <span className="text-white">User A</span>
+            {/* Affichage menu choix utilisateur */}
+            <div className="hover-box position-absolute">
+              <div className="menu-box border-box-top" onClick={() => setShowLogoutConfirmation(true)}>
+                Se déconnecter
+              </div>
+            </div>
           </div>
         </div>
       </nav>
-
+      {/* Confirmation logout: S'afficher lorsque showLogoutConfirmation = true */}
+      {showLogoutConfirmation && (
+        <div className="popup-overlay">
+          <div className="popup-box">
+            <button className="close-btn" onClick={() => setShowLogoutConfirmation(false)}>
+              X
+            </button>
+            <h4>Voulez-vous se déconnecter?</h4>
+            <div className="d-flex justify-content-center gap-3 mt-4">
+              <button className="btn" onClick={onLoginClick}>
+                Oui
+              </button>
+              <button className="btn" onClick={() => setShowLogoutConfirmation(false)}>
+                Non
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* L'élément principale */}
       <div className="container flex-grow-1 my-5">
         <div className="row">
@@ -128,18 +149,20 @@ function User({onBackToPagePrincipaleClick, setCurrentPage}) {
               <strong>Supprimer votre compte</strong>
             </div>
           </div>
-
           {/* Menu choisies */}
-          <div className="col-md-9">{renderRightContent()}</div>
+          <div className="col-md-9">
+            {renderRightContent()}
+          </div>
         </div>
       </div>
-
       {/* Bas de la page */}
       <footer className="py-3 fixed-bottom w-100 d-flex align-items-center" style={gradientStyle}>
         <div className="ms-3">
+          {/* eslint-disable-next-line */}
           <a className="me-3 footer-link">
             Contactez-nous
           </a>
+          {/* eslint-disable-next-line */}
           <a className="footer-link">
             Aide
           </a>
