@@ -1,19 +1,23 @@
+//Initialisation des variables
 const express = require("express");
-const cors = require("cors"); // Importez cors
-const apiRouter = require('./api.js');  // Importez le routeur
+const cors = require("cors"); 
+const apiRouter = require('./api.js');
 const path = require("path");
 const session = require("express-session");
 
+//Initialisation du BDD -> MongoDB
 const { MongoClient } = require('mongodb');
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
 
 const app = express();
 
-app.use(cors({origin: 'http://localhost:5173', credentials: true}));
+//Localhost
+app.use(cors({origin: 'http://localhost:3000', credentials: true}));
 
+//Session
 app.use(session({
-    secret: "technoweb rocks",
+    secret: "projetAWS cool",
     resave: true,
     saveUninitialized: false,
 
@@ -26,9 +30,9 @@ app.use(session({
     userid: null
 }));
 
-app.use(express.static(path.join(__dirname, "../../frontend")));
-const api = apiRouter(client);  // Initialisez le routeur avec client
+app.use(express.static(path.join(__dirname, "../../frontend"))); //Chemin où se trouve le front
+const api = apiRouter(client);  //Initialiser le routeur avec client
 
-app.use('/api', api);  // Utilisez le routeur comme middleware
+app.use('/api', api);  // Utiliser le routeur comme middleware
 
 module.exports = app;

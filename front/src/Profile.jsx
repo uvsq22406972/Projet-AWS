@@ -1,21 +1,102 @@
-import React, { useState } from 'react';
+//Importation
+import React, { useState,useEffect } from 'react';
 import { FaUserCircle } from "react-icons/fa";
-import "./User.css";
+import "./Profile.css";
 import axios from 'axios'
 
+//Connexion avec le back
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
 
-function User({onBackToPagePrincipaleClick, onLoginClick, setCurrentPage}) {
+//Page qui permet d'être sur la page menu utilisateur
+function Profile({onBackToPagePrincipaleClick, setIsConnected, setCurrentPage}) {
+  //Initialisation des états
   const [activeSection, setActiveSection] = useState('info');
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+  const [compte, setCompte] = useState([]);
 
+  //Pour avoir un couleur unique
   const gradientStyle = {
     background: "linear-gradient(to top, #3B7088, #4FE9DE)",
   };
 
+  //Action lorsqu'on clique sur "Se déconnecter"
+  const handleLogoutClick = async () => {
+    try {
+      //Envoie une requête à l'API pour détruire la session (le cookie)
+      await axios.post('http://localhost:4000/api/logout');
+      
+      //Met à jour l'état pour indiquer que l'utilisateur est déconnecté
+      setIsConnected(false);
+      //Redirige l'utilisateur vers la page de connexion
+      setCurrentPage('login');
+
+    } catch (error) {
+        //console.error('Erreur lors de la déconnexion :', error);
+    }
+  };
+
+  //Vérifier si une session est déjà ouvert ou pas
+  async function checkSession() {
+    try {
+      //Récupérer le userid dans la session
+      const response = await axios.get('http://localhost:4000/api/session');
+      let userid = response.data.userid;
+
+      if(userid){
+        console.log("cest moi",userid);
+        setIsConnected(true);
+        setCurrentPage('profile');
+      } else {
+        setIsConnected(false);
+        setCurrentPage('login');
+      }
+    } catch (error) {
+      setIsConnected(false);
+      setCurrentPage('login');
+    }
+  }
+
+  //Récupérer les attributs de la collection Compte sous forme array
+  async function fetchAccount() {
+    try {
+      //Récupérer les attributs dans la bdd
+      const response = await axios.get('http://localhost:4000/api/users/all');
+      const fetchedAccount = response.data;
+
+      //Récupérer le userid dans la session
+      const responses = await axios.get('http://localhost:4000/api/session');
+      let userid = responses.data.userid;
+
+      //Initialiser les val de chaque attribut
+      const Account = fetchedAccount.map(account => ({
+              _id: account._id,
+              username: account.username,
+              password: account.password
+          }));
+
+      //Si un compte/attribut existe dans la BDD
+      if (Account.length > 0){
+          const selectedAccount = Account.find((account) => account._id === userid);
+          setCompte(selectedAccount);
+      }
+
+    } catch (error) {
+        console.error('Erreur lors de la récupération des infos du compte :', error);
+    }
+  }
+
+  //Effectuer les fonction async
+  useEffect(() => {
+    checkSession();
+    fetchAccount();
+    //eslint-disable-next-line
+  }, []);
+
+
   //CSS par ChatGPT, pour un bootstrap plus effectif
   function renderRightContent() {
+    //Affichage menu info du compte
     if (activeSection === 'info') {
       return (
         <div id="section-info" className="mb-5">
@@ -23,19 +104,20 @@ function User({onBackToPagePrincipaleClick, onLoginClick, setCurrentPage}) {
           <form>
             <div className="mb-3">
               <label className="form-label fw-semibold">Nom d'utilisateur</label>
-              <input type="text" className="form-control custom-input" />
+              <p className="form-control custom-input">{compte.username}</p>
             </div>
             <div className="mb-3">
               <label className="form-label fw-semibold">Adresse e-mail</label>
-              <input type="email" className="form-control custom-input" />
+              <p className="form-control custom-input">{compte._id}</p>
             </div>
             <div className="mb-4">
               <label className="form-label fw-semibold">Mot de passe</label>
-              <input type="password" className="form-control custom-input" />
+              <p className="form-control custom-input">{compte.password}</p>
             </div>
           </form>
         </div>
       );
+    //Affichage menu modifier le mdp
     } else if (activeSection === 'password') {
       return (
         <div id="section-password" className="mb-5">
@@ -59,6 +141,7 @@ function User({onBackToPagePrincipaleClick, onLoginClick, setCurrentPage}) {
           </form>
         </div>
       );
+    //Affichage menu supprimer le compte
     } else if (activeSection === 'delete') {
       return (
         <div id="section-delete" className="mb-5">
@@ -89,6 +172,7 @@ function User({onBackToPagePrincipaleClick, onLoginClick, setCurrentPage}) {
     }
   }
 
+  //Déterminer l'affichage correct du menu
   function handleMenuClick(section) {
     setActiveSection(section);
   }
@@ -123,7 +207,7 @@ function User({onBackToPagePrincipaleClick, onLoginClick, setCurrentPage}) {
             </button>
             <h4>Voulez-vous se déconnecter?</h4>
             <div className="d-flex justify-content-center gap-3 mt-4">
-              <button className="btn" onClick={onLoginClick}>
+              <button className="btn" onClick={handleLogoutClick}>
                 Oui
               </button>
               <button className="btn" onClick={() => setShowLogoutConfirmation(false)}>
@@ -172,4 +256,4 @@ function User({onBackToPagePrincipaleClick, onLoginClick, setCurrentPage}) {
   );
 }
 
-export default User;
+export default Profile;

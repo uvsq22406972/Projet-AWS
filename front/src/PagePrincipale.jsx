@@ -1,17 +1,37 @@
+//Importation
 import React, { useState } from 'react';
 import { FaUserCircle } from "react-icons/fa";
 import "./PagePrincipale.css";
 import axios from 'axios';
 
+//Connexion avec le back
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
 
-function PagePrincipale({onUserClick, onLoginClick, setCurrentPage}) {
-  
+//Page qui permet d'être sur la page principale
+function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPage}) {
+  //Initialisation des états
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
+  //Pour avoir un couleur unique
   const gradientStyle = {
       background: "linear-gradient(to top, #3B7088, #4FE9DE)",
+  };
+
+  //Action lorsqu'on clique sur "Se déconnecter"
+  const handleLogoutClick = async () => {
+    try {
+      //Envoie une requête à l'API pour détruire la session (le cookie)
+      await axios.post('http://localhost:4000/api/logout');
+      
+      //Met à jour l'état pour indiquer que l'utilisateur est déconnecté
+      setIsConnected(false);
+      //Redirige l'utilisateur vers la page de connexion
+      setCurrentPage('login');
+
+    } catch (error) {
+        //console.error('Erreur lors de la déconnexion :', error);
+    }
   };
 
   //CSS par ChatGPT, pour un bootstrap plus effectif
@@ -49,7 +69,7 @@ function PagePrincipale({onUserClick, onLoginClick, setCurrentPage}) {
             </button>
             <h4>Voulez-vous se déconnecter?</h4>
             <div className="d-flex justify-content-center gap-3 mt-4">
-              <button onClick={onLoginClick} className="btn">
+              <button onClick={handleLogoutClick} className="btn">
                 Oui
               </button>
               <button className="btn" onClick={() => setShowLogoutConfirmation(false)}>
