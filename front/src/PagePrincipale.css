@@ -95,3 +95,11 @@
     border-radius: 50%;
     background-color: red;
   }
+  .btn-link {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
