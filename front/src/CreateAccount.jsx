@@ -42,7 +42,11 @@ function CreateAccount({onLoginClick, onPagePrincipaleClick, setCurrentPage}) {
     const email = document.getElementById("create_email").value;
     const mdp1 = document.getElementById("create_mdp1").value;
     const mdp2 = document.getElementById("create_mdp2").value;
-       
+    console.log("Pseudo:", pseudo);
+    console.log("Email:", email);
+    console.log("Mot de passe 1:", mdp1, "Longueur:", mdp1.length);
+    console.log("Mot de passe 2:", mdp2, "Longueur:", mdp2.length);
+    
     //Envoie des valeurs au back pour le stocker dans la bdd
     axios.put('http://localhost:4000/api/users', { pseudo, email, mdp1, mdp2 })
     .then(response => {
@@ -58,6 +62,12 @@ function CreateAccount({onLoginClick, onPagePrincipaleClick, setCurrentPage}) {
         toast.error("Mot de passe different");
       } else if (response.data.message === "Tous les champs sont nécessaires"){
         toast.error("Veuillez remplir tout les champs");
+      }
+      else if (response.data.message === "L'email n'est pas valide"){
+        toast.error("L'email n'est pas valide");
+      }
+      else if (response.data.message === "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre"){
+        toast.error(response.data.message);
       }
     })
     .catch(error => {
