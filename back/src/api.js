@@ -114,6 +114,44 @@ function init(db){
     }
   });
 
+  // Route pour changer le mot de passe
+  router.patch('/users/password', async (req, res) => {
+    const { email, oldPassword, newPassword } = req.body;
+
+    // Vérifier que tous les champs sont fournis
+    if (!email || !oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+    }
+
+    // Vérifier si le nouveau mot de passe respecte les critères de sécurité
+    if (!validatePassword(newPassword)) {
+      return res.status(400).json({
+        message: "Le mot de passe doit comporter au moins 8 caractères, un chiffre et un symbole.",
+      });
+    }
+
+    try {
+      // Vérifier si l'utilisateur existe
+      if (!await users.exist(email)) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      // Vérifier si l'ancien mot de passe est correct
+      if (!await users.checkPassword(email, oldPassword)) {
+        return res.status(401).json({ message: "Ancien mot de passe incorrect" });
+      }
+
+      // Mettre à jour le mot de passe en base de données
+      await users.updatePassword(email, newPassword);
+
+      return res.status(200).json({ message: "Mot de passe mis à jour avec succès" });
+
+    } catch (error) {
+      console.error("Erreur lors de la modification du mot de passe :", error);
+      return res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
   // Récupérer de userid dans la session
   router.get("/session", (req, res) => {
     if (req.session && req.session.userid) {
