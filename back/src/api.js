@@ -1,5 +1,6 @@
 const express = require('express');
 const Users = require("./entities/users.js");
+const encrypt = require('./encrypt'); 
 
 function init(db){
   // Initialisation router
@@ -8,6 +9,12 @@ function init(db){
 
   // Initialisation des entités
   const users = new Users.default(db);
+  
+  // Validation de l'email avec une regexp
+  const isEmailValid = (email) => {
+    const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return regex.test(email);
+  };
 
   // Validation du mot de passe
   const validatePassword = (password) => {
@@ -15,17 +22,23 @@ function init(db){
     const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*?.])[A-Za-z0-9!@#$%^&*?.]{8,}$/;
     return regex.test(password);
   };
+  
+  /**module.exports = { isEmailValid, isPasswordValid };
+     routes.js - Fichier contenant vos routes
+     const { isEmailValid, isPasswordValid } = require('./api');
+  **/
 
-  // Permet la création d'un compte
+  //Permet la création d'un compte
   router.put('/users', async (req, res) => {
     // Initialisation des variables récupérées du front
     const pseudo = req.body.pseudo;
     const email = req.body.email;
     const mdp1 = req.body.mdp1;
     const mdp2 = req.body.mdp2;
-    const exist = await users.exist(pseudo); // True si pseudo existe, false sinon
-
-    // Vérifie si tous les champs sont remplis
+    const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
+    
+   
+    //Vérifie si tous les champs sont remplis
     if (!pseudo || !mdp1 || !mdp2 || !email) {
       return res.send({ message: "Tous les champs sont nécessaires" });
     }
@@ -33,6 +46,11 @@ function init(db){
     // Vérifie si les mots de passe sont identiques
     if (mdp1 !== mdp2) {
       return res.send({ message: "Les mots de passe ne correspondent pas" });
+    }
+
+    // Validation de l'email et du mot de passe
+    if (!isEmailValid(email)) {
+      return res.send({ message: "L'email n'est pas valide" });
     }
 
     // Vérifie si le mot de passe respecte les critères
@@ -44,16 +62,25 @@ function init(db){
 
     // Vérifie si l'email est déjà utilisé
     if (exist) {
-      return res.send({ message: "Email déjà utilisé" });
+      return res.send({ message: "Email deja utilisé" });
     }
-
+    
     try {
+      const hashedPassword = await encrypt.hashPassword(mdp1); // Utilisation de la fonction pour encrypter les datas
+      await users.creerCompte(pseudo, email, hashedPassword);
+      return res.status(200).send({ message: "Utilisateur créé avec succès" });
+    } catch (error) {
+      console.error("Erreur lors de la création de l'utilisateur :", error);
+      return res.status(500).send({ message: "Erreur serveur" });
+    }
+    
+    /** try {
       await users.creerCompte(pseudo, email, mdp1, mdp2);
       return res.status(200).send({ message: "Utilisateur créé avec succès" });
     } catch (error) {
       console.error("Erreur lors de la création de l'utilisateur :", error);
       return res.status(500).send({ message: "Erreur lors de la création de l'utilisateur" });
-    }
+    } **/
   });
 
   // Création d'une session
@@ -70,7 +97,7 @@ function init(db){
       res.send({ status: 402 });
       return;
     }
-
+    
     if (await users.checkPassword(login, password)) {
       req.session.regenerate(function (err) {
         if (err) {

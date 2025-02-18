@@ -1,3 +1,4 @@
+const encrypt = require('../encrypt'); 
 class Users {
   // Constructeur de la classe en appelant une bdd
   constructor(db) {
@@ -8,8 +9,12 @@ class Users {
   async creerCompte(username, email, mdp1, mdp2) {
     try {
       await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); // Accès à la collection Compte
-      await col1.insertOne({ username: username, _id: email, password: mdp1 });
+      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      await col1.insertOne({
+         username: username,
+         _id: email,
+         password: mdp1
+        });
     } catch (e) {
       console.error("Erreur lors de la création du compte :", e);
       throw e;  // Retourne l'erreur pour la traiter dans le composant React
@@ -22,10 +27,15 @@ class Users {
   async exist(email) {
     try {
       await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); // Accès à la collection Compte
-      const query = { _id: email };
-      const res = await col1.findOne(query);
-      return res ? true : false;
+      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
+      const res = await col1.findOne(query); //True si email existe, faux sinon
+
+      if (res) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (e) {
       console.error("Erreur lors de la vérification de l'existence de l'email :", e);
       return false;
@@ -38,11 +48,14 @@ class Users {
   async checkPassword(login, password) {
     try {
       await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); // Accès à la collection Compte
-      const user = await col1.findOne({ _id: login });
+      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const user = await col1.findOne({ _id: { $eq: login } }); //True si email existe, faux sinon
+      // Sécurité contre les injections NoSql en empêchant l'injection de certains opérateurs NoSqL
+      
       if (user) {
         const motDePasse = user.password;
-        if (password === motDePasse) {
+             //On vérifie que le mot de passe rentrer est identique a celui encrypté dans la bdd
+        if (encrypt.verifyPassword(password, motDePasse)) {
           console.log("OK");
           return true;
         } else {
