@@ -138,10 +138,6 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
               <label className="form-label fw-semibold">Adresse e-mail</label>
               <p className="form-control custom-input">{compte._id}</p>
             </div>
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Mot de passe</label>
-              <p className="form-control custom-input">{compte.password}</p>
-            </div>
           </form>
         </div>
       );
@@ -235,7 +231,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           </div>
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
             <FaUserCircle size={40} className="me-3 text-white"/>
-            <span className="text-white">User A</span>
+            <span className="text-white">{compte.username}</span>
             {/* Affichage menu choix utilisateur */}
             <div className="hover-box position-absolute">
               <div className="menu-box border-box-top" onClick={() => setShowLogoutConfirmation(true)}>

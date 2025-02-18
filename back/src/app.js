@@ -5,6 +5,8 @@ const apiRouter = require("./api.js");
 const path = require("path");
 const session = require("express-session");
 const axios = require("axios");
+const helmet = require('helmet');
+const crypto = require("crypto");
 
 // Initialisation de la BDD -> MongoDB
 const { MongoClient } = require("mongodb");
@@ -34,6 +36,9 @@ app.use(
   })
 );
 
+// Middleware pour éviter failles XSS
+app.use(helmet());
+
 // Middleware pour servir le frontend
 app.use(express.static(path.join(__dirname, "../../frontend")));
 
@@ -50,7 +55,7 @@ app.post("/verify-recaptcha", async (req, res) => {
   }
 
   try {
-    const secretKey = "6LdtjdcqAAAAAGo9WtRV006GfNpedYFJS6Hlf5ed"; // Remplace avec ta clé secrète reCAPTCHA v2
+    const secretKey = "6LdtjdcqAAAAAGo9WtRV006GfNpedYFJS6Hlf5ed"; 
     const verificationURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`;
 
     const { data } = await axios.post(verificationURL);
@@ -64,5 +69,23 @@ app.post("/verify-recaptcha", async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur serveur reCAPTCHA" });
   }
 });
+//Middleware pour générer et stocker le token CSRF en session
+app.use((req, res, next) => {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString("hex"); // Génère un token aléatoire
+  }
+  res.locals.csrfToken = req.session.csrfToken; // Rend le token accessible aux templates
+  next();
+});
+app.post("/form-submit", (req, res) => {
+  const { csrf } = req.body; // Récupère le token du formulaire
+
+  if (!csrf || csrf !== req.session.csrfToken) {
+    return res.status(403).json({ success: false, message: "Token CSRF invalide" });
+  }
+
+  res.json({ success: true, message: "Formulaire validé !" });
+});
+
 
 module.exports = app;

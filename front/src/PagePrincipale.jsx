@@ -1,5 +1,5 @@
 //Importation
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { FaUserCircle } from "react-icons/fa";
 import "./PagePrincipale.css";
 import axios from 'axios';
@@ -12,6 +12,7 @@ axios.defaults.withCredentials = true;
 function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPage}) {
   //Initialisation des états
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+  const [compte, setCompte] = useState([]);
 
   //Pour avoir un couleur unique
   const gradientStyle = {
@@ -34,6 +35,62 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
     }
   };
 
+  // Vérifier si une session est déjà ouverte ou pas
+  async function checkSession() {
+    try {
+      // Récupérer le userid dans la session
+      const response = await axios.get('/api/session');
+      let userid = response.data.userid;
+
+      if (userid) {
+        console.log("c'est moi", userid);
+        setIsConnected(true);
+        setCurrentPage('pagePrincipale');
+      } else {
+        setIsConnected(false);
+        setCurrentPage('login');
+      }
+    } catch (error) {
+      setIsConnected(false);
+      setCurrentPage('login');
+    }
+  }
+
+  // Récupérer les attributs de la collection Compte sous forme array
+  async function fetchAccount() {
+    try {
+      // Récupérer les attributs dans la bdd
+      const response = await axios.get('/api/users/all');
+      const fetchedAccount = response.data;
+
+      // Récupérer le userid dans la session
+      const responses = await axios.get('/api/session');
+      let userid = responses.data.userid;
+
+      // Initialiser les valeurs de chaque attribut
+      const Account = fetchedAccount.map(account => ({
+        _id: account._id,
+        username: account.username,
+        password: account.password,
+      }));
+
+      // Si des comptes existent dans la BDD
+      if (Account.length > 0) {
+        const selectedAccount = Account.find((account) => account._id === userid);
+        setCompte(selectedAccount);
+      }
+
+    } catch (error) {
+      console.error('Erreur lors de la récupération des infos du compte :', error);
+    }
+  }
+  // Exécution des fonctions asynchrones
+  useEffect(() => {
+    checkSession();
+    fetchAccount();
+    // eslint-disable-next-line
+  }, []);
+
   //CSS par ChatGPT, pour un bootstrap plus effectif
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -47,7 +104,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           {/* Hover menu choix utilisateur */}
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
             <FaUserCircle size={40} className="me-3 text-white"/>
-            <span className="text-white">User A</span>
+            <span className="text-white">{compte.username}</span>
             {/* Affichage menu choix utilisateur */}
             <div className="hover-box position-absolute">
               <div className="menu-box border-box-top" onClick={onUserClick}>
