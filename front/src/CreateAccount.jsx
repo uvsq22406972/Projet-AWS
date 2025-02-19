@@ -41,7 +41,7 @@ function CreateAccount({ onLoginClick }) {
     console.log("Mot de passe 2:", mdp2, "Longueur:", mdp2.length);
     
     //Envoie des valeurs au back pour le stocker dans la bdd
-    axios.put('http://localhost:4000/api/users', { pseudo, email, mdp1, mdp2 })
+    axios.put('/api/users', { pseudo, email, mdp1, mdp2 })
     .then(response => {
       //Affichage des réponses du API
       console.log("Réponse de l'API :", response.data.message);

@@ -59,7 +59,7 @@ function init(db){
     if (!isEmailValid(email)) {
       return res.send({ message: "L'email n'est pas valide" });
     }
-    if (!isPasswordValid(mdp1)) {
+    if (!validatePassword(mdp1)) {
           return res.send({ message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre" });
         }
         
@@ -113,6 +113,26 @@ function init(db){
       return;
     }
   });
+  // pour supprimer un utilisateur
+  router.post('/delete', async (req, res) => {
+    try {
+        // Changer ici pour correspondre aux variables envoyées par le frontend
+        const { email, login, password } = req.body; // Récupération des données de la requête
+
+        // Appel de la méthode supprimerCompte avec les bons paramètres
+        const result = await users.supprimerCompte(email, password);  // Suppression du compte par email et password
+        // Si la suppression a réussi
+        if (result) {
+            res.status(200).json({ message: "Compte supprimé avec succès" });
+        } else {
+            res.status(400).json({ message: "Échec de la suppression du compte" });
+        }
+    } catch (e) {
+        console.error("Erreur lors de la suppression du compte :", e);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+});
+
 
   // Chercher une information à partir de l'email fourni
   router.get('/users', async (req, res) => {
@@ -143,6 +163,7 @@ function init(db){
   // Route pour changer le mot de passe
   router.patch('/users/password', async (req, res) => {
     const { email, oldPassword, newPassword } = req.body;
+    const hashedPassword = await encrypt.hashPassword(newPassword); // Utilisation de la fonction pour encrypter les datas
 
     // Vérifier que tous les champs sont fournis
     if (!email || !oldPassword || !newPassword) {
@@ -168,7 +189,7 @@ function init(db){
       }
 
       // Mettre à jour le mot de passe en base de données
-      await users.updatePassword(email, newPassword);
+      await users.updatePassword(email, hashedPassword);
 
       return res.status(200).json({ message: "Mot de passe mis à jour avec succès" });
 
