@@ -30,41 +30,43 @@ function CreateAccount({ onLoginClick }) {
 
   // Action lorsqu'on clique sur "S'inscrire"
   const handleCreerCompteClick = () => {
-    // Vérification des champs
-    if (!username || !email || !password || !repassword) {
-      toast.error("Veuillez remplir tous les champs");
-      return;
-    }
+    //Initialisation des variables
+    const pseudo = document.getElementById("create_pseudo").value;
+    const email = document.getElementById("create_email").value;
+    const mdp1 = document.getElementById("create_mdp1").value;
+    const mdp2 = document.getElementById("create_mdp2").value;
+    console.log("Pseudo:", pseudo);
+    console.log("Email:", email);
+    console.log("Mot de passe 1:", mdp1, "Longueur:", mdp1.length);
+    console.log("Mot de passe 2:", mdp2, "Longueur:", mdp2.length);
     
-    if (password !== repassword) {
-      toast.error("Les mots de passe ne correspondent pas");
-      return;
-    }
-    
-    if (!validatePassword(password)) {
-      toast.error("Le mot de passe doit contenir au moins 8 caractères, un chiffre et un symbole");
-      return;
-    }
-    
-    // Envoi des valeurs au back
-    axios.put('/api/users', { pseudo: username, email, mdp1: password, mdp2: repassword })
-      .then(response => {
-        console.log("Réponse de l'API :", response.data.message);
-        if (response.data.message === "Email déjà utilisé") {
-          toast.error("Utilisateur existant");
-        } else if (response.data.message === "Utilisateur créé avec succès") {
-          toast.success("Compte créé avec succès 👍");
-          toast.success("Redirection automatique");
-          setTimeout(() => { onLoginClick(); }, 3000);
-        } else {
-          toast.error(response.data.message);
-        }
-      })
-      .catch(error => {
-        console.error("Erreur lors de la requête:", error);
-        toast.error("Erreur lors de la création du compte");
-      });
-  };
+    //Envoie des valeurs au back pour le stocker dans la bdd
+    axios.put('http://localhost:4000/api/users', { pseudo, email, mdp1, mdp2 })
+    .then(response => {
+      //Affichage des réponses du API
+      console.log("Réponse de l'API :", response.data.message);
+      if (response.data.message === "Email deja utilisé") {
+        toast.error("Utilisateur existant");
+      } else if (response.data.message === "Utilisateur créé avec succès") {
+        toast.success("Compte créé avec succès 👍");
+        toast.success("Redirection automatique");        
+        setTimeout(() => {onLoginClick();}, 5100);
+      } else if (response.data.message === "Les mots de passe ne correspondent pas") {
+        toast.error("Mot de passe different");
+      } else if (response.data.message === "Tous les champs sont nécessaires"){
+        toast.error("Veuillez remplir tout les champs");
+      }
+      else if (response.data.message === "L'email n'est pas valide"){
+        toast.error("L'email n'est pas valide");
+      }
+      else if (response.data.message === "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre"){
+        toast.error(response.data.message);
+      }
+    })
+    .catch(error => {
+        //console.error("Erreur lors de la requête:", error);
+    });
+  }
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">

@@ -38,6 +38,8 @@ function init(db){
     const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
     
    
+    
+   
     //Vérifie si tous les champs sont remplis
     if (!pseudo || !mdp1 || !mdp2 || !email) {
       return res.send({ message: "Tous les champs sont nécessaires" });
@@ -47,24 +49,20 @@ function init(db){
     if (mdp1 !== mdp2) {
       return res.send({ message: "Les mots de passe ne correspondent pas" });
     }
+    
+    //Vérifie si l'email est valide ou pas
+    if (exist) {
+      return res.send({ message: "Email deja utilisé" });
+    }
 
     // Validation de l'email et du mot de passe
     if (!isEmailValid(email)) {
       return res.send({ message: "L'email n'est pas valide" });
     }
-
-    // Vérifie si le mot de passe respecte les critères
-    if (!validatePassword(mdp1)) {
-      return res.send({
-        message: "Le mot de passe doit comporter au moins 8 caractères, un chiffre et un symbole.",
-      });
-    }
-
-    // Vérifie si l'email est déjà utilisé
-    if (exist) {
-      return res.send({ message: "Email deja utilisé" });
-    }
-    
+    if (!isPasswordValid(mdp1)) {
+          return res.send({ message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre" });
+        }
+        
     try {
       const hashedPassword = await encrypt.hashPassword(mdp1); // Utilisation de la fonction pour encrypter les datas
       await users.creerCompte(pseudo, email, hashedPassword);
@@ -78,8 +76,8 @@ function init(db){
       await users.creerCompte(pseudo, email, mdp1, mdp2);
       return res.status(200).send({ message: "Utilisateur créé avec succès" });
     } catch (error) {
-      console.error("Erreur lors de la création de l'utilisateur :", error);
-      return res.status(500).send({ message: "Erreur lors de la création de l'utilisateur" });
+        console.error("Erreur lors de la création de l'utilisateur :", error);
+        return res.status(500).send({ message: "Erreur lors de la création de l'utilisateur" });
     } **/
   });
 
@@ -98,6 +96,7 @@ function init(db){
       return;
     }
     
+
     if (await users.checkPassword(login, password)) {
       req.session.regenerate(function (err) {
         if (err) {
