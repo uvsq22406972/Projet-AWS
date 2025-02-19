@@ -81,6 +81,42 @@ class Users {
       throw err; //Lance une exception en cas d'erreur
     }
   }
+
+  async supprimerCompte(email, password) {
+    try {
+      await this.db.connect();
+      const col1 = this.db.db("DB").collection("Compte");
+
+      // Vérifie si l'utilisateur existe
+      const user = await col1.findOne({ _id: { $eq: email } });
+      if (!user) {
+        console.log("Utilisateur introuvable !");
+        return false;
+      }
+
+      // Vérifie si le mot de passe est correct
+      const isPasswordValid = await encrypt.verifyPassword(password, user.password);
+      if (!isPasswordValid) {
+        console.log("Mot de passe incorrect !");
+        return false;
+      }
+
+      // Suppression de l'utilisateur
+      const result = await col1.deleteOne({ _id: email });
+      if (result.deletedCount === 1) {
+        console.log("Compte supprimé avec succès.");
+        return true;
+      } else {
+        console.log("Échec de la suppression du compte.");
+        return false;
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression du compte :", error);
+      throw error;
+    } finally {
+      await this.db.close();
+    }
+  }
 }
 
 exports.default = Users;

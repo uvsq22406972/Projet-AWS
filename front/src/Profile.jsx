@@ -3,7 +3,8 @@ import React, { useState,useEffect } from 'react';
 import { FaUserCircle } from "react-icons/fa";
 import "./Profile.css";
 import axios from 'axios'
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 //Connexion avec le back
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
@@ -86,6 +87,62 @@ function Profile({onBackToPagePrincipaleClick, setIsConnected, setCurrentPage}) 
     }
   }
 
+  //Action lorsque'on clique sur "supprimer votre compte"
+  const handleDeleteAccount = (e) => {
+    e.preventDefault(); // Empêcher le rechargement de la page
+    console.log("test");
+    // Initialisation des variables
+    const emailInput = document.getElementById("delete-email");
+    const loginInput = document.getElementById("delete_username");
+    const passwordInput = document.getElementById("delete_password"); // 🛠 Correction ici !
+    const confirmDeleteInput = document.getElementById("confirmDelete");
+  
+    
+    // Vérifier si les éléments existent
+    if (!emailInput || !loginInput || !passwordInput || !confirmDeleteInput) {
+      console.log("test1 - Un ou plusieurs champs sont introuvables !");
+      toast.error("Erreur : Un ou plusieurs champs sont introuvables.");
+      return;
+  }
+
+    // Récupérer les valeurs
+    const email = emailInput.value.trim();
+    const login = loginInput.value.trim();
+    const password = passwordInput.value.trim();
+    const confirmDelete = confirmDeleteInput.checked;
+
+    // Vérifier si les éléments existent
+    if (!email || !login || !password || !confirmDelete) {
+      console.log("test1 - Un ou plusieurs champs sont introuvables !");
+      toast.error("Erreur : Un ou plusieurs champs sont introuvables.");
+      return;
+  }
+
+
+    if (!confirmDelete) {
+      console.log("test3");
+      toast.error("Vous devez confirmer la suppression.");
+      return;
+    }
+
+    console.log("Email:", email);
+    console.log("Password:", password);
+    console.log(login);
+  
+    // Appel à l'API pour supprimer l'utilisateur
+    axios.post('http://localhost:4000/api/delete', { email, login, password })
+    .then(response => {
+      console.log("Réponse de l'API :", response.data.message);
+      toast.success(response.data.message); // Afficher un message de succès si tout se passe bien
+      setTimeout(() => {handleLogoutClick();}, 1000);
+    })
+    .catch(error => {
+      console.error("Erreur lors de la requête:", error);
+      toast.error("Oups ! Il semble y avoir une erreur dans les informations que vous avez saisies. Pourriez-vous vérifier et essayer à nouveau");
+    });
+  };
+  
+
   //Effectuer les fonction async
   useEffect(() => {
     checkSession();
@@ -151,11 +208,19 @@ function Profile({onBackToPagePrincipaleClick, setIsConnected, setCurrentPage}) 
               <label className="form-label fw-semibold">
                 Saisissez votre nom d'utilisateur
               </label>
-              <input type="text" className="form-control custom-input" />
+              <input type="text" id = "delete_username" className="form-control custom-input" />
             </div>
+
+            <div className="mb-3">
+              <label className="form-label fw-semibold">
+                Saisissez votre email
+              </label>
+              <input type="text" id = "delete-email" className="form-control custom-input" />
+            </div>
+
             <div className="mb-3">
               <label className="form-label fw-semibold">Saisissez votre mot de passe</label>
-              <input type="password" className="form-control custom-input" />
+              <input type="password" id="delete_password" className="form-control custom-input" />
             </div>
             <div className="form-check mb-4">
               <input className="form-check-input" type="checkbox" id="confirmDelete" />
@@ -163,7 +228,7 @@ function Profile({onBackToPagePrincipaleClick, setIsConnected, setCurrentPage}) 
                 Je confirme de vouloir supprimer mon compte
               </label>
             </div>
-            <button type="submit" className="btn btn-secondary">
+            <button type="submit" className="btn btn-secondary" onClick={handleDeleteAccount}>
               Supprimer mon compte
             </button>
           </form>
@@ -252,6 +317,7 @@ function Profile({onBackToPagePrincipaleClick, setIsConnected, setCurrentPage}) 
           </a>
         </div>
       </footer>
+      <ToastContainer />
     </div>
   );
 }

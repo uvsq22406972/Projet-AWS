@@ -127,6 +127,26 @@ function init(db){
         return;
     }
   });
+  // pour supprimer un utilisateur
+  router.post('/delete', async (req, res) => {
+    try {
+        // Changer ici pour correspondre aux variables envoyées par le frontend
+        const { email, login, password } = req.body; // Récupération des données de la requête
+
+        // Appel de la méthode supprimerCompte avec les bons paramètres
+        const result = await users.supprimerCompte(email, password);  // Suppression du compte par email et password
+        // Si la suppression a réussi
+        if (result) {
+            res.status(200).json({ message: "Compte supprimé avec succès" });
+        } else {
+            res.status(400).json({ message: "Échec de la suppression du compte" });
+        }
+    } catch (e) {
+        console.error("Erreur lors de la suppression du compte :", e);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+});
+
 
   //Chercher une information à partir de l'email fourni
   router.get('/users', async (req, res) => {
