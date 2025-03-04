@@ -7,6 +7,8 @@ const GamePage = ({ setCurrentPage }) => {
   const [lives, setLives] = useState(2);
   const [socket, setSocket] = useState(null); // WebSocket state
   const [gameOver, setGameOver] = useState(false); // Game over state
+  const [timer, setTimer] = useState(10); // Timer initialisé à 10 secondes
+  const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
 
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -61,6 +63,39 @@ const GamePage = ({ setCurrentPage }) => {
     generateSequence();
   }, []);
 
+  // Fonction pour gérer le timer
+  useEffect(() => {
+    if (gameOver) return;
+
+    if (timer === 0) {
+      // Lorsque le timer atteint 0, on perd une vie et on réinitialise le timer
+      setLives(prevLives => {
+        const newLives = prevLives - 1;
+        if (newLives <= 0) {
+          setGameOver(true);
+          alert("Le jeu est terminé !");
+        }
+        return newLives;
+      });
+      
+      // Réinitialiser le timer
+      setTimer(10);
+    }
+
+    const interval = setInterval(() => {
+      setTimer(prevTimer => {
+        if (prevTimer > 0) return prevTimer - 1;
+        return 0;
+      });
+    }, 1000);
+
+    setTimerInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [timer, gameOver]);
+
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
@@ -69,37 +104,37 @@ const GamePage = ({ setCurrentPage }) => {
     if (gameOver) return; // Empêcher d'envoyer une réponse si la partie est déjà finie
 
     try {
-        const response = await fetch(`http://localhost:4001/verify-word?word=${inputValue}`);
-        const data = await response.json();
+      const response = await fetch(`http://localhost:4001/verify-word?word=${inputValue}`);
+      const data = await response.json();
 
-        let newLives = lives;
+      let newLives = lives;
 
-        if (!data.valid) {
-            newLives -= 1;
-        } else if (!inputValue.includes(sequence)) {
-            newLives -= 1;
-        } else {
-            generateSequence();
-        }
+      if (!data.valid) {
+        newLives -= 1;
+      } else if (!inputValue.includes(sequence)) {
+        newLives -= 1;
+      } else {
+        generateSequence();
+      }
 
-        setLives(newLives);
+      setLives(newLives);
 
-        if (newLives <= 0) {
-            setGameOver(true);
-            socket.send(JSON.stringify({ type: 'game_over' }));
-            alert("Fin de la partie !");
-        } else {
-            socket.send(JSON.stringify({
-                type: 'update_lives',
-                lives: newLives,
-            }));
-        }
+      if (newLives <= 0) {
+        setGameOver(true);
+        socket.send(JSON.stringify({ type: 'game_over' }));
+        alert("Fin de la partie !");
+      } else {
+        socket.send(JSON.stringify({
+          type: 'update_lives',
+          lives: newLives,
+        }));
+      }
 
-        setInputValue("");
+      setInputValue("");
     } catch (error) {
-        console.error("Erreur lors de la vérification du mot :", error);
+      console.error("Erreur lors de la vérification du mot :", error);
     }
-};
+  };
 
   const handleReturn = () => {
     setCurrentPage('gameroom');
@@ -127,6 +162,12 @@ const GamePage = ({ setCurrentPage }) => {
       </div>
       <button onClick={handleReturn}>Retour</button>
       {gameOver && <div>Jeu terminé !</div>}
+
+      {/* Afficher la bombe avec le timer */}
+      <div className="bomb-container">
+        <img src="/images/bomb-icon.png" alt="Bombe" className="bomb-icon" />
+        <div className="timer">{timer}</div>
+      </div>
     </div>
   );
 };
