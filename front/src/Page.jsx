@@ -5,6 +5,8 @@ import CreateAccount from './CreateAccount.jsx';
 import Loading from './Loading.jsx';
 import Login from './Login.jsx';
 import Profile from './Profile.jsx';
+import GameRoom from './GameRoom.jsx';
+import GamePage from './GamePage.jsx';
 import axios from 'axios';
 
 //Connexion avec le back
@@ -58,6 +60,14 @@ function Page() {
     setCurrentPage('login');
   }
 
+  const handleGameRoomClick = () => {
+    setCurrentPage('gameroom');
+  }
+
+  const handleGamePageClick = () => {
+    setCurrentPage('game');
+  }
+
   const handleCreateAccountClick = () => {
     setCurrentPage('createAccount')
   }
@@ -73,9 +83,13 @@ function Page() {
         <Login onCreateAccountClick={handleCreateAccountClick} onPagePrincipaleClick={handlePagePrincipaleClick} setIsConnected={setIsConnected} setCurrentPage={setCurrentPage}/>
       ) : currentPage === 'createAccount' ? (
         <CreateAccount onLoginClick={handleLoginClick} onPagePrincipaleClick={handlePagePrincipaleClick} setCurrentPage={setCurrentPage}/>
-      ) : (
+      ) : currentPage === 'gameroom' ? (
+        <GameRoom onBackToPagePrincipaleClick={handlePagePrincipaleClick} onLoginClick={handleGameRoomClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage}/>
+      ) : currentPage === 'gamepage' ? (
+        <GamePage onBackToGameRoomClick={handleGameRoomClick} onGameRoomClick={handleGamePageClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage}/>
+      ) : (  
         <Loading/>
-      )}
+      )}    
     </React.StrictMode>
   )
 }
