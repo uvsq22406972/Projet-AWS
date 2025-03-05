@@ -102,23 +102,22 @@ const GamePage = ({ setCurrentPage }) => {
 
   const handleSubmit = async () => {
     if (gameOver) return; // Empêcher d'envoyer une réponse si la partie est déjà finie
-
+  
     try {
       const response = await fetch(`http://localhost:4001/verify-word?word=${inputValue}`);
       const data = await response.json();
-
+  
       let newLives = lives;
-
-      if (!data.valid) {
-        newLives -= 1;
-      } else if (!inputValue.includes(sequence)) {
+  
+      if (!data.valid || !inputValue.includes(sequence)) {
         newLives -= 1;
       } else {
         generateSequence();
+        setTimer(10); // Réinitialisation du timer lorsque le mot est correct
       }
-
+  
       setLives(newLives);
-
+  
       if (newLives <= 0) {
         setGameOver(true);
         socket.send(JSON.stringify({ type: 'game_over' }));
@@ -129,13 +128,13 @@ const GamePage = ({ setCurrentPage }) => {
           lives: newLives,
         }));
       }
-
+  
       setInputValue("");
     } catch (error) {
       console.error("Erreur lors de la vérification du mot :", error);
     }
-  };
-
+  };  
+  
   const handleReturn = () => {
     setCurrentPage('gameroom');
   };
