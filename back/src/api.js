@@ -1,5 +1,6 @@
 const express = require('express');
 const Users = require("./entities/users.js");
+const Rooms = require("./entities/rooms.js");
 const encrypt = require('./encrypt'); 
 
 function init(db){
@@ -9,6 +10,7 @@ function init(db){
 
   // Initialisation des entités
   const users = new Users.default(db);
+  const rooms = new Rooms.default(db);
   
   // Validation de l'email avec une regexp
   const isEmailValid = (email) => {
@@ -80,6 +82,27 @@ function init(db){
         return res.status(500).send({ message: "Erreur lors de la création de l'utilisateur" });
     } **/
   });
+
+
+//Permet la création d'un room
+router.put('/rooms', async (req, res) => {
+  // Initialisation des variables récupérées du front
+  const id = req.body.id;
+  const roomName = req.body.user;
+  console.log("id :", id);
+  console.log("RoomName Du back :", roomName);
+  //const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
+  await rooms.createRoom(id,roomName);
+});
+
+//Permet la suppression d'un room
+router.delete('/rooms', async (req, res) => {
+  // Initialisation des variables récupérées du front
+  const id = req.body.id;
+  await rooms.deleteRoom(id);
+  
+});
+
 
   // Création d'une session
   router.post('/users', async (req, res) => {

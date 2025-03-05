@@ -7,12 +7,15 @@ const axios = require("axios");
 const helmet = require("helmet");
 const crypto = require("crypto");
 const WebSocket = require("ws");
+const Rooms = require("./entities/rooms.js");
 
 // Initialisation de la BDD -> MongoDB
 const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
 
+axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.withCredentials = true;
 const app = express();
 const port = 4001; // Port Express
 const wsPort = 4002; // Port WebSocket
@@ -143,25 +146,28 @@ let rooms = {
   'test': { room: 'test', users: [] } // room de test pour la rejoindre
 };
 
-wss.on("connection", (ws) => {
-  ws.on("message", (message) => {
+wss.on("connection", async (ws) => {
+  await client.connect();
+  const db = client.db("DB");
+  const collection = db.collection("Rooms");
+  ws.on("message",async (message) => {
     const data = JSON.parse(message);
     console.log(`Message reçu: ${data.type}`);
 
     if (data.type === "create_room") {
-      const roomName = data.room;
-      const user = data.user;
+      const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
+      console.log("Room générée:", generatedRoomName);
 
-      if (!rooms[roomName]) {
-        rooms[roomName] = { users: [] };
-      }
-      rooms[roomName].users.push(user);
-
+      const reponse = axios.put(`api/rooms`,{
+        id : generatedRoomName,
+        user : data.user
+      });
+      //retour utilisateur
       ws.send(
         JSON.stringify({
-          message: `Room ${roomName} créée !`,
-          room: roomName,
-          users: rooms[roomName].users,
+          message: `Room ${generatedRoomName} créée !`,
+          room: generatedRoomName,
+          users: data.user,
         })
       );
     }
@@ -232,9 +238,21 @@ wss.on("connection", (ws) => {
       if (data.type === "leave_room") {
         const roomName = data.room;
         const user = data.user;
-  
+        const reponse = axios.delete(`api/rooms`,{
+          id : roomName,
+          user : data.user
+        });
+        //retour utilisateur
+        ws.send(
+          JSON.stringify({
+            message: `Room ${roomName} créée !`,
+            room: roomName,
+            users: data.user,
+          })
+        );
+        
         // Vérifier si la room existe
-        if (rooms[roomName]) {
+       /** if (rooms[roomName]) {
           // Retirer l'utilisateur de la room
           const userIndex = rooms[roomName].users.indexOf(user);
           if (userIndex !== -1) {
@@ -246,12 +264,12 @@ wss.on("connection", (ws) => {
           delete rooms[roomName];
           console.log(`La room ${roomName} a été supprimée car elle est vide.`);
           return;
-        }
+        }**/
 
 
   
           // Envoyer la mise à jour aux autres clients de la room
-          wss.clients.forEach((client) => {
+         /**  wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
               client.send(
                 JSON.stringify({
@@ -260,8 +278,8 @@ wss.on("connection", (ws) => {
                 })
               );
             }
-          });
-        }
+          });**/
+    
   
         // Fermer la connexion WebSocket de l'utilisateur
         ws.close();  // Fermer la connexion WebSocket

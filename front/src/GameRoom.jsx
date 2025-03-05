@@ -28,7 +28,7 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
         };
         checkSession();
         console.log("code de room ; ",roomCode);
-        if (isUserReady && userid && !roomCode) {
+        if (isUserReady && userid) {
             if(!roomCode) {
                 createRoom();
             }
@@ -71,12 +71,9 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
             return;
         }
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
-            console.log("Room générée:", generatedRoomName);
     
             const message = {
                 type: "create_room",
-                room: generatedRoomName,
                 user: userid,
             };
             ws.current.send(JSON.stringify(message));
@@ -119,7 +116,7 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
 
             const message = {
                 type: "join_room",
-                room: "test",
+                room: roomCode,
                 user: userid,
             };
             ws.current.send(JSON.stringify(message));
