@@ -84,7 +84,7 @@ const GameRoom = () => {
                 // mise à jour de la liste des utilisateurs
                 
                 console.log('Liste des utilisateurs mise à jour : ', response.users);
-                setUsers([response.users]);
+                setUsers(response.users);
                 console.log("Verification de users qui est bien modif - ",users);
             }
         };
