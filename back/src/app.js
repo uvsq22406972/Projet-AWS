@@ -139,7 +139,9 @@ app.get("/random-sequence", async (req, res) => {
 /* ************* WebSocket Server ************* */
 const wss = new WebSocket.Server({ port: wsPort });
 
-let rooms = {};
+let rooms = {
+  'test': { room: 'test', users: [] } // room de test pour la rejoindre
+};
 
 wss.on("connection", (ws) => {
   ws.on("message", (message) => {
@@ -169,7 +171,13 @@ wss.on("connection", (ws) => {
       const user = data.user;
 
       if (!rooms[roomName]) {
-        rooms[roomName] = { users: [] };
+        console.log("aucune room trouvé");
+        ws.send(
+          JSON.stringify({
+            type: "no_room",
+          })
+        );
+        return;
       }
       rooms[roomName].users.push(user);
 
@@ -219,8 +227,45 @@ wss.on("connection", (ws) => {
             })
           );
         }
-      });
-    }
+        });
+      }
+      if (data.type === "leave_room") {
+        const roomName = data.room;
+        const user = data.user;
+  
+        // Vérifier si la room existe
+        if (rooms[roomName]) {
+          // Retirer l'utilisateur de la room
+          const userIndex = rooms[roomName].users.indexOf(user);
+          if (userIndex !== -1) {
+            rooms[roomName].users.splice(userIndex, 1); // Supprimer l'utilisateur de la salle
+            console.log(`${user} a quitté la room ${roomName}`);
+          }
+          // si la room est vide, on la supprime
+        if (rooms[roomName] && rooms[roomName].users.length === 0) {
+          delete rooms[roomName];
+          console.log(`La room ${roomName} a été supprimée car elle est vide.`);
+          return;
+        }
+
+
+  
+          // Envoyer la mise à jour aux autres clients de la room
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({
+                  room: roomName,
+                  users: rooms[roomName].users,
+                })
+              );
+            }
+          });
+        }
+  
+        // Fermer la connexion WebSocket de l'utilisateur
+        ws.close();  // Fermer la connexion WebSocket
+      }
   });
 
   ws.on("close", () => {

@@ -3,6 +3,9 @@ import React, { useState,useEffect } from 'react';
 import { FaUserCircle } from "react-icons/fa";
 import "./PagePrincipale.css";
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 //Connexion avec le back
 axios.defaults.baseURL = 'http://localhost:4000';
@@ -13,6 +16,8 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   //Initialisation des états
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [compte, setCompte] = useState([]);
+  const [roomCode, setRoomCode] = useState("");   
+
 
   //Pour avoir un couleur unique
   const gradientStyle = {
@@ -91,8 +96,40 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
     // eslint-disable-next-line
   }, []);
 
+  //  on gère les inputs utilisateurs et on passe a la game Room 
+  const handleJoinRoom = () => {
+
+    const socket = new WebSocket('ws://localhost:4002');
+    //quand la connexion est faite
+    socket.onopen = () => {
+      console.log('Connexion WebSocket établie');
+      console.log("valeur récupérer :" , roomCode);
+      // Envoie du message pour rejoindre la room
+      socket.send(
+        JSON.stringify({
+          type: 'join_room',
+          room: roomCode,
+          user: compte.username,
+        })
+      );
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("data recu on message");
+        if (data.type === 'no_room') {
+          console.log("Aucune room trouvé");
+          toast.error("Aucun salle de jeu ne porte ce nom");
+
+        } else {
+          setCurrentPage('gameroom', roomCode);
+          socket.close();
+          console.log("connexion fermée");
+        }
+      };
+  };
+  }
   //CSS par ChatGPT, pour un bootstrap plus effectif
   return (
+    <div>
     <div className="d-flex flex-column min-vh-100">
       {/* Haut de la page */}
       <nav className="navbar navbar-expand-lg sticky-top" style={gradientStyle}>
@@ -147,8 +184,12 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
               <p className="fw-bold">Ou</p>
               <h5 className="fw-bold mb-2">Rejoindre une salle existante</h5>
               <div className="input-group mb-3 w-75 mx-auto">
-                <input type="text" className="form-control" placeholder="Code de la salle"/>
-                <button className="btn">Rejoindre</button>
+                <input type="text"  
+                onChange={(e) => setRoomCode(e.target.value)} value={roomCode}
+                className="form-control" placeholder="Code de la salle"/>
+
+                <button className="btn"  onClick={handleJoinRoom}
+                >Rejoindre</button>
               </div>
             </div>
           </div>
@@ -185,6 +226,8 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           </a>
         </div>
       </footer>
+    </div>
+    <ToastContainer/>
     </div>
   )
 }
