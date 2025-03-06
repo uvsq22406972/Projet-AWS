@@ -58,9 +58,9 @@ class Rooms {
   
       // Chercher une room où l'userId est présent dans le tableau "users"
       const room = await col1.findOne({ users: userId });
-  
+      console.log(room);
       // Si une room est trouvée, retourne son nom
-      return room ? room.roomname : null;
+      return room ? room.id : null;
     } catch (err) {
       console.error("Erreur lors de la récupération du roomname :", err);
       throw err;
@@ -88,7 +88,7 @@ class Rooms {
     const col1 = this.db.db("DB").collection("Rooms");
     await col1.updateOne(
       { id: roomName }, // Filtre : Trouver la room par son id
-      { $push: { users: user } } // Ajout du user dans le tableau
+      { $addToSet: { users: user } } // Ajout du user dans le tableau
     );
     console.log("User ajouté");
   }

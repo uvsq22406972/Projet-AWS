@@ -89,8 +89,7 @@ function init(db){
     // Initialisation des variables récupérées du front
     const id = req.body.id;
     const roomName = req.body.user;
-    console.log("id :", id);
-    console.log("RoomName Du back :", roomName);
+    console.log("RoomName Du back :", id);
     //const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
     await rooms.createRoom(id,roomName);
   });
@@ -146,6 +145,32 @@ router.post('/removeUserFromRoom', async (req, res) => {
       res.status(500).json({ error: "Erreur interne du serveur" });
     }
   });
+
+//Permet de récupérer les room d'une user
+router.get('/getRoomFromUsers', async (req, res) => {
+  try {
+    // Récupération de la room depuis les paramètres de la requête
+    const user = req.query.user; 
+    console.log("Récupération de la room de ",user);
+
+    if (!user) {
+      return res.status(400).json({ error: "Room non spécifiée" });
+    }
+    const room = await rooms.getRoomName(user);
+    
+    if (room === null) {
+      return res.status(400).json({ error: "Aucune room contient l'utilisateur" });
+    }
+    
+    res.json(room); 
+    console.log("room found :", room);
+    
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs :", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
 
   // Création d'une session
   router.post('/users', async (req, res) => {

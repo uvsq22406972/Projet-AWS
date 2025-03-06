@@ -1,15 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 import axios from 'axios';
 
-const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrentPage
-    const [room, setRoom] = useState(roomCode);
+const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
+    const storedRoom = localStorage.getItem("room");
+    const [room, setRoom] = useState(storedRoom);
     const [users, setUsers] = useState([]);
     const [gameStarted, setGameStarted] = useState(false);
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
     const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
     const ws = useRef(null);
-
     // Vérifier si une session est déjà ouverte
     useEffect(() => {
         ws.current = new WebSocket("ws://localhost:4002");
@@ -25,29 +25,36 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
         ws.current.onopen = () => {
             console.log("WebSocket connecté !");
             setIsWebSocketOpen(true);
+            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                if (!storedRoom) {
+                   createRoom();  
+                }
+                else {
+                    joinRoom();
+                }
+            } else {
+                console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
+                setTimeout(createRoom, 500); // Réessaye après 500ms
+            }
         };
         checkSession();
-        if(isWebSocketOpen) {
-           /**  ws.send(
-                JSON.stringify({
-                    type: 'get_room',
-                    user: compte.username,
-                  })
-            )**/
-        }
-       
+        console.log("code de room ; ",room);
+        
         // Gérer les messages du serveur WebSocket
         ws.current.onmessage = (event) => {
             const message = JSON.parse(event.data);
             console.log('Message reçu:', message);
-            console.log("Voici le code de la room :", message.room);
-            if (message.type === 'game_started') {
-                //alert(`Le jeu a commencé dans la room ${message.room}`);
-            }
 
-            setRoom(message.room);
-            console.log(room);
-            setUsers(message.users);
+            if (message.type === 'game_started') {
+                alert(`Le jeu a commencé dans la room ${message.room}`);
+            }
+            if (message.type === 'generatedRoom') {
+                localStorage.setItem("room", message.room);
+                setRoom(message.room);
+                setUsers(message.users);
+            }
+            
+           
         };
 
         ws.current.onclose = (event) => {
@@ -56,22 +63,11 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
             // Auto-reconnexion après 3 secondes
             setTimeout(() => {
                 console.log("🔄 Tentative de reconnexion...");
-                ws.current = new WebSocket("ws://localhost:4002");
+                ws.current = new WebSocket("ws://localhost:4001");
             }, 3000);
         };
 
-        console.log("code de room ; ",roomCode);
-        if (isUserReady && userid) {
-            if(!roomCode) {
-                createRoom();
-            }
-            else {
-                joinRoom();
-            }
-            
-        }
-
-    }, [roomCode, userid, isUserReady]);
+    }, [room, userid, isUserReady]);
 
     // Créer une room
     const createRoom = () => {
@@ -109,9 +105,9 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
         };
         ws.current.send(JSON.stringify(message));
 
-        setTimeout(() => {
-            fetchUsersInRoom();
-        }, 200);
+        
+        fetchUsersInRoom();
+        
     };
 
     // pour rejoindre une room
@@ -125,7 +121,7 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
 
             const message = {
                 type: "join_room",
-                room: roomCode,
+                room: storedRoom,
                 user: userid,
             };
             ws.current.send(JSON.stringify(message));
@@ -141,20 +137,32 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
 
     // Récupérer les utilisateurs dans la room
     const fetchUsersInRoom = () => {
+        console.log("fetching");
         if (!isWebSocketOpen) {
             console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
             return;
         }
-        const message = { type: "get_users", room };
-        ws.current.send(JSON.stringify(message));
-
+        
         ws.current.onmessage = (event) => {
             const response = JSON.parse(event.data);
             if (response.type === 'users_list') {
                 console.log('Utilisateurs mis à jour:', response.users);
                 setUsers(response.users);
             }
+            else if (response.type === "error"){console.log("oula");}
+            
         };
+        console.log("Stored Room avant envoi :", storedRoom);
+        if (!storedRoom) {
+            console.warn("La room est vide, impossible d'envoyer la requête.");
+            return;
+        }
+   
+        const message = { type: "get_users", room: room };
+        ws.current.send(JSON.stringify(message));
+        
+
+        
     };
 
     const leaveRoom = () => {
@@ -166,15 +174,21 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
         //le joueur quitte la salle envoyé au serveur
         const message = {
           type: "leave_room",
-          room: room,  
+          room: storedRoom,  
           user: userid,  
         };
         ws.current.send(JSON.stringify(message));
-        console.log(`Le joueur ${userid} quitte la room ${room}`);
+        console.log(`Le joueur ${userid} quitte la room ${storedRoom}`);
         
        // redirection
         setCurrentPage("pagePrincipale");
+        localStorage.removeItem("room");
       };
+    
+    const showPlayer = () => {
+        fetchUsersInRoom();
+        console.log(users);
+    }
 
     // Démarrer le jeu
     const startGame = () => {
@@ -200,15 +214,15 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
                     <div className="text-start mb-4">
                         <h4 className="text-white">Utilisateurs dans la room :</h4>
                         <ul className="list-group">
-                            {Array.isArray(users) && users.length > 0 ? (
-                                users.map((user, index) => (
-                                    <li key={index} className="list-group-item">
-                                        {user}
-                                    </li>
-                                ))
-                            ) : (
-                                <li className="list-group-item text-muted">Aucun utilisateur pour l'instant</li>
-                            )}
+                        {Array.isArray(users) && users.length > 0 ? (
+                            users.map(element => (
+                            <li key={element} className="list-group-item">
+                                {element}
+                            </li>
+                            ))
+                        ) : (
+                            <li className="list-group-item text-muted">Aucun utilisateur pour l'instant</li>
+                        )}
                         </ul>
                     </div>
 
@@ -226,6 +240,11 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
             {/* Bouton ajouter un joueur */}
             <button className="custom-btn w-100 mt-3" onClick={addPlayer}>
                 Ajouter un joueur
+            </button>
+
+             {/* Bouton afficher les jouers */}
+             <button className="custom-btn w-100 mt-3" onClick={showPlayer}>
+                Show joueurs
             </button>
         </div>
     </div>

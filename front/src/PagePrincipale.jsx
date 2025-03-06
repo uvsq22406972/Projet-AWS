@@ -100,7 +100,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const handleJoinRoom = () => {
 
     const socket = new WebSocket('ws://localhost:4002');
-    
+    localStorage.setItem("room", roomCode);
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("data recu on message",data.message);
@@ -109,7 +109,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           toast.error("Aucun salle de jeu ne porte ce nom");
 
         } else {
-          setCurrentPage('gameroom', data.room);
+          setCurrentPage('gameroom',roomCode );
           socket.close();
           console.log("connexion fermée");
         }
@@ -182,7 +182,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           <div className="col-md-6">
             <div className="game-card">
               <img src="/images/bombparty.jpg" alt="Bomb Party" height="150"/>
-              <button className="btn mb-3" onClick={() => setCurrentPage("gameroom")}>Créer une salle</button>
+              <button className="btn mb-3" onClick={() => setCurrentPage("gameroom",{roomCode:null})}>Créer une salle</button>
               <p className="fw-bold">Ou</p>
               <h5 className="fw-bold mb-2">Rejoindre une salle existante</h5>
               <div className="input-group mb-3 w-75 mx-auto">

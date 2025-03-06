@@ -142,10 +142,6 @@ app.get("/random-sequence", async (req, res) => {
 /* ************* WebSocket Server ************* */
 const wss = new WebSocket.Server({ port: wsPort });
 
-let rooms = {
-  'test': { room: 'test', users: [] } // room de test pour la rejoindre
-};
-
 wss.on("connection", async (ws) => {
   await client.connect();
   const db = client.db("DB");
@@ -165,6 +161,7 @@ wss.on("connection", async (ws) => {
       //retour utilisateur
       ws.send(
         JSON.stringify({
+          type:'generatedRoom',
           message: `Room ${generatedRoomName} créée !`,
           room: generatedRoomName,
           users: data.user,
@@ -178,13 +175,12 @@ wss.on("connection", async (ws) => {
       try {
         const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
         if (resp.status === 200) {
-          console.log("tout va bien pour le moment");
-          console.log("Envoi du message WebSocket : viens la mon cochon");
+          console.log("Envoi du message WebSocket :");
             ws.send(
               JSON.stringify({
                 type: "cool",
                 room:roomName,
-                message: `viens la mon cochon`,
+                message: `Room rejointe`,
               })
             );
           await axios.post(`api/addUserToRoom`,{
@@ -205,10 +201,12 @@ wss.on("connection", async (ws) => {
 
     if (data.type === "get_users") {
      const roomName = data.room;
+     console.log("aojzebcpaoje cpjia éé",roomName)
       try {
-        const resp = await axios.get(`getUsersFromRoom`, { params: { room: roomName } });
-    
-        if (resp.status === 200) {
+       
+        const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
+        console.log("ceci est un test",resp);
+        if (resp) {
           ws.send(
             JSON.stringify({
               type: "users_list",
@@ -216,6 +214,7 @@ wss.on("connection", async (ws) => {
               users: resp.data, 
             })
           );
+          console.log("ceci est les datas envoyés :",resp.data);
         }
       } catch (error) {
         ws.send(
@@ -226,6 +225,30 @@ wss.on("connection", async (ws) => {
         );
       }
     }
+
+    if (data.type === "get_room") {
+       try {
+        console.log(data);
+        const resp = axios.get(`api/getRoomFromUsers`,{ params: {user:data.user}});
+       
+        if(resp.status === 200) {
+          ws.send( 
+            JSON.stringify({
+              type:'dataRoom',
+              room: resp.data
+            })
+          );
+        }
+      } 
+       catch (error) {
+         ws.send(
+           JSON.stringify({
+             type: "error",
+             message: `erreur inattendu.`,
+           })
+         );
+       }
+      }
 
     if (data.type === "start_game") {
       const roomName = data.room;
@@ -270,23 +293,18 @@ wss.on("connection", async (ws) => {
             user : data.user
           })
         }
-        // Envoyer la mise à jour aux autres clients de la room
-         /**  wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(
-                JSON.stringify({
-                  room: roomName,
-                  users: rooms[roomName].users,
-                })
-              );
-            }
-          });**/
-    
-  
-        // Fermer la connexion WebSocket de l'utilisateur
-        // Fermer la connexion WebSocket
       }
   });
+  const sendToGameRoom = (data) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      setTimeout(() => {
+        console.log('Envoi des données à GameRoom après 3 secondes :', data);
+        ws.send(JSON.stringify(data)); // Envoie les données à GameRoom via WebSocket
+      }, 3000);
+    } else {
+      console.warn('WebSocket n\'est pas prêt pour envoyer des données');
+    }
+  };
 
   ws.on("close", () => {
     console.log("Un utilisateur a quitté la room");
