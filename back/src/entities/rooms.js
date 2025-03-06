@@ -11,7 +11,7 @@ class Rooms {
       const col1 = this.db.db("DB").collection("Rooms"); //Accès au collection Compte
       await col1.insertOne({
          id : roomName,
-         users : {user}
+         users : [user]
         });
     } catch (e) {
       console.error("Erreur lors de la création du compte :", e);
@@ -27,9 +27,9 @@ class Rooms {
       const col1 = this.db.db("DB").collection("Rooms");
 
       // Vérifie si lla room existe
-      const room = await col1.findOne({ id: { $eq: roomName } });
+      const room = await col1.findOne({ id: roomName });
       if (!room) {
-        console.log("room introuvable !");
+        console.log("room introuvable !" ,roomName );
         return false;
       }
       console.log("testtestetstest");
@@ -71,13 +71,38 @@ class Rooms {
     try {
       await this.db.connect();
       const col1 = this.db.db("DB").collection("Rooms");
-      const room = await col1.findOne({ roomname });     
+      const room = await col1.findOne({id:roomname});   
+      console.log(room);
+      if(room == null) {
+        return null;
+      }  
       return room ? room.users : [];
     } catch (err) {
       console.error("Erreur lors de la récupération des utilisateurs :", err);
       throw err;
     }
   }
+
+  async addUserToRoom(roomName, user) {
+    await this.db.connect();
+    const col1 = this.db.db("DB").collection("Rooms");
+    await col1.updateOne(
+      { id: roomName }, // Filtre : Trouver la room par son id
+      { $push: { users: user } } // Ajout du user dans le tableau
+    );
+    console.log("User ajouté");
+  }
+
+  async removeUserFromRoom(roomName, user) {
+    await this.db.connect();
+    const col1 = this.db.db("DB").collection("Rooms");
+    await col1.updateOne(
+      { id: roomName }, // Filtre : Trouver la room par son id
+      { $pull: { users: user } } // Supprime uniquement ce user du tableau
+    );
+    console.log("User removed");
+  }
+  
   
 } 
 exports.default = Rooms;

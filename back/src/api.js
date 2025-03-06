@@ -84,25 +84,68 @@ function init(db){
   });
 
 
-//Permet la création d'un room
-router.put('/rooms', async (req, res) => {
+  //Permet la création d'un room
+  router.put('/rooms', async (req, res) => {
+    // Initialisation des variables récupérées du front
+    const id = req.body.id;
+    const roomName = req.body.user;
+    console.log("id :", id);
+    console.log("RoomName Du back :", roomName);
+    //const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
+    await rooms.createRoom(id,roomName);
+  });
+
+  //Permet la suppression d'un room
+  router.delete('/rooms', async (req, res) => {
+    // Initialisation des variables récupérées du front
+    const room = req.body.room;
+    console.log("id recu : ", room);
+    await rooms.deleteRoom(room);
+  });
+
+//Permet la suppression d'un room
+router.post('/addUserToRoom', async (req, res) => {
   // Initialisation des variables récupérées du front
-  const id = req.body.id;
-  const roomName = req.body.user;
-  console.log("id :", id);
-  console.log("RoomName Du back :", roomName);
-  //const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
-  await rooms.createRoom(id,roomName);
+  const room = req.body.room;
+  const user = req.body.user;
+  console.log("j'ajoute");
+  await rooms.addUserToRoom(room,user);
 });
 
 //Permet la suppression d'un room
-router.delete('/rooms', async (req, res) => {
+router.post('/removeUserFromRoom', async (req, res) => {
   // Initialisation des variables récupérées du front
-  const id = req.body.id;
-  await rooms.deleteRoom(id);
-  
+  const room = req.body.room;
+  const user = req.body.user;
+  await rooms.removeUserFromRoom(room,user);
 });
 
+
+
+  //Permet de récupérer les utilisateurs d'une room
+  router.get('/getUsersFromRoom', async (req, res) => {
+    try {
+      // Récupération de la room depuis les paramètres de la requête
+      const room = req.query.room; 
+      console.log("Récupération des users dans :", room);
+  
+      if (!room) {
+        return res.status(400).json({ error: "Room non spécifiée" });
+      }
+      const usersFound = await rooms.getUsersInRoom(room);
+      
+      if (usersFound === null) {
+        return res.status(400).json({ error: "Aucune room ne porte ce nom" });
+      }
+      
+      res.json(usersFound); 
+      console.log("Users found :", usersFound);
+      
+    } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs :", error);
+      res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+  });
 
   // Création d'une session
   router.post('/users', async (req, res) => {

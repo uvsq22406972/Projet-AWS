@@ -174,43 +174,50 @@ wss.on("connection", async (ws) => {
 
     if (data.type === "join_room") {
       const roomName = data.room;
-      const user = data.user;
-
-      if (!rooms[roomName]) {
-        console.log("aucune room trouvé");
+      console.log("données recu on join" ,data);
+      try {
+        const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
+        if (resp.status === 200) {
+          console.log("tout va bien pour le moment");
+          console.log("Envoi du message WebSocket : viens la mon cochon");
+            ws.send(
+              JSON.stringify({
+                type: "cool",
+                room:roomName,
+                message: `viens la mon cochon`,
+              })
+            );
+          await axios.post(`api/addUserToRoom`,{
+            room: roomName,
+            user:data.user
+          });
+        }
+       } catch (error) {
         ws.send(
           JSON.stringify({
             type: "no_room",
+            message: `La room ${roomName} n'existe pas.`,
           })
         );
-        return;
       }
-      rooms[roomName].users.push(user);
-
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(
-            JSON.stringify({
-              room: roomName,
-              users: rooms[roomName].users,
-            })
-          );
-        }
-      });
+      
     }
 
     if (data.type === "get_users") {
-      const roomName = data.room;
-
-      if (rooms[roomName]) {
-        ws.send(
-          JSON.stringify({
-            type: "users_list",
-            room: roomName,
-            users: rooms[roomName].users,
-          })
-        );
-      } else {
+     const roomName = data.room;
+      try {
+        const resp = await axios.get(`getUsersFromRoom`, { params: { room: roomName } });
+    
+        if (resp.status === 200) {
+          ws.send(
+            JSON.stringify({
+              type: "users_list",
+              room: roomName,
+              users: resp.data, 
+            })
+          );
+        }
+      } catch (error) {
         ws.send(
           JSON.stringify({
             type: "error",
@@ -238,37 +245,32 @@ wss.on("connection", async (ws) => {
       if (data.type === "leave_room") {
         const roomName = data.room;
         const user = data.user;
-        const reponse = axios.delete(`api/rooms`,{
-          id : roomName,
-          user : data.user
-        });
-        //retour utilisateur
-        ws.send(
-          JSON.stringify({
-            message: `Room ${roomName} créée !`,
-            room: roomName,
-            users: data.user,
-          })
-        );
-        
-        // Vérifier si la room existe
-       /** if (rooms[roomName]) {
-          // Retirer l'utilisateur de la room
-          const userIndex = rooms[roomName].users.indexOf(user);
-          if (userIndex !== -1) {
-            rooms[roomName].users.splice(userIndex, 1); // Supprimer l'utilisateur de la salle
-            console.log(`${user} a quitté la room ${roomName}`);
+        console.log("data envoyé : ",roomName )
+        const resp = await axios.get(`api/getUsersFromRoom`,{
+         params : {
+          room : roomName
+         }
+        }) ;
+        const usersFound = resp.data;
+        console.log("message recu ",usersFound);
+        console.log("Type de usersFound :", typeof usersFound, usersFound);
+
+        if(usersFound.length === 1 && usersFound[0] == user)
+          {
+            const reponse = await axios.delete(`api/rooms`,{
+              data: { 
+                room: roomName,
+                user: data.user
+              }
+            });
           }
-          // si la room est vide, on la supprime
-        if (rooms[roomName] && rooms[roomName].users.length === 0) {
-          delete rooms[roomName];
-          console.log(`La room ${roomName} a été supprimée car elle est vide.`);
-          return;
-        }**/
-
-
-  
-          // Envoyer la mise à jour aux autres clients de la room
+        else {
+          const response = await axios.post(`api/removeUserFromRoom`, {
+            room : roomName,
+            user : data.user
+          })
+        }
+        // Envoyer la mise à jour aux autres clients de la room
          /**  wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
               client.send(
@@ -282,7 +284,7 @@ wss.on("connection", async (ws) => {
     
   
         // Fermer la connexion WebSocket de l'utilisateur
-        ws.close();  // Fermer la connexion WebSocket
+        // Fermer la connexion WebSocket
       }
   });
 

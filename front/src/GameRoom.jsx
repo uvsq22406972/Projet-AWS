@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import axios from 'axios';
 
 const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrentPage
-    const [room, setRoom] = useState("");
+    const [room, setRoom] = useState(roomCode);
     const [users, setUsers] = useState([]);
     const [gameStarted, setGameStarted] = useState(false);
     const [userid, setUserid] = useState("");
@@ -27,6 +27,39 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
             setIsWebSocketOpen(true);
         };
         checkSession();
+        if(isWebSocketOpen) {
+           /**  ws.send(
+                JSON.stringify({
+                    type: 'get_room',
+                    user: compte.username,
+                  })
+            )**/
+        }
+       
+        // Gérer les messages du serveur WebSocket
+        ws.current.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            console.log('Message reçu:', message);
+            console.log("Voici le code de la room :", message.room);
+            if (message.type === 'game_started') {
+                //alert(`Le jeu a commencé dans la room ${message.room}`);
+            }
+
+            setRoom(message.room);
+            console.log(room);
+            setUsers(message.users);
+        };
+
+        ws.current.onclose = (event) => {
+            console.warn("⚠️ WebSocket fermé :", event);
+            setIsWebSocketOpen(false);
+            // Auto-reconnexion après 3 secondes
+            setTimeout(() => {
+                console.log("🔄 Tentative de reconnexion...");
+                ws.current = new WebSocket("ws://localhost:4002");
+            }, 3000);
+        };
+
         console.log("code de room ; ",roomCode);
         if (isUserReady && userid) {
             if(!roomCode) {
@@ -37,30 +70,6 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
             }
             
         }
-       
-
-        // Gérer les messages du serveur WebSocket
-        ws.current.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            console.log('Message reçu:', message);
-
-            if (message.type === 'game_started') {
-                alert(`Le jeu a commencé dans la room ${message.room}`);
-            }
-
-            setRoom(message.room);
-            setUsers(message.users);
-        };
-
-        ws.current.onclose = (event) => {
-            console.warn("⚠️ WebSocket fermé :", event);
-            setIsWebSocketOpen(false);
-            // Auto-reconnexion après 3 secondes
-            setTimeout(() => {
-                console.log("🔄 Tentative de reconnexion...");
-                ws.current = new WebSocket("ws://localhost:4001");
-            }, 3000);
-        };
 
     }, [roomCode, userid, isUserReady]);
 
@@ -162,12 +171,7 @@ const GameRoom = ({ roomCode, setCurrentPage }) => {  // <-- Ajout de setCurrent
         };
         ws.current.send(JSON.stringify(message));
         console.log(`Le joueur ${userid} quitte la room ${room}`);
-        ws.current.close();
-        //met a jour l'état de ws
-        setIsWebSocketOpen(false);
-        setRoom("");  
-        setUsers([]);  
-      
+        
        // redirection
         setCurrentPage("pagePrincipale");
       };

@@ -100,6 +100,20 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const handleJoinRoom = () => {
 
     const socket = new WebSocket('ws://localhost:4002');
+    
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("data recu on message",data.message);
+        if (data.type === 'no_room') {
+          console.log("Aucune room trouvé");
+          toast.error("Aucun salle de jeu ne porte ce nom");
+
+        } else {
+          setCurrentPage('gameroom', data.room);
+          socket.close();
+          console.log("connexion fermée");
+        }
+      };
     //quand la connexion est faite
     socket.onopen = () => {
       console.log('Connexion WebSocket établie');
@@ -112,19 +126,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           user: compte.username,
         })
       );
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log("data recu on message");
-        if (data.type === 'no_room') {
-          console.log("Aucune room trouvé");
-          toast.error("Aucun salle de jeu ne porte ce nom");
-
-        } else {
-          setCurrentPage('gameroom', roomCode);
-          socket.close();
-          console.log("connexion fermée");
-        }
-      };
+      
   };
   }
   //CSS par ChatGPT, pour un bootstrap plus effectif
