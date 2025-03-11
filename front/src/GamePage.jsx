@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import "./GamePage.css";
 
-const GamePage = ({ setCurrentPage }) => {
+function removeAccents(str) {
+  // Normalise la chaîne et enlève les diacritiques
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshold }) => {
   const [sequence, setSequence] = useState("");
   const [inputValue, setInputValue] = useState("");
-  const [lives, setLives] = useState(2);
+  const [lives, setLives] = useState(initialLives);
   const [socket, setSocket] = useState(null); // WebSocket state
   const [gameOver, setGameOver] = useState(false); // Game over state
-  const [timer, setTimer] = useState(10); // Timer initialisé à 10 secondes
+  const [timer, setTimer] = useState(initialTime);
   const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
+  const [lostLivesCount, setLostLivesCount] = useState(0);
 
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const [blackenedLetters, setBlackenedLetters] = useState(new Set());
 
   // Connecter au WebSocket backend
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:4002");
+    const ws = new WebSocket("ws://51.21.180.103:4002");
     setSocket(ws);
     
     ws.onopen = () => {
@@ -48,6 +55,42 @@ const GamePage = ({ setCurrentPage }) => {
     };
   }, []);
 
+  function loseLife() {
+    // Réduire le nombre de vies
+    setLives((prevLives) => {
+      const newLives = prevLives - 1;
+  
+      // Gérer la fin de partie
+      if (newLives <= 0) {
+        setGameOver(true);
+        socket.send(JSON.stringify({ type: 'game_over' }));
+        alert("Fin de la partie !");
+      } else {
+        // Mettre à jour le serveur
+        socket.send(JSON.stringify({
+          type: 'update_lives',
+          lives: newLives,
+        }));
+      }
+  
+      return newLives;
+    });
+  
+    // Incrémenter le compteur de vies perdues
+    setLostLivesCount((prevCount) => {
+      const updatedCount = prevCount + 1;
+  
+      // Vérifier si on atteint le seuil
+      if (updatedCount === livesLostThreshold) {
+        generateSequence();     // Changer la séquence
+        return 0;              // Réinitialiser le compteur si vous voulez recommencer à 0
+        // return updatedCount; // ou laissez-le si vous ne voulez le faire qu'une seule fois
+      }
+  
+      return updatedCount;
+    });
+  }
+
   // Fonction pour récupérer une séquence depuis l'API
   const generateSequence = async () => {
     try {
@@ -68,18 +111,9 @@ const GamePage = ({ setCurrentPage }) => {
     if (gameOver) return;
 
     if (timer === 0) {
-      // Lorsque le timer atteint 0, on perd une vie et on réinitialise le timer
-      setLives(prevLives => {
-        const newLives = prevLives - 1;
-        if (newLives <= 0) {
-          setGameOver(true);
-          alert("Le jeu est terminé !");
-        }
-        return newLives;
-      });
-      
+      loseLife();
       // Réinitialiser le timer
-      setTimer(10);
+      setTimer(initialTime);
     }
 
     const interval = setInterval(() => {
@@ -94,7 +128,7 @@ const GamePage = ({ setCurrentPage }) => {
     return () => {
       clearInterval(interval);
     };
-  }, [timer, gameOver]);
+  }, [timer, gameOver, initialTime]);
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
@@ -109,24 +143,25 @@ const GamePage = ({ setCurrentPage }) => {
   
       let newLives = lives;
   
-      if (!data.valid || !inputValue.includes(sequence)) {
-        newLives -= 1;
-      } else {
+      if (data.valid && inputValue.includes(sequence)) {
+        // Mot valide => on réinitialise le timer, on génère une nouvelle séquence, etc.
         generateSequence();
-        setTimer(10); // Réinitialisation du timer lorsque le mot est correct
+        setTimer(initialTime);
+        blackenLetters(inputValue);
+      } else {
+        console.log("Mot invalide. Réessayez !");
       }
   
       setLives(newLives);
-  
-      if (newLives <= 0) {
-        setGameOver(true);
-        socket.send(JSON.stringify({ type: 'game_over' }));
-        alert("Fin de la partie !");
-      } else {
-        socket.send(JSON.stringify({
-          type: 'update_lives',
-          lives: newLives,
-        }));
+
+      // Vérifier si on a perdu X vies au total (d’affilée ou non)
+      if ((lostLivesCount + 1) % livesLostThreshold === 0) {
+        // On change le bout de mot
+        console.log(`On a perdu ${livesLostThreshold} vies, on change la séquence !`);
+        generateSequence();
+
+        // On remet le compteur à 0 (ou on le laisse continuer, selon votre logique)
+        setLostLivesCount(0);
       }
   
       setInputValue("");
@@ -138,6 +173,29 @@ const GamePage = ({ setCurrentPage }) => {
   const handleReturn = () => {
     setCurrentPage('gameroom');
   };
+
+  function blackenLetters(word) {
+    // Supprimer les accents, mettre en majuscule
+    const normalized = removeAccents(word).toUpperCase();
+    // On fait une copie du Set actuel
+    const updatedSet = new Set(blackenedLetters);
+
+    for (const char of normalized) {
+      if (letters.includes(char)) {
+        updatedSet.add(char);
+      }
+    }
+
+    // Vérifier si TOUTES les lettres (A-Z) sont noircies
+    if (updatedSet.size === letters.length) {
+      // Réinitialiser le Set et ajouter 1 vie
+      updatedSet.clear();
+      setLives((prev) => prev + 1);
+    }
+
+    // Mettre à jour l'état
+    setBlackenedLetters(updatedSet);
+  }
 
   return (
     <div className="game-container">
@@ -155,10 +213,21 @@ const GamePage = ({ setCurrentPage }) => {
         Valider
       </button>
       <div className="keyboard">
-        {letters.map((letter, index) => (
-          <div key={index} className="key">{letter}</div>
-        ))}
+      {letters.map((letter, index) => {
+        // Vérifier si la lettre est noircies
+        const isBlackened = blackenedLetters.has(letter);
+      
+        return (
+          <div
+            key={index}
+            className={`key ${isBlackened ? 'blackened' : ''}`}
+          >
+            {letter}
+          </div>
+        );
+      })}
       </div>
+
       <button onClick={handleReturn}>Retour</button>
       {gameOver && <div>Jeu terminé !</div>}
 

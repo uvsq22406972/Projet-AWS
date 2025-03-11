@@ -6,7 +6,7 @@ import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 //Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'http://51.21.180.103:4000';
 axios.defaults.withCredentials = true;
 
 //Page qui permet d'être sur la page menu utilisateur
@@ -138,7 +138,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     console.log(login);
   
     // Appel à l'API pour supprimer l'utilisateur
-    axios.post('http://localhost:4000/api/delete', { email, login, password })
+    axios.post('http://51.21.180.103:4000/api/delete', { email, login, password })
     .then(response => {
       console.log("Réponse de l'API :", response.data.message);
       toast.success(response.data.message); // Afficher un message de succès si tout se passe bien

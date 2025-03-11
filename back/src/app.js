@@ -14,17 +14,29 @@ const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
 
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'http://51.21.180.103:4000';
 axios.defaults.withCredentials = true;
 const app = express();
 const port = 4001; // Port Express
 const wsPort = 4002; // Port WebSocket
 
+const allowedOrigins = [
+  "http://localhost:3000", // Dev local
+  "https://votre-app.amplifyapp.com" // URL du frontend Amplify
+];
+
 // Middleware pour parser le JSON
 app.use(express.json());
 
-// Localhost - Autoriser le front à se connecter au serveur
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
+// Route de test pour vérifier que le serveur répond
+app.get("/", (req, res) => {
+  res.send("Le backend fonctionne !");
+});
 
 // Gestion des sessions
 app.use(
@@ -140,7 +152,7 @@ app.get("/random-sequence", async (req, res) => {
 });
 
 /* ************* WebSocket Server ************* */
-const wss = new WebSocket.Server({ port: wsPort });
+const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
   await client.connect();

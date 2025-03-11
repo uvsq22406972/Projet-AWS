@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'http://51.21.180.103:4000';
 axios.defaults.withCredentials = true;
 
 //Page qui permet d'être sur la page principale
@@ -28,7 +28,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const handleLogoutClick = async () => {
     try {
       //Envoie une requête à l'API pour détruire la session (le cookie)
-      await axios.post('http://localhost:4000/api/logout');
+      await axios.post('http://51.21.180.103:4000/api/logout');
       
       //Met à jour l'état pour indiquer que l'utilisateur est déconnecté
       setIsConnected(false);
@@ -99,7 +99,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   //  on gère les inputs utilisateurs et on passe a la game Room 
   const handleJoinRoom = () => {
 
-    const socket = new WebSocket('ws://localhost:4002');
+    const socket = new WebSocket('ws://51.21.180.103:4002');
     localStorage.setItem("room", roomCode);
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);

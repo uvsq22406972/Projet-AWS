@@ -5,7 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'http://51.21.180.103:4000';
 axios.defaults.withCredentials = true;
 
 // Fonction de validation du mot de passe
