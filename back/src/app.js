@@ -49,14 +49,22 @@ mongoose.connect(MONGO_URI, {
 // Middleware pour parser le JSON
 app.use(express.json());
 
+// Route de test pour vérifier que le serveur répond
+app.get("/", (req, res) => {
+  res.send("Le backend fonctionne !");
+});
+
+/*
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+*/
 
 // Gestion des sessions
+/*
 app.use(
   session({
     secret: SESSION_SECRET,
@@ -70,16 +78,32 @@ app.use(
     },
   })
 );
+*/
+app.use(
+  session({
+    secret: "projetAWS cool",
+    resave: true,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 10, // 10 minutes
+      secure: false,
+      httpOnly: true,
+    },
+  })
+);
 
 //Prolonge la session si l'utilisateur reste actif
+/*
 app.use((req, res, next) => {
   if (req.session) {
     req.session.touch(); 
   }
   next();
 });
+*/
 
 //Si l'utilisateur est inactif pendant 30 minutes, il est déconnecté
+/*
 app.use((req, res, next) => {
   const now = Date.now();
   if (req.session.lastActivity && now - req.session.lastActivity > SESSION_MAX_AGE) {
@@ -93,14 +117,10 @@ app.use((req, res, next) => {
     next();
   }
 });
+*/
 
 // Middleware de sécurité
 app.use(helmet());
-
-// Route de test pour vérifier que le serveur répond
-app.get("/", (req, res) => {
-  res.send("Le backend fonctionne !");
-});
 
 // Middleware pour servir le frontend
 app.use(express.static(path.join(__dirname, "../../front")));
@@ -108,8 +128,6 @@ app.use(express.static(path.join(__dirname, "../../front")));
 // Initialisation de l'API MongoDB
 const api = apiRouter(mongoose.connection);
 app.use("/api", api);
-
-
 
 // Vérification du reCAPTCHA v2
 app.post("/verify-recaptcha", async (req, res) => {
