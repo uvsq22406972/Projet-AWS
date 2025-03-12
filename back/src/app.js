@@ -84,7 +84,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 10, // 10 minutes
-      secure: false,
+      secure: true,
       httpOnly: true,
     },
   })
