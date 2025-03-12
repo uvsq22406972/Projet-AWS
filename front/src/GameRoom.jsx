@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from "react";
+import CustomSlider from './CustomSlider.jsx';
+import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
@@ -11,6 +13,10 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
     const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
+    const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
+    const [gameTime, setGameTime] = useState(10);
+    const [livesLostThreshold, setLivesLostThreshold] = useState(2);
+
     const ws = useRef(null);
     const [selectedAvatar, setSelectedAvatar] = useState(null)
 
@@ -71,9 +77,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             const message = JSON.parse(event.data);
             console.log('Message reçu:', message);
 
-            if (message.type === 'game_started') {
-                alert(`Le jeu a commencé dans la room ${message.room}`);
-            }
             if (message.type === 'generatedRoom') {
                 localStorage.setItem("room", message.room);
                 
@@ -223,7 +226,8 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         console.log("Le bouton Démarrer a été cliqué ");
         ws.current.send(JSON.stringify({ type: "start_game", room }));
         setGameStarted(true);
-        setCurrentPage('gamepage');  // <-- Affiche la page GamePage
+        // Passe livesToPlay comme prop en plus de changer de page
+        setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
     };
 
     // Fonction pour sélectionner un avatar
@@ -290,6 +294,46 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                     )}
                 </ul>
             </div>
+
+
+                    {/* Nb de vies */}
+                    <div style={{ margin: '20px 0' }}>
+                      <label htmlFor="livesSlider">
+                        Nombre de vies : <strong>{livesToPlay}</strong>
+                      </label>
+                      <CustomSliderWithTooltip
+                        value={livesToPlay}
+                        onChange={setLivesToPlay}
+                        min={1}
+                        max={5}
+                      />
+                    </div>
+
+                    {/* Choix du temps de jeu */}
+                    <div style={{ margin: '20px 0' }}>
+                        <label htmlFor="timeSlider">
+                          Temps de jeu : <strong>{gameTime} secondes</strong>
+                        </label>
+                        <CustomSliderWithTooltip
+                          value={gameTime}
+                          onChange={setGameTime}
+                          min={5}
+                          max={15}
+                        />
+                    </div>
+
+                    {/* Choix de changement de séquence */}
+                    <div style={{ margin: '20px 0' }}>
+                      <label htmlFor="changeSequenceSlider">
+                        Changer la séquence : <strong>{livesLostThreshold}</strong> vies perdues
+                      </label>
+                      <CustomSliderWithTooltip
+                        value={livesLostThreshold}
+                        onChange={setLivesLostThreshold}
+                        min={1}
+                        max={5}
+                      />
+                    </div>
 
             {/* Boutons */}
             <button className="custom-btn w-100 mb-3" onClick={startGame}>Démarrer le jeu</button>
