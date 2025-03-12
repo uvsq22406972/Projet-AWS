@@ -83,11 +83,13 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
               <label>Mot de passe</label>
             </div>
 
+            
             {/* Widget reCAPTCHA */}
-            <ReCAPTCHA
+            {/*<ReCAPTCHA
               sitekey="6LdtjdcqAAAAAJiQiqVsDxWDDVgDTH_hdzOgRzcP" // Remplace par ta clé
               onChange={handleRecaptchaChange}
             />
+            */}
 
             {/* Bouton de connexion */}
             <button type="submit" className="btn custom-btn w-100" onClick={handleLoginClick}>Se connecter</button>
