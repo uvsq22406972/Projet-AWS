@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+
 const express = require("express");
 const cors = require("cors");
 const apiRouter = require("./api.js");
@@ -11,65 +13,108 @@ const Rooms = require("./entities/rooms.js");
 const mongoose = require("mongoose");
 
 // Initialisation de la BDD -> MongoDB
+/*
 const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://naufalstrs14:1HGcla39nyRjd7DQ@projetaws.dyqsl.mongodb.net/?retryWrites=true&w=majority&appName=ProjetAWS";
-
+*/
 axios.defaults.baseURL = 'http://51.21.180.103:4000';
 axios.defaults.withCredentials = true;
 const app = express();
 const port = 4001; // Port Express
 const wsPort = 4002; // Port WebSocket
 
+//Chargement des variables de .env
+require("dotenv").config();
+const MONGO_URI = process.env.MONGO_URI;
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(64).toString("hex");
+const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE ? parseInt(process.env.SESSION_MAX_AGE) : 1000 * 60 * 30;
+
 const allowedOrigins = [
   "http://localhost:3000", // Dev local
-  "https://votre-app.amplifyapp.com" // URL du frontend Amplify
+  "https://votre-app.amplifyapp.com", // URL du frontend Amplify
+  "http://51.21.180.103:4000"  // Backend EC2
 ];
+
+if (!MONGO_URI) {
+  console.error("ERREUR: MONGO_URI n'est pas défini dans .env !");
+  process.exit(1); // Arrête le serveur
+}
 
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log("🟢 Connexion à MongoDB réussie !"))
-.catch(err => console.error("🔴 Erreur MongoDB:", err));
+.then(() => console.log("Connexion à MongoDB réussie !"))
+.catch(err => console.error("Erreur MongoDB:", err));
 
 // Middleware pour parser le JSON
 app.use(express.json());
 
 app.use(cors({
   origin: allowedOrigins,
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Gestion des sessions
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false, //On sauvegarde pas si la session change pas
+    saveUninitialized: false, //Eviter la creation des sessions vides
+    cookie: {
+      secure: process.env.NODE_ENV === "production", //HTTPS
+      maxAge: SESSION_MAX_AGE,
+      httpOnly: true,
+      sameSite: "lax"
+    },
+  })
+);
+
+//Prolonge la session si l'utilisateur reste actif
+app.use((req, res, next) => {
+  if (req.session) {
+    req.session.touch(); 
+  }
+  next();
+});
+
+//Si l'utilisateur est inactif pendant 30 minutes, il est déconnecté
+app.use((req, res, next) => {
+  const now = Date.now();
+  if (req.session.lastActivity && now - req.session.lastActivity > SESSION_MAX_AGE) {
+    req.session.destroy((err) => {
+      if (err) console.error("Erreur lors de la destruction de session:", err);
+      res.clearCookie("connect.sid"); //Supprime le cookie de session pour forcer la déconnexion
+      return res.status(401).json({ message: "Session expirée, veuillez vous reconnecter." });
+    });
+  } else {
+    req.session.lastActivity = now; // Mise à jour de l'activité
+    next();
+  }
+});
+
+// Middleware de sécurité
+app.use(helmet());
+
+//Garantir la suppression du cookie
+res.clearCookie("connect.sid", { path: '/' });
 
 // Route de test pour vérifier que le serveur répond
 app.get("/", (req, res) => {
   res.send("Le backend fonctionne !");
 });
 
-// Gestion des sessions
-app.use(
-  session({
-    secret: "projetAWS cool",
-    resave: true,
-    saveUninitialized: false,
-    cookie: {
-      maxAge: 1000 * 60 * 10, // 10 minutes
-      secure: false,
-      httpOnly: true,
-    },
-  })
-);
-
-// Middleware de sécurité
-app.use(helmet());
-
 // Middleware pour servir le frontend
-app.use(express.static(path.join(__dirname, "../../frontend")));
+app.use(express.static(path.join(__dirname, "../../front")));
 
 // Initialisation de l'API MongoDB
-const api = apiRouter(client);
+const api = apiRouter(mongoose.connection);
 app.use("/api", api);
+
+
 
 // Vérification du reCAPTCHA v2
 app.post("/verify-recaptcha", async (req, res) => {
@@ -96,8 +141,7 @@ app.post("/verify-recaptcha", async (req, res) => {
 });
 app.get("/verify-word", async (req, res) => {
   try {
-      await client.connect();
-      const db = client.db("dictionnaire");
+      //const db = client.db("dictionnaire");
       const collection = db.collection("mots");
       
       const { word } = req.query;
@@ -138,8 +182,7 @@ app.post("/form-submit", (req, res) => {
 /* ************* Endpoint pour générer une séquence ************* */
 app.get("/random-sequence", async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db("dictionnaire");
+    //const db = client.db("dictionnaire");
     const collection = db.collection("mots");
 
     // Sélectionner un mot aléatoire
@@ -164,8 +207,7 @@ app.get("/random-sequence", async (req, res) => {
 const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
-  await client.connect();
-  const db = client.db("DB");
+  //const db = client.db("DB");
   const collection = db.collection("Rooms");
   ws.on("message",async (message) => {
     const data = JSON.parse(message);
