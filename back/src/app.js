@@ -372,9 +372,10 @@ wss.on("connection", async (ws) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Serveur Express démarré sur http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Serveur Express démarré sur http://0.0.0.0:${port}`);
 });
+
 
 console.log(`Serveur WebSocket à l'écoute sur le port ${wsPort}`);
 
