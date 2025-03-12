@@ -21,7 +21,7 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
 
   // Connecter au WebSocket backend
   useEffect(() => {
-    const ws = new WebSocket("ws://51.21.180.103:4002");
+    const ws = new WebSocket("ws://bombpartyy.duckdns.org:4002");
     setSocket(ws);
     
     ws.onopen = () => {
@@ -94,7 +94,7 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
   // Fonction pour récupérer une séquence depuis l'API
   const generateSequence = async () => {
     try {
-      const response = await fetch("http://localhost:4001/random-sequence");
+      const response = await fetch("https://bombpartyy.duckdns.org/random-sequence");
       const data = await response.json();
       setSequence(data.sequence);
     } catch (error) {
@@ -138,7 +138,7 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
     if (gameOver) return; // Empêcher d'envoyer une réponse si la partie est déjà finie
   
     try {
-      const response = await fetch(`http://localhost:4001/verify-word?word=${inputValue}`);
+      const response = await fetch(`https://bombpartyy.duckdns.org/verify-word?word=${inputValue}`);
       const data = await response.json();
   
       let newLives = lives;

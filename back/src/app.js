@@ -39,7 +39,7 @@ if (!MONGO_URI) {
   process.exit(1); // Arrête le serveur
 }
 
-mongoose.connect(MONGO_URI, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
@@ -154,7 +154,7 @@ app.post("/verify-recaptcha", async (req, res) => {
 app.get("/verify-word", async (req, res) => {
   try {
       //const db = client.db("dictionnaire");
-      const db = client.db("ProjetAWS");
+      const db = mongoose.connection.db;
       const collection = db.collection("mots");
       
       const { word } = req.query;
@@ -167,8 +167,6 @@ app.get("/verify-word", async (req, res) => {
   } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Erreur serveur" });
-  } finally {
-      await client.close();
   }
 });
 
@@ -196,7 +194,7 @@ app.post("/form-submit", (req, res) => {
 app.get("/random-sequence", async (req, res) => {
   try {
     //const db = client.db("dictionnaire");
-    const db = client.db("ProjetAWS");
+    const db = mongoose.connection.db;
     const collection = db.collection("mots");
 
     // Sélectionner un mot aléatoire
@@ -222,7 +220,7 @@ const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
   //const db = client.db("DB");
-  const db = client.db("ProjetAWS");
+  const db = mongoose.connection.db;
   const collection = db.collection("Rooms");
   ws.on("message",async (message) => {
     const data = JSON.parse(message);
