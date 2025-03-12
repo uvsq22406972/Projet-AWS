@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://51.21.180.103:4000';
+axios.defaults.baseURL = 'http://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 //Page qui permet d'être sur la page principale
@@ -28,7 +28,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const handleLogoutClick = async () => {
     try {
       //Envoie une requête à l'API pour détruire la session (le cookie)
-      await axios.post('http://51.21.180.103:4000/api/logout');
+      await axios.post('http://bombpartyy.duckdns.org/api/logout');
       
       //Met à jour l'état pour indiquer que l'utilisateur est déconnecté
       setIsConnected(false);
