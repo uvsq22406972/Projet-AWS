@@ -8,7 +8,7 @@ class Users {
   // Crée un compte utilisateur
   async creerCompte(username, email, mdp1, mdp2) {
     try {
-      const col1 = this.db.collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.db.collection("Compte"); //Accès au collection Compte
       await col1.insertOne({
          username: username,
          _id: email,
@@ -23,7 +23,7 @@ class Users {
   // Vérifie si un email existe déjà dans la bdd
   async exist(email) {
     try {
-      const col1 = this.db.collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.db.collection("Compte"); //Accès au collection Compte
       const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
       const res = await col1.findOne(query); //True si email existe, faux sinon
 
@@ -41,7 +41,7 @@ class Users {
   // Vérifie si le mot de passe correspond au mot de passe stocké en bdd
   async checkPassword(login, password) {
     try {
-      const col1 = this.db.collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.db.collection("Compte"); //Accès au collection Compte
       const user = await col1.findOne({ _id: { $eq: login } }); //True si email existe, faux sinon
       // Sécurité contre les injections NoSql en empêchant l'injection de certains opérateurs NoSqL
       
@@ -66,7 +66,7 @@ class Users {
   // Récupère un utilisateur via son pseudo (username)
   async getUser(pseudo) {
     try {
-      const col1 = this.db.collection("Compte");
+      const col1 = this.db.db.collection("Compte");
       const user = await col1.findOne({ username: pseudo });
       return user;
     } catch (err) {
@@ -77,7 +77,7 @@ class Users {
   // Récupère tous les utilisateurs
   async getAllUsers() {
     try {
-      const col1 = this.db.collection("Compte");
+      const col1 = this.db.db.collection("Compte");
       const account = await col1.find({}).toArray();
       return account;
     } catch (err) {
@@ -88,7 +88,7 @@ class Users {
   // Met à jour le mot de passe d'un utilisateur dans la bdd
   async updatePassword(email, newPassword) {
     try {
-      const col1 = this.db.collection("Compte");
+      const col1 = this.db.db.collection("Compte");
       const result = await col1.updateOne(
         { _id: email },
         { $set: { password: newPassword } }
@@ -105,7 +105,7 @@ class Users {
 
   async supprimerCompte(email, password) {
     try {
-      const col1 = this.db.collection("Compte");
+      const col1 = this.db.db.collection("Compte");
 
       // Vérifie si l'utilisateur existe
       const user = await col1.findOne({ _id: { $eq: email } });
