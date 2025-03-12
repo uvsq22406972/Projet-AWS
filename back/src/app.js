@@ -97,9 +97,6 @@ app.use((req, res, next) => {
 // Middleware de sécurité
 app.use(helmet());
 
-//Garantir la suppression du cookie
-res.clearCookie("connect.sid", { path: '/' });
-
 // Route de test pour vérifier que le serveur répond
 app.get("/", (req, res) => {
   res.send("Le backend fonctionne !");
