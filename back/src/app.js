@@ -85,7 +85,7 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 10, // 10 minutes
       sameSite: "none",
-      secure: false,
+      secure: true,
       httpOnly: true,
     },
   })
