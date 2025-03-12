@@ -7,7 +7,7 @@ class Rooms {
    // Crée un compte utilisateur
    async createRoom(roomName, user) {
     try {
-      const col1 = this.db.db.collection("Rooms"); //Accès au collection Compte
+      const col1 = this.db.useDb("ProjetAWS").collection("Rooms"); //Accès au collection Compte
       await col1.insertOne({
          id : roomName,
          users : [user]
@@ -20,7 +20,7 @@ class Rooms {
 
   async deleteRoom(roomName) {
     try {
-      const col1 = this.db.db.collection("Rooms");
+      const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
 
       // Vérifie si lla room existe
       const room = await col1.findOne({ id: roomName });
@@ -47,7 +47,7 @@ class Rooms {
   // Récupère la room d'un utilisateur
   async getRoomName(userId) {
     try {
-      const col1 = this.db.db.collection("Rooms");
+      const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
   
       // Chercher une room où l'userId est présent dans le tableau "users"
       const room = await col1.findOne({ users: userId });
@@ -62,7 +62,7 @@ class Rooms {
   
   async getUsersInRoom(roomname) {
     try {
-      const col1 = this.db.db.collection("Rooms");
+      const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
       const room = await col1.findOne({id:roomname});   
       console.log(room);
       if(room == null) {
@@ -76,7 +76,7 @@ class Rooms {
   }
 
   async addUserToRoom(roomName, user) {
-    const col1 = this.db.db.collection("Rooms");
+    const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
     await col1.updateOne(
       { id: roomName }, // Filtre : Trouver la room par son id
       { $addToSet: { users: user } } // Ajout du user dans le tableau
@@ -85,7 +85,7 @@ class Rooms {
   }
 
   async removeUserFromRoom(roomName, user) {
-    const col1 = this.db.db.collection("Rooms");
+    const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
     await col1.updateOne(
       { id: roomName }, // Filtre : Trouver la room par son id
       { $pull: { users: user } } // Supprime uniquement ce user du tableau
