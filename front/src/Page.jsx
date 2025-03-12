@@ -10,7 +10,7 @@ import GamePage from './GamePage.jsx';
 import axios from 'axios';
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://51.21.180.103:4000';
+axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
 
 //Gestion des pages affichés
@@ -24,7 +24,7 @@ function Page() {
   async function checkSession() {
     try {
       //Récupérer le userid dans la session
-      const response = await axios.get('http://51.21.180.103:4000/api/session');
+      const response = await axios.get('http://localhost:4000/api/session');
       let userid = response.data.userid;
 
       if(userid){

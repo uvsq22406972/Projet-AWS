@@ -14,7 +14,7 @@ const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
 
-axios.defaults.baseURL = 'http://51.21.180.103:4000';
+axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
 const app = express();
 const port = 4001; // Port Express
@@ -22,7 +22,6 @@ const wsPort = 4002; // Port WebSocket
 
 const allowedOrigins = [
   "http://localhost:3000", // Dev local
-  "https://votre-app.amplifyapp.com" // URL du frontend Amplify
 ];
 
 // Middleware pour parser le JSON

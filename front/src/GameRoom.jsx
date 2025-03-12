@@ -18,7 +18,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const ws = useRef(null);
     // Vérifier si une session est déjà ouverte
     useEffect(() => {
-        ws.current = new WebSocket("ws://51.21.180.103:4002");
+        ws.current = new WebSocket("ws://localhost:4002");
         async function checkSession() {
             try {
                 const response = await axios.get('/api/session');
@@ -66,7 +66,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             // Auto-reconnexion après 3 secondes
             setTimeout(() => {
                 console.log("🔄 Tentative de reconnexion...");
-                ws.current = new WebSocket("ws://51.21.180.103:4001");
+                ws.current = new WebSocket("ws://localhost:4001");
             }, 3000);
         };
 

@@ -21,7 +21,7 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
 
   // Connecter au WebSocket backend
   useEffect(() => {
-    const ws = new WebSocket("ws://51.21.180.103:4002");
+    const ws = new WebSocket("ws://localhost:4002");
     setSocket(ws);
     
     ws.onopen = () => {
