@@ -30,7 +30,7 @@ const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE ? parseInt(process.env.SESSI
 
 const allowedOrigins = [
   "http://localhost:3000", // Dev local
-  "https://votre-app.amplifyapp.com", // URL du frontend Amplify
+  "https://naufal-11mars.dqpjmme35ppsz.amplifyapp.com", //URL Amplify
   "http://51.21.180.103:4000"  // Backend EC2
 ];
 
