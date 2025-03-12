@@ -8,8 +8,7 @@ class Users {
   // Crée un compte utilisateur
   async creerCompte(username, email, mdp1, mdp2) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.collection("Compte"); //Accès au collection Compte
       await col1.insertOne({
          username: username,
          _id: email,
@@ -18,16 +17,13 @@ class Users {
     } catch (e) {
       console.error("Erreur lors de la création du compte :", e);
       throw e;  // Retourne l'erreur pour la traiter dans le composant React
-    } finally {
-      await this.db.close();
     }
   }
 
   // Vérifie si un email existe déjà dans la bdd
   async exist(email) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.collection("Compte"); //Accès au collection Compte
       const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
       const res = await col1.findOne(query); //True si email existe, faux sinon
 
@@ -39,16 +35,13 @@ class Users {
     } catch (e) {
       console.error("Erreur lors de la vérification de l'existence de l'email :", e);
       return false;
-    } finally {
-      await this.db.close();
     }
   }
 
   // Vérifie si le mot de passe correspond au mot de passe stocké en bdd
   async checkPassword(login, password) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.collection("Compte"); //Accès au collection Compte
       const user = await col1.findOne({ _id: { $eq: login } }); //True si email existe, faux sinon
       // Sécurité contre les injections NoSql en empêchant l'injection de certains opérateurs NoSqL
       
@@ -67,30 +60,24 @@ class Users {
     } catch (error) {
       console.error("Erreur lors de la récupération du mot de passe :", error);
       throw error;
-    } finally {
-      await this.db.close();
     }
   }
 
   // Récupère un utilisateur via son pseudo (username)
   async getUser(pseudo) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.collection("Compte");
       const user = await col1.findOne({ username: pseudo });
       return user;
     } catch (err) {
       throw err;
-    } finally {
-      await this.db.close();
     }
   }
 
   // Récupère tous les utilisateurs
   async getAllUsers() {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.collection("Compte");
       const account = await col1.find({}).toArray();
       return account;
     } catch (err) {
@@ -101,8 +88,7 @@ class Users {
   // Met à jour le mot de passe d'un utilisateur dans la bdd
   async updatePassword(email, newPassword) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.collection("Compte");
       const result = await col1.updateOne(
         { _id: email },
         { $set: { password: newPassword } }
@@ -114,15 +100,12 @@ class Users {
     } catch (error) {
       console.error("Erreur lors de la mise à jour du mot de passe :", error);
       throw error;
-    } finally {
-      await this.db.close();
     }
   }
 
   async supprimerCompte(email, password) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.collection("Compte");
 
       // Vérifie si l'utilisateur existe
       const user = await col1.findOne({ _id: { $eq: email } });
@@ -150,8 +133,6 @@ class Users {
     } catch (error) {
       console.error("Erreur lors de la suppression du compte :", error);
       throw error;
-    } finally {
-      await this.db.close();
     }
   }
 }

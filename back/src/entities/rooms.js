@@ -7,8 +7,7 @@ class Rooms {
    // Crée un compte utilisateur
    async createRoom(roomName, user) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Rooms"); //Accès au collection Compte
+      const col1 = this.db.collection("Rooms"); //Accès au collection Compte
       await col1.insertOne({
          id : roomName,
          users : [user]
@@ -16,15 +15,12 @@ class Rooms {
     } catch (e) {
       console.error("Erreur lors de la création du compte :", e);
       throw e;  // Retourne l'erreur pour la traiter dans le composant React
-    } finally {
-      await this.db.close();
     }
   }
 
   async deleteRoom(roomName) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Rooms");
+      const col1 = this.db.collection("Rooms");
 
       // Vérifie si lla room existe
       const room = await col1.findOne({ id: roomName });
@@ -45,16 +41,13 @@ class Rooms {
     } catch (error) {
       console.error("Erreur lors de la suppression du compte :", error);
       throw error;
-    } finally {
-      await this.db.close();
     }
   }
 
   // Récupère la room d'un utilisateur
   async getRoomName(userId) {
     try {
-      await this.db.connect(); 
-      const col1 = this.db.db("DB").collection("Rooms");
+      const col1 = this.db.collection("Rooms");
   
       // Chercher une room où l'userId est présent dans le tableau "users"
       const room = await col1.findOne({ users: userId });
@@ -69,8 +62,7 @@ class Rooms {
   
   async getUsersInRoom(roomname) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Rooms");
+      const col1 = this.db.collection("Rooms");
       const room = await col1.findOne({id:roomname});   
       console.log(room);
       if(room == null) {
@@ -84,8 +76,7 @@ class Rooms {
   }
 
   async addUserToRoom(roomName, user) {
-    await this.db.connect();
-    const col1 = this.db.db("DB").collection("Rooms");
+    const col1 = this.db.collection("Rooms");
     await col1.updateOne(
       { id: roomName }, // Filtre : Trouver la room par son id
       { $addToSet: { users: user } } // Ajout du user dans le tableau
@@ -94,8 +85,7 @@ class Rooms {
   }
 
   async removeUserFromRoom(roomName, user) {
-    await this.db.connect();
-    const col1 = this.db.db("DB").collection("Rooms");
+    const col1 = this.db.collection("Rooms");
     await col1.updateOne(
       { id: roomName }, // Filtre : Trouver la room par son id
       { $pull: { users: user } } // Supprime uniquement ce user du tableau
