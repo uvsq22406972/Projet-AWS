@@ -10,7 +10,7 @@ import GamePage from './GamePage.jsx';
 import axios from 'axios';
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://bombpartyy.duckdns.org';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 //Gestion des pages affichés
@@ -24,7 +24,7 @@ function Page() {
   async function checkSession() {
     try {
       //Récupérer le userid dans la session
-      const response = await axios.get('http://bombpartyy.duckdns.org/api/session');
+      const response = await axios.get('https://bombpartyy.duckdns.org/api/session');
       let userid = response.data.userid;
 
       if(userid){

@@ -7,7 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Connexion avec le back
-axios.defaults.baseURL = 'http://bombpartyy.duckdns.org';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 // Page qui permet de se connecter à un compte existant

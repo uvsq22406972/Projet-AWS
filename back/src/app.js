@@ -16,7 +16,7 @@ const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
 */
-axios.defaults.baseURL = 'http://bombpartyy.duckdns.org';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 const app = express();
 const port = 4001; // Port Express
@@ -31,7 +31,7 @@ const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE ? parseInt(process.env.SESSI
 const allowedOrigins = [
   "http://localhost:3000", // Dev local
   "https://naufal-11mars.dqpjmme35ppsz.amplifyapp.com", //URL Amplify
-  "http://bombpartyy.duckdns.org"  // Backend EC2
+  "https://bombpartyy.duckdns.org"  // Backend EC2
 ];
 
 if (!MONGO_URI) {
