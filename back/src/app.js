@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-
 const express = require("express");
 const cors = require("cors");
 const apiRouter = require("./api.js");
