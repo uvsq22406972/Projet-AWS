@@ -19,7 +19,7 @@ const client = new MongoClient(uri);
 axios.defaults.baseURL = 'http://51.21.180.103:4000';
 axios.defaults.withCredentials = true;
 const app = express();
-const port = 4000; // Port Express
+const port = 4001; // Port Express
 const wsPort = 4002; // Port WebSocket
 
 //Chargement des variables de .env
