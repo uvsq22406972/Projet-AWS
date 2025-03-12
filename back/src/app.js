@@ -63,10 +63,10 @@ app.use(
     resave: false, //On sauvegarde pas si la session change pas
     saveUninitialized: false, //Eviter la creation des sessions vides
     cookie: {
-      secure: process.env.NODE_ENV === "production", //HTTPS
-      maxAge: SESSION_MAX_AGE,
+      secure: false,
+      sameSite: "none",
       httpOnly: true,
-      sameSite: "lax"
+      maxAge: SESSION_MAX_AGE
     },
   })
 );
