@@ -8,11 +8,13 @@ const helmet = require("helmet");
 const crypto = require("crypto");
 const WebSocket = require("ws");
 const Rooms = require("./entities/rooms.js");
+const mongoose = require("mongoose");
 
 // Initialisation de la BDD -> MongoDB
 const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://naufalstrs14:1HGcla39nyRjd7DQ@projetaws.dyqsl.mongodb.net/?retryWrites=true&w=majority&appName=ProjetAWS";
 
 axios.defaults.baseURL = 'http://51.21.180.103:4000';
 axios.defaults.withCredentials = true;
@@ -24,6 +26,13 @@ const allowedOrigins = [
   "http://localhost:3000", // Dev local
   "https://votre-app.amplifyapp.com" // URL du frontend Amplify
 ];
+
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("🟢 Connexion à MongoDB réussie !"))
+.catch(err => console.error("🔴 Erreur MongoDB:", err));
 
 // Middleware pour parser le JSON
 app.use(express.json());
