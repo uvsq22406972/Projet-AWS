@@ -21,7 +21,7 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
 
   // Connecter au WebSocket backend
   useEffect(() => {
-    const ws = new WebSocket("ws://bombpartyy.duckdns.org:4002");
+    const ws = new WebSocket("wss://bombpartyy.duckdns.org:4002");
     setSocket(ws);
     
     ws.onopen = () => {

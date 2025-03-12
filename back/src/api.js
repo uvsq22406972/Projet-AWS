@@ -37,7 +37,7 @@ function init(db){
     const email = req.body.email;
     const mdp1 = req.body.mdp1;
     const mdp2 = req.body.mdp2;
-    const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
+    const exist = await users.exist(email); //True si email existe, false sinon
     
    
     
