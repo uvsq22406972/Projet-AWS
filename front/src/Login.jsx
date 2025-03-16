@@ -38,6 +38,7 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
   // Action lorsqu'on clique sur "Se connecter"
   const handleLoginClick = async (e) => {
     e.preventDefault(); // Empêcher le rafraîchissement de la page
+    console.log("Login click");
 
     if (!recaptchaValue) {
       toast.error("Veuillez valider le reCAPTCHA !");
