@@ -54,6 +54,8 @@ app.get("/", (req, res) => {
   res.send("Le backend fonctionne !");
 });
 
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
