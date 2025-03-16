@@ -174,6 +174,8 @@ router.get('/getRoomFromUsers', async (req, res) => {
 
   // Création d'une session
   router.post('/users', async (req, res) => {
+    console.log("-----> in POST /users route");
+    console.log("req.secure =", req.secure);
     const login = req.body.email;
     const password = req.body.mdp;
 
@@ -189,16 +191,20 @@ router.get('/getRoomFromUsers', async (req, res) => {
     
 
     if (await users.checkPassword(login, password)) {
+      console.log("Login/password OK, regenerating session...");
       req.session.regenerate(function (err) {
         if (err) {
+          console.log("Erreur regenerate:", err);
           res.send({ status: 500, message: "Erreur interne" });
         } else {
           req.session.userid = login;
+          console.log("Session ID =", req.sessionID);
           res.send({ status: 200, message: "Login et mot de passe accepté" });
         }
       });
       return;
     } else {
+      console.log("Bad credentials, destroying session...");
       req.session.destroy((err) => {});
       res.send({ status: 401, message: "login et/ou le mot de passe invalide(s)" });
       return;
