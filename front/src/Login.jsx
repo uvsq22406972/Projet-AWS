@@ -45,6 +45,8 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
       return;
     }
 
+    console.log("recaptchaValue =", recaptchaValue);
+
     try {
       const response = await axios.post(`/api/users`, {
         email,
