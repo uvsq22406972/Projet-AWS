@@ -27,7 +27,6 @@ require("dotenv").config();
 const MONGO_URI = process.env.MONGO_URI;
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(64).toString("hex");
 const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE ? parseInt(process.env.SESSION_MAX_AGE) : 1000 * 60 * 30;
-
 const allowedOrigins = [
   "http://localhost:3000", // Dev local
   "https://naufal-11mars.dqpjmme35ppsz.amplifyapp.com", //URL Amplify
@@ -46,14 +45,6 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log("Connexion à MongoDB réussie !"))
 .catch(err => console.error("Erreur MongoDB:", err));
 
-// Middleware pour parser le JSON
-app.use(express.json());
-
-// Route de test pour vérifier que le serveur répond
-app.get("/", (req, res) => {
-  res.send("Le backend fonctionne !");
-});
-
 app.set('trust proxy', 1);
 
 app.use(cors({
@@ -62,6 +53,9 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Middleware pour parser le JSON
+app.use(express.json());
 
 // Gestion des sessions
 /*
@@ -122,6 +116,11 @@ app.use((req, res, next) => {
 
 // Middleware de sécurité
 app.use(helmet());
+
+// Route de test pour vérifier que le serveur répond
+app.get("/", (req, res) => {
+  res.send("Le backend fonctionne !");
+});
 
 // Middleware pour servir le frontend
 app.use(express.static(path.join(__dirname, "../../front")));
