@@ -99,7 +99,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   //  on gère les inputs utilisateurs et on passe a la game Room 
   const handleJoinRoom = () => {
 
-    const socket = new WebSocket('ws://51.21.180.103:4002');
+    const socket = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
     localStorage.setItem("room", roomCode);
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
