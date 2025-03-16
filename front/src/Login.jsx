@@ -40,11 +40,12 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
     e.preventDefault(); // Empêcher le rafraîchissement de la page
     console.log("Login click");
 
-    
+    /*
     if (!recaptchaValue) {
       toast.error("Veuillez valider le reCAPTCHA !");
       return;
     }
+      */
 
     console.log("recaptchaValue =", recaptchaValue);
 
