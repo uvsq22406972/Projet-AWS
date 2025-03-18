@@ -36,7 +36,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
         ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
 
-        ws.onopen = () => {
+        ws.current.onopen = () => {
             console.log("WebSocket connecté !");
             setIsWebSocketOpen(true);
             if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -55,7 +55,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         console.log("code de room ; ",room);
         
         // Gérer les messages du serveur WebSocket
-        ws.onmessage = (event) => {
+        ws.current.onmessage = (event) => {
             const message = JSON.parse(event.data);
             console.log('Message reçu:', message);
 
@@ -72,7 +72,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             else if (message.type === "error"){console.log("oula");}
         };
 
-        ws.onclose = (e) => {
+        ws.current.onclose = (e) => {
             console.warn("⚠️ WS fermé :", e.code, e.reason);
             setIsWebSocketOpen(false);
       
