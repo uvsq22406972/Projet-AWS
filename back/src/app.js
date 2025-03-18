@@ -232,12 +232,12 @@ wss.on("connection", async (ws) => {
       console.log("Room générée:", generatedRoomName);
 
       try{
-        const reponse = axios.put(`api/rooms`,{
+        const reponse = await axios.put(`api/rooms`,{
           id : generatedRoomName,
           user : data.user
         });
         //retour utilisateur
-        if(resp.status === 200) {
+        if(reponse.status === 200) {
           ws.send(
             JSON.stringify({
               type:'generatedRoom',
