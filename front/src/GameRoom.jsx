@@ -36,24 +36,26 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
         ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
 
-        ws.current.onopen = () => {
+        ws.onopen = () => {
             console.log("WebSocket connecté !");
             setIsWebSocketOpen(true);
-
-            console.log("storedRoom avant condition =", storedRoom);
-            if (!storedRoom || storedRoom === "null") {
-                console.log("storedRoom apres condition=", storedRoom);
-                // Si c'est null ou "null" => on crée
-                createRoom();
+            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                if (!storedRoom) {
+                   createRoom();  
+                }
+                else {
+                    joinRoom();
+                }
             } else {
-                // Sinon on rejoint
-                joinRoom();
+                console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
+                setTimeout(createRoom, 500); // Réessaye après 500ms
             }
         };
+        checkSession();
         console.log("code de room ; ",room);
         
         // Gérer les messages du serveur WebSocket
-        ws.current.onmessage = (event) => {
+        ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
             console.log('Message reçu:', message);
 
@@ -70,15 +72,15 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             else if (message.type === "error"){console.log("oula");}
         };
 
-        ws.current.onclose = (e) => {
+        ws.onclose = (e) => {
             console.warn("⚠️ WS fermé :", e.code, e.reason);
             setIsWebSocketOpen(false);
       
             // Reconnexion auto après 3s
-            //reconnectTimer.current = setTimeout(() => {
-            //  console.log("🔄 Tentative de reconnexion...");
-            //  connectWS();
-            //}, 3000);
+            reconnectTimer.current = setTimeout(() => {
+              console.log("🔄 Tentative de reconnexion...");
+              connectWS();
+            }, 3000);
         };
     };
 
@@ -99,17 +101,21 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     // Créer une room
     const createRoom = () => {
-        console.log("===> createRoom called with user:", userid);
         if (!isWebSocketOpen) {
+            console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
             return;
         }
-
-        const message = {
-            type: "create_room",
-            user: userid,
-        };
-        console.log("Sending create_room message:", message);
-        ws.current.send(JSON.stringify(message));
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+    
+            const message = {
+                type: "create_room",
+                user: userid,
+            };
+            ws.current.send(JSON.stringify(message));
+        } else {
+            console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
+            setTimeout(createRoom, 500); // Réessaye après 500ms
+        }
     };
 
 
@@ -140,16 +146,23 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
             return;
         }
-        console.log("Ajout du joueur:", userid);
-        const message = {
-            type: "join_room",
-            room: storedRoom,
-            user: userid,
-        };
-        ws.current.send(JSON.stringify(message));
-        setTimeout(() => {
-            fetchUsersInRoom();
-        }, 200);
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+            console.log("Ajout du joueur:", userid);
+
+            const message = {
+                type: "join_room",
+                room: storedRoom,
+                user: userid,
+            };
+            ws.current.send(JSON.stringify(message));
+
+            setTimeout(() => {
+                fetchUsersInRoom();
+            }, 200);
+        } else {
+            console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
+            setTimeout(joinRoom, 500); // Réessaye après 500ms
+        }
     };
 
     // Récupérer les utilisateurs dans la room
