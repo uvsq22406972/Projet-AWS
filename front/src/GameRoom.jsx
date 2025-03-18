@@ -39,19 +39,12 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         ws.current.onopen = () => {
             console.log("WebSocket connecté !");
             setIsWebSocketOpen(true);
-            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                if (!storedRoom) {
-                   createRoom();  
-                }
-                else {
-                    joinRoom();
-                }
+            if (!storedRoom) {
+                createRoom();  
             } else {
-                console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
-                setTimeout(createRoom, 500); // Réessaye après 500ms
+                joinRoom();
             }
         };
-        checkSession();
         console.log("code de room ; ",room);
         
         // Gérer les messages du serveur WebSocket
@@ -77,10 +70,10 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             setIsWebSocketOpen(false);
       
             // Reconnexion auto après 3s
-            reconnectTimer.current = setTimeout(() => {
-              console.log("🔄 Tentative de reconnexion...");
-              connectWS();
-            }, 3000);
+            //reconnectTimer.current = setTimeout(() => {
+            //  console.log("🔄 Tentative de reconnexion...");
+            //  connectWS();
+            //}, 3000);
         };
     };
 
@@ -102,20 +95,13 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     // Créer une room
     const createRoom = () => {
         if (!isWebSocketOpen) {
-            console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
             return;
         }
-        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-    
-            const message = {
-                type: "create_room",
-                user: userid,
-            };
-            ws.current.send(JSON.stringify(message));
-        } else {
-            console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
-            setTimeout(createRoom, 500); // Réessaye après 500ms
-        }
+        const message = {
+            type: "create_room",
+            user: userid,
+        };
+        ws.current.send(JSON.stringify(message));
     };
 
 
@@ -146,23 +132,16 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
             return;
         }
-        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            console.log("Ajout du joueur:", userid);
-
-            const message = {
-                type: "join_room",
-                room: storedRoom,
-                user: userid,
-            };
-            ws.current.send(JSON.stringify(message));
-
-            setTimeout(() => {
-                fetchUsersInRoom();
-            }, 200);
-        } else {
-            console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
-            setTimeout(joinRoom, 500); // Réessaye après 500ms
-        }
+        console.log("Ajout du joueur:", userid);
+        const message = {
+            type: "join_room",
+            room: storedRoom,
+            user: userid,
+        };
+        ws.current.send(JSON.stringify(message));
+        setTimeout(() => {
+            fetchUsersInRoom();
+        }, 200);
     };
 
     // Récupérer les utilisateurs dans la room
