@@ -102,6 +102,19 @@ function init(db){
     await rooms.deleteRoom(room);
   });
 
+  //Permet de vérifier si un room existe ou pas
+  router.get('/roomExists', async (req, res) => {
+    const roomName = req.query.room;
+    // check en BDD si la room existe
+    const found = await collectionRooms.findOne({ id: roomName });
+    if (found) {
+      res.json({ ok: true });
+    } else {
+      res.json({ ok: false });
+    }
+  });
+  
+
 //Permet la suppression d'un room
 router.post('/addUserToRoom', async (req, res) => {
   // Initialisation des variables récupérées du front

@@ -10,7 +10,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [gameStarted, setGameStarted] = useState(false);
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
-    const [isWsConnected, setIsWsConnected] = useState(false);
     const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
     const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
     const [gameTime, setGameTime] = useState(10);
@@ -37,7 +36,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
         ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
 
-        ws.onopen = () => {
+        ws.current.onopen = () => {
             console.log("WebSocket connecté !");
             setIsWebSocketOpen(true);
             if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -56,7 +55,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         console.log("code de room ; ",room);
         
         // Gérer les messages du serveur WebSocket
-        ws.onmessage = (event) => {
+        ws.current.onmessage = (event) => {
             const message = JSON.parse(event.data);
             console.log('Message reçu:', message);
 
@@ -73,9 +72,9 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             else if (message.type === "error"){console.log("oula");}
         };
 
-        ws.onclose = (e) => {
+        ws.current.onclose = (e) => {
             console.warn("⚠️ WS fermé :", e.code, e.reason);
-            setIsWsConnected(false);
+            setIsWebSocketOpen(false);
       
             // Reconnexion auto après 3s
             reconnectTimer.current = setTimeout(() => {
@@ -223,13 +222,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     return (
         <div>
-        {/* Savoir si la session est OK */}
-        {!isUserReady && <p>Chargement de la session…</p>}
-        {isUserReady && <p>Session OK pour l'utilisateur : {userid}</p>}
-        
-        {/* Savoir si le WebSocket est connecté */}
-        {!isWsConnected && <p>En attente de connexion WebSocket…</p>}
-        {isWsConnected && <p>WebSocket connecté !</p>}
         <div className="d-flex justify-content-center align-items-center vh-100">
             <div className="container d-flex justify-content-center align-items-center">
                 <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)" }}>
@@ -294,7 +286,13 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                         max={5}
                       />
                     </div>
-
+                    {/* Savoir si la session est OK */}
+                    {!isUserReady && <p>Chargement de la session…</p>}
+                    {isUserReady && <p>Session OK pour l'utilisateur : {userid}</p>}
+                                
+                    {/* Savoir si le WebSocket est connecté */}
+                    {!isWsConnected && <p>En attente de connexion WebSocket…</p>}
+                    {isWsConnected && <p>WebSocket connecté !</p>}
                     {/* Bouton démarrer */}
                     <button className="custom-btn w-100" onClick={startGame}>
                         Démarrer le jeu
