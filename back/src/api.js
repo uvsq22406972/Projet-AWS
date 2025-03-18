@@ -1,9 +1,11 @@
-const express = require('express');
+express = require('express');
 const Users = require("./entities/users.js");
 const Rooms = require("./entities/rooms.js");
 const encrypt = require('./encrypt'); 
-const nodemailer = require("nodemailer"); 
+const nodemailer = require("nodemailer");
 const session = require("express-session");
+
+// Pour stocker les codes temporaires
 function init(db){
   // Initialisation router
   const router = express.Router();
@@ -21,14 +23,12 @@ function init(db){
     cookie: { maxAge: 60000 }
   }));
 
-
   // Transporter pour envoyer les emails
-  
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: 'bellearnaude@gmail.com', 
-      pass: 'fwhv yqui iqjp sppb'      
+      pass: 'fwhv yqui iqjp sppb' 
     }
   });
 
@@ -37,7 +37,7 @@ function init(db){
     const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     return regex.test(email);
   };
-
+ 
   // Générer un code de vérification aléatoire
   const generateVerificationCode = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -63,6 +63,8 @@ function init(db){
     const mdp1 = req.body.mdp1;
     const mdp2 = req.body.mdp2;
     const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
+  
+    
    
     //Vérifie si tous les champs sont remplis
     if (!pseudo || !mdp1 || !mdp2 || !email) {
@@ -105,38 +107,38 @@ function init(db){
     } **/
   });
 
-// Connexion et envoi du code de vérification
-router.post('/users', async (req, res) => {
-  const { email, mdp } = req.body;
+999999999999999999999999999999999999999999999999
+  //Connexion et envoi du code de vérification
+  router.post('/users', async (req, res) => {
+    const { email, mdp } = req.body;
 
-  if (!email || !mdp) return res.send({ status: 400 });
+    if (!email || !mdp) return res.send({ status: 400 });
 
-  if (!await users.exist(email)) return res.send({ status: 402 });
+    if (!await users.exist(email)) return res.send({ status: 402 });
 
-  if (await users.checkPassword(email, mdp)) {
-    const code = generateVerificationCode();
-    req.session.verificationCode = code;
-    req.session.userid = email; 
+    if (await users.checkPassword(email, mdp)) {
+      const code = generateVerificationCode();
+      req.session.verificationCode = code;
+      req.session.userid = email; 
 
-    try {
-      await transporter.sendMail({
-        from: 'bellearnaude@gmail.com',
-        to: email,
-        subject: 'Code de vérification',
-        text: `Votre code de vérification est : ${code}`
-      });
+      try {
+        await transporter.sendMail({
+          from: 'bellearnaude@gmail.com',
+          to: email,
+          subject: 'Code de vérification',
+          text: `Votre code de vérification est : ${code}`
+        });
 
-      res.send({ status: 200, message: "Code envoyé avec succès" });
-    } catch (error) {
-      res.send({ status: 500, message: "Erreur lors de l'envoi de l'email" });
+        res.send({ status: 200, message: "Code envoyé avec succès" });
+      } catch (error) {
+        res.send({ status: 500, message: "Erreur lors de l'envoi de l'email" });
+      }
+    } else {
+      res.send({ status: 401, message: "Mot de passe incorrect" });
     }
-  } else {
-    res.send({ status: 401, message: "Mot de passe incorrect" });
-  }
-});
+  });
 
-// Vérification du code de vérification
-// Route de vérification du code
+   // Route de vérification du code
 router.post('/verify-code', (req, res) => {
   const { code } = req.body; // Récupère seulement le code de vérification envoyé par le frontend
 
@@ -151,6 +153,7 @@ router.post('/verify-code', (req, res) => {
       res.send({ status: 401, message: "Code invalide." });
   }
 });
+
 
 
 
@@ -242,7 +245,6 @@ router.get('/getRoomFromUsers', async (req, res) => {
   }
 });
 
-
   // Création d'une session
   router.post('/users', async (req, res) => {
     const login = req.body.email;
@@ -309,18 +311,14 @@ router.get('/getRoomFromUsers', async (req, res) => {
       res.status(500).send(e);
     }
   });
-   // Récupérer l'utilisateur connecté
+
   router.get('/users/detail', async (req, res) => {
     try {
-      if (req.session.verified && req.session.userid) {
-        const user = await users.getUserByEmail(req.session.userid);
-        if (user) {
-          res.status(200).json(user);
-        } else {
-          res.status(404).json({ message: "User not found" });
-        }
+      const user = await users.getEmail(req.session.userid);
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
       } else {
-        res.status(403).json({ message: "Utilisateur non authentifié." });
+        res.status(200).json(user);
       }
     } catch (e) {
       res.status(500).send(e);
@@ -401,4 +399,4 @@ router.get('/getRoomFromUsers', async (req, res) => {
   return router;
 }
 
-module.exports = init;
+module.exports = init; 
