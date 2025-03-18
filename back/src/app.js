@@ -231,31 +231,19 @@ wss.on("connection", async (ws) => {
       const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
       console.log("Room générée:", generatedRoomName);
 
-      try{
-        const reponse = await axios.put(`api/rooms`,{
-          id : generatedRoomName,
-          user : data.user
-        });
-        //retour utilisateur
-        if(reponse.status === 200) {
-          console.log("Envoi du message WebSocket :");
-          ws.send(
-            JSON.stringify({
-              type:'generatedRoom',
-              message: `Room ${generatedRoomName} créée !`,
-              room: generatedRoomName,
-              users: data.user,
-            })
-          );
-        }
-      } catch (e) {
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            message: `Erreur inattendue`,
-          })
-        )
-      }
+      const reponse = axios.put(`api/rooms`,{
+        id : generatedRoomName,
+        user : data.user
+      });
+      //retour utilisateur
+      ws.send(
+        JSON.stringify({
+          type:'generatedRoom',
+          message: `Room ${generatedRoomName} créée !`,
+          room: generatedRoomName,
+          users: data.user,
+        })
+      );
     }
 
     if (data.type === "join_room") {
