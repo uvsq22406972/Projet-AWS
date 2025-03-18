@@ -133,4 +133,9 @@ button:disabled {
     font-size: 24px;
     font-weight: bold;
   }
+
+  .key.blackened {
+    background-color: #333;
+    color: #fff;
+  }
   

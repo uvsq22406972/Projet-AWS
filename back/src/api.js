@@ -63,7 +63,12 @@ function init(db){
     const mdp1 = req.body.mdp1;
     const mdp2 = req.body.mdp2;
     const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
+<<<<<<< HEAD
   
+=======
+    
+   
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
     
    
     //Vérifie si tous les champs sont remplis
@@ -107,7 +112,43 @@ function init(db){
     } **/
   });
 
+<<<<<<< HEAD
 999999999999999999999999999999999999999999999999
+  //Connexion et envoi du code de vérification
+=======
+  // Connexion et envoi du code de vérification
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
+  router.post('/users', async (req, res) => {
+    const { email, mdp } = req.body;
+
+    if (!email || !mdp) return res.send({ status: 400 });
+
+    if (!await users.exist(email)) return res.send({ status: 402 });
+
+    if (await users.checkPassword(email, mdp)) {
+      const code = generateVerificationCode();
+      req.session.verificationCode = code;
+      req.session.userid = email; 
+
+      try {
+        await transporter.sendMail({
+          from: 'bellearnaude@gmail.com',
+          to: email,
+          subject: 'Code de vérification',
+          text: `Votre code de vérification est : ${code}`
+        });
+
+        res.send({ status: 200, message: "Code envoyé avec succès" });
+      } catch (error) {
+        res.send({ status: 500, message: "Erreur lors de l'envoi de l'email" });
+      }
+    } else {
+      res.send({ status: 401, message: "Mot de passe incorrect" });
+    }
+  });
+
+<<<<<<< HEAD
+=======
   //Connexion et envoi du code de vérification
   router.post('/users', async (req, res) => {
     const { email, mdp } = req.body;
@@ -138,6 +179,7 @@ function init(db){
     }
   });
 
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
    // Route de vérification du code
 router.post('/verify-code', (req, res) => {
   const { code } = req.body; // Récupère seulement le code de vérification envoyé par le frontend

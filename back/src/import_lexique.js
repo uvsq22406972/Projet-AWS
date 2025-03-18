@@ -11,16 +11,18 @@ async function importLexique() {
         const db = client.db("dictionnaire");
         const collection = db.collection("mots");
 
-        let words = [];
+        const words = [];
+        const seen = new Set();
+
 
         // Lire le fichier CSV et extraire la colonne "1_ortho"
-        fs.createReadStream("Lexique383.csv", { encoding: 'utf8' })
+        fs.createReadStream("Lexique383.csv", { encoding: 'latin1' })
             .pipe(csv({ separator: ';' })) // Lexique utilise ";" comme séparateur
             .on('data', (row) => {
-                if (row['1_ortho']) {
-                    words.push({ mot: row['1_ortho'].trim() }); // Ajouter uniquement les mots
-                } else {
-                    console.log("Aucun mot trouvé dans cette ligne.");
+                const ortho = row["1_ortho"]?.trim();
+                if (ortho && !seen.has(ortho)) {
+                    seen.add(ortho);
+                    words.push({ mot: ortho.trim() }); // Ajouter uniquement les mots
                 }
             })
             .on('end', async () => {

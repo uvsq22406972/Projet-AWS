@@ -68,6 +68,12 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
     }
   };
 
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
       <div className="container d-flex justify-content-center align-items-center">

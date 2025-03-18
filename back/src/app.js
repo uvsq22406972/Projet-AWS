@@ -20,11 +20,22 @@ const app = express();
 const port = 4001; // Port Express
 const wsPort = 4002; // Port WebSocket
 
+const allowedOrigins = [
+  "http://localhost:3000", // Dev local
+];
+
 // Middleware pour parser le JSON
 app.use(express.json());
 
-// Localhost - Autoriser le front à se connecter au serveur
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
+// Route de test pour vérifier que le serveur répond
+app.get("/", (req, res) => {
+  res.send("Le backend fonctionne !");
+});
 
 // Gestion des sessions
 app.use(
@@ -140,7 +151,7 @@ app.get("/random-sequence", async (req, res) => {
 });
 
 /* ************* WebSocket Server ************* */
-const wss = new WebSocket.Server({ port: wsPort });
+const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
   await client.connect();

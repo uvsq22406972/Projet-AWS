@@ -85,8 +85,8 @@ function Page() {
         <CreateAccount onLoginClick={handleLoginClick} onPagePrincipaleClick={handlePagePrincipaleClick} setCurrentPage={setCurrentPage}/>
       ) : currentPage === 'gameroom' ? (
         <GameRoom onBackToPagePrincipaleClick={handlePagePrincipaleClick} onLoginClick={handleGameRoomClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage}/>
-      ) : currentPage === 'gamepage' ? (
-        <GamePage onBackToGameRoomClick={handleGameRoomClick} onGameRoomClick={handleGamePageClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage}/>
+      ) : currentPage.page === 'gamepage' ? (
+        <GamePage onBackToGameRoomClick={handleGameRoomClick} onGameRoomClick={handleGamePageClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage} initialLives={currentPage.initialLives || 2} initialTime={currentPage.initialTime || 10} livesLostThreshold={currentPage.livesLostThreshold || 2}/>
       ) : (  
         <Loading/>
       )}    

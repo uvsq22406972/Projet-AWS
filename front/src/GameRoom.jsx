@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from "react";
+import CustomSlider from './CustomSlider.jsx';
+import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
@@ -11,8 +13,17 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
     const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
+    const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
+    const [gameTime, setGameTime] = useState(10);
+    const [livesLostThreshold, setLivesLostThreshold] = useState(2);
+
     const ws = useRef(null);
+<<<<<<< HEAD
     const [selectedAvatar, setSelectedAvatar] = useState(localStorage.getItem('selectedAvatar') || null);
+=======
+    const [selectedAvatar, setSelectedAvatar] = useState(null)
+
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
     // Chemins des avatars (placer ces images dans public/images)
     const avatars = [
         '/images/avatar1.jpg',
@@ -27,13 +38,21 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     // Vérifier si une session est déjà ouverte
     useEffect(() => {
+        const savedAvatar = localStorage.getItem('selectedAvatar');
+        if (savedAvatar) {
+            setSelectedAvatar(savedAvatar);
+        }
         ws.current = new WebSocket("ws://localhost:4002");
         async function checkSession() {
             try {
                 const response = await axios.get('/api/session');
                 const user = await axios.get('/api/users/detail');
 
+<<<<<<< HEAD
                 console.log("find the user according to the session id : ");
+=======
+                console.log("find the user qccording to the session id : ");
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
                 
                 console.log(user);
                 
@@ -66,9 +85,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             const message = JSON.parse(event.data);
             console.log('Message reçu:', message);
 
-            if (message.type === 'game_started') {
-                alert(`Le jeu a commencé dans la room ${message.room}`);
-            }
             if (message.type === 'generatedRoom') {
                 localStorage.setItem("room", message.room);
                 
@@ -218,7 +234,14 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         console.log("Le bouton Démarrer a été cliqué ");
         ws.current.send(JSON.stringify({ type: "start_game", room }));
         setGameStarted(true);
-        setCurrentPage('gamepage');  // <-- Affiche la page GamePage
+        // Passe livesToPlay comme prop en plus de changer de page
+        setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
+    };
+
+    // Fonction pour sélectionner un avatar
+    const handleAvatarSelect = (avatar) => {
+        setSelectedAvatar(avatar); // Met à jour l'état local
+        localStorage.setItem('selectedAvatar', avatar); // Enregistre l'avatar dans localStorage
     };
 
      // Envoi de l'avatar au server
@@ -276,8 +299,12 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                         users.map((element, index) => {
                             const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
                             const userColor = colors[index % colors.length];
+<<<<<<< HEAD
                             console.log(element)
                             console.log(index)
+=======
+                            
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
                             return (
                                 <li 
                                     key={element} 
@@ -302,6 +329,49 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                 </ul>
             </div>
 
+<<<<<<< HEAD
+=======
+
+                    {/* Nb de vies */}
+                    <div style={{ margin: '20px 0' }}>
+                      <label htmlFor="livesSlider">
+                        Nombre de vies : <strong>{livesToPlay}</strong>
+                      </label>
+                      <CustomSliderWithTooltip
+                        value={livesToPlay}
+                        onChange={setLivesToPlay}
+                        min={1}
+                        max={5}
+                      />
+                    </div>
+
+                    {/* Choix du temps de jeu */}
+                    <div style={{ margin: '20px 0' }}>
+                        <label htmlFor="timeSlider">
+                          Temps de jeu : <strong>{gameTime} secondes</strong>
+                        </label>
+                        <CustomSliderWithTooltip
+                          value={gameTime}
+                          onChange={setGameTime}
+                          min={5}
+                          max={15}
+                        />
+                    </div>
+
+                    {/* Choix de changement de séquence */}
+                    <div style={{ margin: '20px 0' }}>
+                      <label htmlFor="changeSequenceSlider">
+                        Changer la séquence : <strong>{livesLostThreshold}</strong> vies perdues
+                      </label>
+                      <CustomSliderWithTooltip
+                        value={livesLostThreshold}
+                        onChange={setLivesLostThreshold}
+                        min={1}
+                        max={5}
+                      />
+                    </div>
+
+>>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
             {/* Boutons */}
             <button className="custom-btn w-100 mb-3" onClick={startGame}>Démarrer le jeu</button>
             <button className="custom-btn w-100 mb-3" onClick={leaveRoom}>Quitter la salle</button>
