@@ -40,8 +40,9 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             console.log("WebSocket connecté !");
             setIsWebSocketOpen(true);
 
-            console.log("storedRoom =", storedRoom);
+            console.log("storedRoom avant condition =", storedRoom);
             if (!storedRoom || storedRoom === "null") {
+                console.log("storedRoom apres condition=", storedRoom);
                 // Si c'est null ou "null" => on crée
                 createRoom();
             } else {
@@ -98,13 +99,16 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     // Créer une room
     const createRoom = () => {
+        console.log("===> createRoom called with user:", userid);
         if (!isWebSocketOpen) {
             return;
         }
+
         const message = {
             type: "create_room",
             user: userid,
         };
+        console.log("Sending create_room message:", message);
         ws.current.send(JSON.stringify(message));
     };
 
