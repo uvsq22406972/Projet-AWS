@@ -231,19 +231,30 @@ wss.on("connection", async (ws) => {
       const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
       console.log("Room générée:", generatedRoomName);
 
-      const reponse = axios.put(`api/rooms`,{
-        id : generatedRoomName,
-        user : data.user
-      });
-      //retour utilisateur
-      ws.send(
-        JSON.stringify({
-          type:'generatedRoom',
-          message: `Room ${generatedRoomName} créée !`,
-          room: generatedRoomName,
-          users: data.user,
-        })
-      );
+      try{
+        const reponse = axios.put(`api/rooms`,{
+          id : generatedRoomName,
+          user : data.user
+        });
+        //retour utilisateur
+        if(resp.status === 200) {
+          ws.send(
+            JSON.stringify({
+              type:'generatedRoom',
+              message: `Room ${generatedRoomName} créée !`,
+              room: generatedRoomName,
+              users: data.user,
+            })
+          );
+        }
+      } catch (e) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            message: `Erreur inattendue`,
+          })
+        )
+      }
     }
 
     if (data.type === "join_room") {
