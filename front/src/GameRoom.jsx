@@ -291,8 +291,8 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                     {isUserReady && <p>Session OK pour l'utilisateur : {userid}</p>}
                                 
                     {/* Savoir si le WebSocket est connecté */}
-                    {!isWsConnected && <p>En attente de connexion WebSocket…</p>}
-                    {isWsConnected && <p>WebSocket connecté !</p>}
+                    {!isWebSocketOpen && <p>En attente de connexion WebSocket…</p>}
+                    {isWebSocketOpen && <p>WebSocket connecté !</p>}
                     {/* Bouton démarrer */}
                     <button className="custom-btn w-100" onClick={startGame}>
                         Démarrer le jeu
