@@ -39,9 +39,13 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         ws.current.onopen = () => {
             console.log("WebSocket connecté !");
             setIsWebSocketOpen(true);
-            if (!storedRoom) {
-                createRoom();  
+
+            console.log("storedRoom =", storedRoom);
+            if (!storedRoom || storedRoom === "null") {
+                // Si c'est null ou "null" => on crée
+                createRoom();
             } else {
+                // Sinon on rejoint
                 joinRoom();
             }
         };

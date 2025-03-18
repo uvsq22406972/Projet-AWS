@@ -238,6 +238,7 @@ wss.on("connection", async (ws) => {
         });
         //retour utilisateur
         if(reponse.status === 200) {
+          console.log("Envoi du message WebSocket :");
           ws.send(
             JSON.stringify({
               type:'generatedRoom',
