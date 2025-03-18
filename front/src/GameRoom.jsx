@@ -10,6 +10,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [gameStarted, setGameStarted] = useState(false);
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
+    const [isWsConnected, setIsWsConnected] = useState(false);
     const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
     const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
     const [gameTime, setGameTime] = useState(10);
@@ -74,7 +75,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
         ws.onclose = (e) => {
             console.warn("⚠️ WS fermé :", e.code, e.reason);
-            setIsConnected(false);
+            setIsWsConnected(false);
       
             // Reconnexion auto après 3s
             reconnectTimer.current = setTimeout(() => {
@@ -222,6 +223,13 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     return (
         <div>
+        {/* Savoir si la session est OK */}
+        {!isUserReady && <p>Chargement de la session…</p>}
+        {isUserReady && <p>Session OK pour l'utilisateur : {userid}</p>}
+        
+        {/* Savoir si le WebSocket est connecté */}
+        {!isWsConnected && <p>En attente de connexion WebSocket…</p>}
+        {isWsConnected && <p>WebSocket connecté !</p>}
         <div className="d-flex justify-content-center align-items-center vh-100">
             <div className="container d-flex justify-content-center align-items-center">
                 <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)" }}>
