@@ -63,12 +63,7 @@ function init(db){
     const mdp1 = req.body.mdp1;
     const mdp2 = req.body.mdp2;
     const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
-<<<<<<< HEAD
   
-=======
-    
-   
->>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
     
    
     //Vérifie si tous les champs sont remplis
@@ -112,12 +107,9 @@ function init(db){
     } **/
   });
 
-<<<<<<< HEAD
-999999999999999999999999999999999999999999999999
-  //Connexion et envoi du code de vérification
-=======
+
   // Connexion et envoi du code de vérification
->>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
+
   router.post('/users', async (req, res) => {
     const { email, mdp } = req.body;
 
@@ -147,8 +139,7 @@ function init(db){
     }
   });
 
-<<<<<<< HEAD
-=======
+
   //Connexion et envoi du code de vérification
   router.post('/users', async (req, res) => {
     const { email, mdp } = req.body;
@@ -179,7 +170,7 @@ function init(db){
     }
   });
 
->>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
+
    // Route de vérification du code
 router.post('/verify-code', (req, res) => {
   const { code } = req.body; // Récupère seulement le code de vérification envoyé par le frontend
@@ -195,7 +186,6 @@ router.post('/verify-code', (req, res) => {
       res.send({ status: 401, message: "Code invalide." });
   }
 });
-
 
 
 
