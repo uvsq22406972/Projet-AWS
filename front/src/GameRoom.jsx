@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import CustomSlider from './CustomSlider.jsx';
 import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
@@ -10,40 +10,57 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [gameStarted, setGameStarted] = useState(false);
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
-    const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
+    const [compte, setCompte] = useState([]);
     const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
     const [gameTime, setGameTime] = useState(10);
     const [livesLostThreshold, setLivesLostThreshold] = useState(2);
 
     const ws = useRef(null);
+    const reconnectTimer = useRef(null);
+    const isWebSocketOpen = useRef(false);
     // Vérifier si une session est déjà ouverte
-    useEffect(() => {
-        ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
-        async function checkSession() {
-            try {
-                const response = await axios.get('/api/session');
-                setUserid(response.data.userid);
-                setIsUserReady(true);
-            } catch (error) {
-                console.log("Erreur, la session a expiré");
-            }
+    const checkSession = async () => {
+        try {
+            const response = await axios.get('/api/session');
+            setUserid(response.data.userid);
+            setIsUserReady(true);
+        } catch (error) {
+            console.log("Erreur, la session a expiré");
         }
+    };
+
+    async function fetchAccount() {
+        try {
+          const [response, sessionRes] = await Promise.all([
+            axios.get('/api/users/all'),
+            axios.get('/api/session')
+          ]);
+          
+          const userid = sessionRes.data.userid;
+          const account = response.data.find(a => a._id === userid);
+          
+          if (account) {
+            setCompte(account);
+            return true; // Retourne un statut de succès
+          }
+          return false;
+        } catch (error) {
+          console.error('Erreur:', error);
+          return false;
+        }
+    }
+
+    const connectWS = useCallback(() => {
+
+        ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
+
         ws.current.onopen = () => {
             console.log("WebSocket connecté !");
-            setIsWebSocketOpen(true);
-            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-                if (!storedRoom) {
-                   createRoom();  
-                }
-                else {
-                    joinRoom();
-                }
-            } else {
-                console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
-                setTimeout(createRoom, 500); // Réessaye après 500ms
-            }
+            isWebSocketOpen.current = true;
+
+            console.log("storedRoom =", storedRoom);
+            handleRoomLogic();
         };
-        checkSession();
         console.log("code de room ; ",room);
         
         // Gérer les messages du serveur WebSocket
@@ -56,40 +73,91 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                 setRoom(message.room);
                 setUsers(message.users);
             }
-            
-           
+
+            if (message.type === 'users_list') {
+                console.log('Utilisateurs mis à jour:', message.users);
+                setUsers(message.users);
+            }
+            else if (message.type === "error"){console.log("oula");}
         };
 
-        ws.current.onclose = (event) => {
-            console.warn("⚠️ WebSocket fermé :", event);
-            setIsWebSocketOpen(false);
-            // Auto-reconnexion après 3 secondes
-            setTimeout(() => {
-                console.log("🔄 Tentative de reconnexion...");
-                ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
+        ws.current.onclose = (e) => {
+            console.warn("⚠️ WS fermé :", e.code, e.reason);
+            isWebSocketOpen.current = false;
+      
+            //Reconnexion auto après 3s
+            reconnectTimer.current = setTimeout(() => {
+              console.log("🔄 Tentative de reconnexion...");
+              connectWS();
             }, 3000);
         };
+    }, []);
 
-    }, [room, userid, isUserReady]);
-
-    // Créer une room
-    const createRoom = () => {
-        if (!isWebSocketOpen) {
-            console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
-            return;
-        }
-        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-    
-            const message = {
-                type: "create_room",
-                user: userid,
+    const safeSend = useCallback((message, retries = 3) => {
+        return new Promise((resolve, reject) => {
+            const attempt = (attemptCount) => {
+                if (ws.current?.readyState === WebSocket.OPEN) {
+                    ws.current.send(JSON.stringify(message));
+                    resolve();
+                } else if (attemptCount < retries) {
+                    setTimeout(() => attempt(attemptCount + 1), 300 * attemptCount);
+                } else {
+                    reject("Échec d'envoi après " + retries + " tentatives");
+                }
             };
-            ws.current.send(JSON.stringify(message));
+            attempt(0);
+        });
+    }, []);
+
+    const handleRoomLogic = async () => {
+        if (!compte?.username || !isWebSocketOpen) return;
+
+        console.log("storedRoom =", storedRoom);
+        if (!storedRoom) {
+            await createRoom();
         } else {
-            console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
-            setTimeout(createRoom, 500); // Réessaye après 500ms
+            await joinRoom();
         }
     };
+
+    useEffect(() => {
+        const initialize = async () => {
+            await checkSession();
+            await fetchAccount(); // Attend que les données du compte soient chargées
+            connectWS();
+          };
+          
+        initialize();
+
+    
+        // Cleanup
+        return () => {
+            if (ws.current) ws.current.close();
+            if (reconnectTimer.current) {
+                clearTimeout(reconnectTimer.current);
+            }
+            isWebSocketOpen.current = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (compte?.username && isWebSocketOpen) {
+            handleRoomLogic();
+        }
+    }, [compte, isWebSocketOpen]); // Déclenché quand compte ou WS change
+
+    // Créer une room
+    const createRoom = useCallback(async () => {
+        try {
+            await safeSend({
+                type: "create_room",
+                user: compte.username
+            }, 5); // 🎯 5 tentatives max
+        } catch (error) {
+            console.error("Échec critique création room:", error);
+            alert("Problème de connexion - Veuillez rafraîchir");
+        }
+    }, [compte.username, safeSend]);
 
 
 // pour ajouter un joueur au jeu
@@ -146,15 +214,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             return;
         }
         
-        ws.current.onmessage = (event) => {
-            const response = JSON.parse(event.data);
-            if (response.type === 'users_list') {
-                console.log('Utilisateurs mis à jour:', response.users);
-                setUsers(response.users);
-            }
-            else if (response.type === "error"){console.log("oula");}
-            
-        };
         console.log("Stored Room avant envoi :", storedRoom);
         if (!storedRoom) {
             console.warn("La room est vide, impossible d'envoyer la requête.");

@@ -228,12 +228,21 @@ wss.on("connection", async (ws) => {
     console.log(`Message reçu: ${data.type}`);
 
     if (data.type === "create_room") {
+      if (!data.user) {
+        ws.send(JSON.stringify({ 
+          type: "error", 
+          message: "Nom d'utilisateur invalide" 
+        }));
+        return;
+      }
+      
       const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
       console.log("Room générée:", generatedRoomName);
+      const creator = data.user;
 
       const reponse = axios.put(`api/rooms`,{
         id : generatedRoomName,
-        user : data.user
+        user : creator
       });
       //retour utilisateur
       ws.send(
@@ -241,7 +250,7 @@ wss.on("connection", async (ws) => {
           type:'generatedRoom',
           message: `Room ${generatedRoomName} créée !`,
           room: generatedRoomName,
-          users: data.user,
+          users: [creator],
         })
       );
     }
@@ -357,6 +366,7 @@ wss.on("connection", async (ws) => {
 
         if(usersFound.length === 1 && usersFound[0] == user)
           {
+            console.log ("Suppression de la room...");
             const reponse = await axios.delete(`api/rooms`,{
               data: { 
                 room: roomName,
