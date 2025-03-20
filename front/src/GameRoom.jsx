@@ -18,35 +18,16 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [livesLostThreshold, setLivesLostThreshold] = useState(2);
 
     const ws = useRef(null);
-<<<<<<< HEAD
-    const [selectedAvatar, setSelectedAvatar] = useState(localStorage.getItem('selectedAvatar') || null);
-    // Chemins des avatars (placer ces images dans public/images)
-    const avatars = [
-        '/images/avatar1.jpg',
-        '/images/avatar2.jpg',
-        '/images/avatar3.jpg',
-        '/images/avatar4.jpg',
-        '/images/avatar5.jpg',
-        '/images/avatar6.jpg',
-        '/images/avatar7.jpg',
-        '/images/avatar8.jpg'
-    ];
-
     // Vérifier si une session est déjà ouverte
     useEffect(() => {
-        const savedAvatar = localStorage.getItem('selectedAvatar');
-        if (savedAvatar) {
-            setSelectedAvatar(savedAvatar);
-        }
+        
         ws.current = new WebSocket("ws://localhost:4002");
         async function checkSession() {
             try {
                 const response = await axios.get('/api/session');
                 const user = await axios.get('/api/users/detail');
                 console.log("find the user according to the session id : ");
-=======
-                console.log("find the user qccording to the session id : ");
->>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
+
                 
                 console.log(user);
                 
@@ -232,47 +213,12 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
     };
 
-    // Fonction pour sélectionner un avatar
-    const handleAvatarSelect = (avatar) => {
-        setSelectedAvatar(avatar); // Met à jour l'état local
-        localStorage.setItem('selectedAvatar', avatar); // Enregistre l'avatar dans localStorage
-    };
-
-     // Envoi de l'avatar au server
-
-    const sendAvatarToServer = (avatar) => {
-        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
-
-        const message = {
-            type: "update_avatar",
-            room: storedRoom,
-            user: userid,
-            avatar: avatar
-        };
-        ws.current.send(JSON.stringify(message));
-    };   
+    
 
 
     return (
         <div>
     <div className="d-flex flex-column justify-content-center align-items-center vh-100">
-        {/* Carrousel d'avatars */}
-        <div className="w-96 mb-4">  {/* Limite la largeur à 24rem */}
-            <Carousel showThumbs={false} infiniteLoop autoPlay>
-                {avatars.map((avatar, index) => (
-                    <div key={index} className="flex justify-center items-center">
-                        <img 
-                                    src={avatar} 
-                                    alt={`Avatar ${index + 1}`}
-                                    className={`rounded-full border-4 border-gray-400 object-cover cursor-pointer ${selectedAvatar === avatar ? 'ring-4 ring-blue-500' : ''}`}
-                                    style={{ width: "250px", height: "250px", borderRadius: "50%", border: "2px solid black", marginTop: "60px" }}
-                                    onClick={() => handleAvatarSelect(avatar)} // Ajout de l'événement onClick
-                                />
-                    </div>
-                ))}
-            </Carousel>
-        </div>
-
         <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)", width: "400px" }}>
             <h2 className="mb-4 fw-bold text-white">Salle de Jeu</h2>
 
@@ -287,12 +233,9 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                         users.map((element, index) => {
                             const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
                             const userColor = colors[index % colors.length];
-<<<<<<< HEAD
                             console.log(element)
                             console.log(index)
-=======
-                            
->>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
+
                             return (
                                 <li 
                                     key={element} 
@@ -300,14 +243,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                                     style={{ backgroundColor: userColor, color: "white", border: "none" }}
                                 >
                                     {element}
-                                    {selectedAvatar && (
-                                                <img 
-                                                    src={selectedAvatar} 
-                                                    alt="Avatar"
-                                                    className="rounded-full ml-2"
-                                                    style={{ width: "30px", height: "30px" }}
-                                                />
-                                            )}
+                                    
                                 </li>
                             );
                         })
@@ -317,8 +253,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                 </ul>
             </div>
 
-<<<<<<< HEAD
-=======
+
 
                     {/* Nb de vies */}
                     <div style={{ margin: '20px 0' }}>

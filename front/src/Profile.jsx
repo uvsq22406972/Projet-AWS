@@ -5,6 +5,8 @@ import "./Profile.css";
 import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-responsive-carousel/lib/styles/carousel.min.css';
+import Avatar from 'avataaars';
 //Connexion avec le back
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
@@ -15,6 +17,15 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [activeSection, setActiveSection] = useState('info');
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [compte, setCompte] = useState([]);
+
+ // États pour les choix de l'utilisateur
+    const [skinColor, setSkinColor] = useState("Light");
+    const [hairType, setHairType] = useState("ShortHairShortFlat");
+    const [clothes, setClothes] = useState("Hoodie");
+    const [accessory, setAccessory] = useState("Blank");
+    const [eyeType, setEyeType] = useState("Default");
+    const [hairColor, setHairColor] = useState("Black");
+    const [facialHair, setFacialHair] = useState("Blank");
 
   // États pour la modification du mot de passe
   const [email, setEmail] = useState('');
@@ -184,7 +195,117 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     // Affichage menu info du compte
     if (activeSection === 'info') {
       return (
+        
         <div id="section-info" className="mb-5">
+            <div className="avatar-section" >
+            <h2 className="section-title">🎨 Personnalisation de ton Avatar</h2>
+            <div className="avatar-preview">
+      <Avatar
+        style={{ width: "200px", height: "200px" }}
+        avatarStyle="Circle"
+        topType={hairType}
+        skinColor={skinColor}
+        clotheType={clothes}
+        accessoriesType={accessory}
+        eyeType={eyeType}
+        facialHairType={facialHair}
+        hairColor={hairColor}
+      />
+      </div>
+      <div className="avatar-options">
+      <div className="option-group">
+        <label>Teint :</label>
+        <select onChange={(e) => setSkinColor(e.target.value)}>
+          <option value="Light">Clair</option>
+          <option value="Brown">Moyen</option>
+          <option value="DarkBrown">Foncé</option>
+          <option value="Pale">Très Clair</option>
+          <option value="Black">Noir</option>
+          <option value="Tanned">Halé</option>
+          <option value="Yellow">Jaune, style cartoon</option>
+        </select>
+      </div>
+      <div className="option-group">
+        <label>Cheveux :</label>
+        <select onChange={(e) => setHairType(e.target.value)}>
+          <option value="ShortHairShortFlat">Court plat</option>
+          <option value="LongHairStraight">Long</option>
+          <option value="NoHair">Chauve</option>
+          <option value="ShortHairShortRound">Court arrondi</option>
+          <option value="ShortHairDreads01">Dreadlocks courts</option>
+          <option value="ShortHairDreads02">Dreadlocks longs</option>
+          <option value="ShortHairFrizzle">Frisé court</option>
+          <option value="ShortHairShaggyMullet">Dégradé long</option>
+          <option value="ShortHairTheCaesar">Coupe César</option>
+          <option value="LongHairFro">Afro long</option>
+          <option value="LongHairFroBand">Afro avec bandeau</option>
+          <option value="LongHairBun">Chignon</option>
+          <option value="Hijab">Voile</option>
+        </select>
+      </div>
+      <div className="option-group">
+        <label>Vêtements :</label>
+        <select onChange={(e) => setClothes(e.target.value)}>
+          <option value="BlazerShirt">Blazer</option>
+          <option value="GraphicShirt">T-Shirt</option>
+          <option value="ShirtVNeck">T-Shirt col v</option>
+          <option value="Hoodie">Sweat à capuche</option>
+          <option value="BlawerSweater">Blazer avec pull</option>
+          <option value="ShirtCrewNeck">T-shirt col rond</option>
+          <option value="ShirtScoopNeck">T-shirt col échancré</option>
+        </select>
+      </div>
+      <div className="option-group">
+        <label>Accessoires :</label>
+        <select onChange={(e) => setAccessory(e.target.value)}>
+          <option value="Blank">Aucun Accessoires</option>
+          <option value="kurt">Lunettes rondes</option>
+          <option value="Prescription01">Lunettes classiques</option>
+          <option value="Prescription02">Lunettes épaisses v</option>
+          <option value="Round">Lunettes vintage</option>
+          <option value="Sunglasses">Lunettes de soleil</option>
+          <option value="Wayfarers">Lunettes carrées</option>
+        </select>
+      </div>
+      <div className="option-group">
+        <label>Expressions du visage :</label>
+        <select onChange={(e) => setEyeType(e.target.value)}>
+          <option value="Default">Neutre</option>
+          <option value="Happy">Souriant</option>
+          <option value="Squint">Plissé</option>
+          <option value="Wink">Clin d'oeil</option>
+          <option value="Surprised">Etonné</option>
+          <option value="Cry">Pleurs</option>
+          <option value="X">Yeux fermés en croix</option>
+          <option value="Side">Regard de coté</option>
+        </select>
+      </div>
+      <div className="option-group">
+        <label>Pilosité faciale :</label>
+        <select onChange={(e) => setFacialHair(e.target.value)}>
+          <option value="Blank">Neutre</option>
+          <option value="BeardMedium">Barbe Moyenne</option>
+          <option value="BeardLight">Barbe légère</option>
+          <option value="BearMajestic">Barbe fournie</option>
+          <option value="MoustacheFancy">Moustache stylée</option>
+          <option value="MoustacheMagnum">Moustache épaisse</option>
+        </select>
+      </div>
+      <div className="option-group">
+        <label>Couleur des cheveux :</label>
+        <select onChange={(e) => setHairColor(e.target.value)}>
+          <option value="Black">Noir</option>
+          <option value="BrownDark">Brun foncé</option>
+          <option value="Brown">Brun clair</option>
+          <option value="Blonde">Blond</option>
+          <option value="BlondeGolden">Blond doré</option>
+          <option value="Red">Roux</option>
+          <option value="SilverGray">Gris argenté</option>
+        </select>
+      </div>
+    </div>
+      <button>Ok</button>
+    </div>
           <h3 className="mb-4">Information du compte</h3>
           <form>
             <div className="mb-3">
@@ -198,6 +319,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           </form>
         </div>
       );
+
     // Affichage menu modifier le mot de passe
     } else if (activeSection === 'password') {
       return (
