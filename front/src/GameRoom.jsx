@@ -43,8 +43,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             try {
                 const response = await axios.get('/api/session');
                 const user = await axios.get('/api/users/detail');
-
-<<<<<<< HEAD
                 console.log("find the user according to the session id : ");
 =======
                 console.log("find the user qccording to the session id : ");
@@ -254,12 +252,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         ws.current.send(JSON.stringify(message));
     };   
 
-    // Fonction pour sélectionner un avatar
-     const handleAvatarSelect = (avatar) => {
-        setSelectedAvatar(avatar);
-        localStorage.setItem('selectedAvatar', avatar);
-        sendAvatarToServer(avatar);  // On envoie l'avatar sélectionné au serveur
-    };
 
     return (
         <div>
@@ -366,8 +358,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                         max={5}
                       />
                     </div>
-
->>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
             {/* Boutons */}
             <button className="custom-btn w-100 mb-3" onClick={startGame}>Démarrer le jeu</button>
             <button className="custom-btn w-100 mb-3" onClick={leaveRoom}>Quitter la salle</button>
