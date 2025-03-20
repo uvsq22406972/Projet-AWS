@@ -20,10 +20,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const ws = useRef(null);
 <<<<<<< HEAD
     const [selectedAvatar, setSelectedAvatar] = useState(localStorage.getItem('selectedAvatar') || null);
-=======
-    const [selectedAvatar, setSelectedAvatar] = useState(null)
-
->>>>>>> 162e41b85ed819cae971f1b978f2c75806bfe001
     // Chemins des avatars (placer ces images dans public/images)
     const avatars = [
         '/images/avatar1.jpg',
