@@ -1,0 +1,64 @@
+.custom-slider {
+    /* Supprime le style par défaut des sliders dans les navigateurs WebKit */
+    -webkit-appearance: none;
+    width: 100%;
+    height: 10px;             /* Hauteur de la piste */
+    border-radius: 5px;
+    background: #e0e0e0;      /* Couleur de fond par défaut */
+    outline: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    transition: background 0.3s ease;
+  }
+  
+  /* --- Piste du slider en WebKit (Chrome, Safari, Opera) --- */
+  .custom-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 10px;             /* Même hauteur que .custom-slider */
+    background: #e0e0e0;      /* Couleur de la piste */
+    border-radius: 5px;
+  }
+  
+  /* --- Piste du slider en Firefox --- */
+  .custom-slider::-moz-range-track {
+    width: 100%;
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
+  }
+  
+  /* --- Le curseur (thumb) en WebKit --- */
+  .custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;              /* Diamètre du curseur */
+    height: 20px;
+    border-radius: 50%;
+    background: #F48516;      /* Couleur du curseur */
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+    margin-top: -5px;         /* Décalage vertical (la moitié de (20px - 10px)) */
+  }
+  
+  .custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+  }
+  
+  /* --- Le curseur (thumb) en Firefox --- */
+  .custom-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #F48516;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+    transform: translateY(-5px);  /* Même décalage que margin-top */
+  }
+  
+  .custom-slider::-moz-range-thumb:hover {
+    transform: scale(1.1) translateY(-5px);
+  }
+  

@@ -1,0 +1,106 @@
+.game-card {
+    border: 2px solid #D0D7DA;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    min-height: 250px;
+  }
+  .game-card img {
+    max-width: 120px;
+    display: block;
+    margin: 0 auto 1rem;
+  }
+
+  #main_container {
+    margin-bottom: 20px;
+  }
+
+  .footer-link {
+    color: white;
+    text-decoration: none;
+  }
+  .footer-link:hover {
+    text-decoration: underline;
+  }
+  
+  .user-hover-area {
+    cursor: pointer;
+  }
+
+  .hover-box {
+    display: none;
+    top: 100%;
+    right: 0;
+    z-index: 999;
+  }
+
+  .user-hover-area:hover .hover-box {
+    display: block;
+  }
+
+  .border-box-top {
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+  }
+  .border-box-bottom {
+    border-top: 0;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .btn{
+    background-color: #F48516;
+  }
+
+  .btn:hover{
+    background-color: #F48516D2;
+  }
+
+  .navbar-brand:hover{
+    cursor: pointer;
+  }
+
+  .menu-box {
+    background: #fff;
+  }
+  
+  /* POPUP CONFIRMATION */
+  .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .popup-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    width: 400px;
+  }
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 12px;
+    color: white;
+    cursor: pointer;
+    border-radius: 50%;
+    background-color: red;
+  }
+  .btn-link {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  

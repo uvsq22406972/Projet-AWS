@@ -1,0 +1,171 @@
+.game-and-users-container {
+    display: flex;
+    flex-direction: row; /* Disposition en ligne */
+    justify-content: center; /* Centre le contenu horizontalement */
+    align-items:center; /* Aligne les éléments en haut */
+    gap: 20px; /* Espace entre les utilisateurs et le jeu */
+    padding: 20px;
+    height: 100vh; /* Prend toute la hauteur de la fenêtre */
+    box-sizing: border-box;
+}
+
+.users-container {
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.list-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.list-group-item {
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 600px;
+    width: 100%;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.lives {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.sequence {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+input {
+    padding: 10px;
+    font-size: 18px;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+    margin-bottom: 10px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+}
+
+input:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #d64705;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #cc5d08;
+}
+
+button:disabled {
+    background-color: #bbb;
+    cursor: not-allowed;
+}
+
+.keyboard {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    gap: 5px;
+    justify-content: center;
+    margin-top: 20px;
+    max-width: 500px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.key {
+    background: rgb(34, 203, 203);
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.key:hover {
+    background: #777;
+}
+
+.key:active {
+    background: #555;
+}
+
+.game-over {
+    font-size: 24px;
+    font-weight: bold;
+    color: red;
+    margin-top: 20px;
+}
+
+.bomb-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.bomb-icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+}
+
+.timer {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.key.blackened {
+    background-color: #333;
+    color: #fff;
+}
+.current-player {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+
+@media (max-width: 768px) {
+    .keyboard {
+        grid-template-columns: repeat(8, 40px);
+    }
+    .game-container {
+        margin-top: 20px;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .keyboard {
+        grid-template-columns: repeat(6, 40px);
+    }
+    input {
+        width: 100%;
+    }
+}

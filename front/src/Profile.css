@@ -1,0 +1,26 @@
+.menu-box {
+    border: 2px solid #F48516;
+    border-radius: 4px;
+    padding: 1rem;
+    cursor: pointer;
+    white-space: nowrap;    
+    overflow: hidden;       
+    text-overflow: ellipsis;
+  }
+  .menu-box-active {
+    background-color: #F48516;
+    color: #fff;
+  }
+
+  .menu-box:hover {
+    background-color: #F48516D2;
+    color: #fff;
+  }
+
+  .custom-input {
+    border: 2px solid #F48516;
+  }
+
+  .footer-link{
+    cursor: pointer;
+  }
