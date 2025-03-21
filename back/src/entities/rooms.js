@@ -91,7 +91,7 @@ class Rooms {
   async getAllRooms() {
     try {
         // 🔥 Utilisation directe de `this.db.useDb("ProjetAWS")`
-        const db = this.db.useDb("ProjetAWS"); 
+        const db = this.db.db; 
 
         // Vérification explicite de la collection "Rooms"
         const collectionExists = await db.listCollections({ name: "Rooms" }).toArray();
@@ -102,7 +102,7 @@ class Rooms {
         }
 
         const rooms = await db.collection("Rooms").find({}).toArray();
-        
+
         // 🔥 Validation des données pour éviter les erreurs
         return rooms.map(room => {
             if (!room.id || !Array.isArray(room.users)) {
