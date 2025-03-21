@@ -99,6 +99,19 @@ function init(db){
     await rooms.createRoom(id,users);
   });
 
+  // Récupérer toutes les salles publiques
+  router.get('/rooms/public', async (req, res) => {
+    console.log("[DEBUG] Appel à /api/rooms/public");
+    try {
+      const showRoom = await rooms.getAllRooms();
+      console.log("[DEBUG] Salles récupérées:", showRoom);
+      res.status(200).json(showRoom);
+    } catch (error) {
+      console.error("[ERREUR] /rooms/public:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   //Permet la suppression d'un room
   router.delete('/rooms', async (req, res) => {
     try {
@@ -154,27 +167,20 @@ function init(db){
   //Permet de récupérer les utilisateurs d'une room
   router.get('/getUsersFromRoom', async (req, res) => {
     try {
-      // Récupération de la room depuis les paramètres de la requête
-      const room = req.query.room; 
-      console.log("Récupération des users dans :", room);
-  
+      const room = req.query.room;
       if (!room) {
         return res.status(400).json({ error: "Room non spécifiée" });
       }
       const usersFound = await rooms.getUsersInRoom(room);
-      
       if (usersFound === null) {
-        return res.status(400).json({ error: "Aucune room ne porte ce nom" });
+        return res.status(404).json({ error: "Room non trouvée" }); // Retourne 404 si la salle n'existe pas
       }
-      
-      res.json(usersFound); 
-      console.log("Users found :", usersFound);
-      
+      res.json(usersFound);
     } catch (error) {
-      console.error("Erreur lors de la récupération des utilisateurs :", error);
       res.status(500).json({ error: "Erreur interne du serveur" });
     }
   });
+  
 
 //Permet de récupérer les room d'une user
 router.get('/getRoomFromUsers', async (req, res) => {

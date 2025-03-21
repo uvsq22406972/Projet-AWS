@@ -102,5 +102,23 @@
     text-decoration: underline;
     cursor: pointer;
   }
+
+  .room-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .room-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    background: #e9ecef;
+  }
+  
+  .badge {
+    font-size: 0.85rem;
+    padding: 0.5em 0.75em;
+  }
   
   

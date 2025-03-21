@@ -114,8 +114,9 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const handleRoomLogic = async () => {
         if (!compte?.username || !isWebSocketOpen) return;
 
+        const currentRoom = localStorage.getItem("room");
         console.log("storedRoom =", storedRoom);
-        if (!storedRoom) {
+        if (!currentRoom) {
             await createRoom();
         } else {
             await joinRoom();
@@ -153,10 +154,10 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
           if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current.close(1000, "Navigation normale");
           }
-          localStorage.removeItem("room");
+          //localStorage.removeItem("room");
         };
     }, []);
-
+    
     // Créer une room
     const createRoom = useCallback(async () => {
         if (isCreatingRoom) return;
@@ -252,10 +253,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         }
       
         // Reset complet avec callback
-        setRoom(prev => {
-          localStorage.removeItem("room");
-          return null;
-        });
+        localStorage.removeItem("room");
         
         setUsers([]);
         setCurrentPage("pagePrincipale");

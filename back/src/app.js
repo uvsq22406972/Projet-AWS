@@ -325,7 +325,6 @@ wss.on("connection", async (ws) => {
           
           // Correction 3: Rafraîchir les données
           await new Promise(resolve => setTimeout(resolve, 500));
-          this.updateRooms();
       
         } catch (error) {
           console.error("Erreur traitement leave_room:", error);
