@@ -6,7 +6,7 @@ function removeAccents(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshold }) => {
+const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshold, keyboardColor}) => {
   const [sequence, setSequence] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [lives, setLives] = useState(initialLives);
@@ -15,9 +15,18 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
   const [timer, setTimer] = useState(initialTime);
   const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
   const [lostLivesCount, setLostLivesCount] = useState(0);
+  const [currentKeyboardColor, setCurrentKeyboardColor] = useState(localStorage.getItem("keyboardColor") || keyboardColor);
 
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const [blackenedLetters, setBlackenedLetters] = useState(new Set());
+
+
+  useEffect(() => {
+        const savedColor = localStorage.getItem("keyboardColor");
+        if (savedColor) {
+            setCurrentKeyboardColor(savedColor);
+        }
+    }, []);
 
   // Connecter au WebSocket backend
   useEffect(() => {
@@ -212,7 +221,9 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
       <button onClick={handleSubmit} disabled={gameOver || !inputValue}>
         Valider
       </button>
-      <div className="keyboard">
+      <div 
+        className="keyboard" 
+          >
       {letters.map((letter, index) => {
         // Vérifier si la lettre est noircies
         const isBlackened = blackenedLetters.has(letter);
@@ -221,6 +232,17 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
           <div
             key={index}
             className={`key ${isBlackened ? 'blackened' : ''}`}
+            style={{
+              backgroundColor: isBlackened ? "gray" : currentKeyboardColor, // Chaque touche a sa couleur
+              color: isBlackened ? "white" : "black", // Texte blanc si noircie
+              padding: '10px',
+              borderRadius: '5px',
+              margin: '5px',
+              display: 'inline-block',
+              width: '40px',
+              textAlign: 'center', 
+              cursor: isBlackened ? "not-allowed" : "pointer"
+            }}
           >
             {letter}
           </div>
