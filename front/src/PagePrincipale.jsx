@@ -124,7 +124,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
     localStorage.setItem("room", roomName); // 🔥 On enregistre AVANT de changer de page
     console.log("✅ localStorage mis à jour :", localStorage.getItem("room"));
   
-    const socket = new WebSocket('ws://localhost:4002');
+    const socket = new WebSocket('wss://bombpartyy.duckdns.org/ws/');
     
     socket.onopen = () => {
       console.log('✅ Connexion WebSocket établie');
