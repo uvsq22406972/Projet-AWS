@@ -91,10 +91,10 @@ class Rooms {
   async getAllRooms() {
     try {
         // 🔥 Utilisation directe de `this.db.useDb("ProjetAWS")`
-        const db = this.db.useDb("ProjetAWS"); 
+        const db = this.db.useDb("ProjetAWS").collection("Rooms"); 
 
         // Vérification explicite de la collection "Rooms"
-        const collectionExists = await db.listCollections({ name: "Rooms" }).hasNext();
+        const collectionExists = db.listCollections({ name: "Rooms" }).hasNext();
         
         if (!collectionExists) {
             console.log("❌ Aucune collection 'Rooms' trouvée");
