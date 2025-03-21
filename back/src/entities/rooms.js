@@ -89,43 +89,39 @@ class Rooms {
   }
 
   async getAllRooms() {
-    let client;
     try {
-      client = await this.db.connect();
-      const db = client.db("DB");
-  
-      // Vérification explicite du nom de la collection (case-sensitive)
-      const collectionExists = await db.listCollections({ name: "Rooms" }).hasNext();
-      
-      if (!collectionExists) {
-        console.log("Aucune collection 'Rooms' trouvée");
-        return [];
-      }
-  
-      const roomsCollection = db.collection("Rooms");
-      const rooms = await roomsCollection.find({}).toArray();
-  
-      // Validation des données
-      return rooms.map(room => {
-        if (!room.id || !Array.isArray(room.users)) {
-          console.warn("Structure de room invalide:", room);
-          return { name: "Inconnue", players: 0 };
+        // 🔥 Utilisation directe de `this.db.useDb("ProjetAWS")`
+        const db = this.db.useDb("ProjetAWS"); 
+
+        // Vérification explicite de la collection "Rooms"
+        const collectionExists = await db.listCollections({ name: "Rooms" }).hasNext();
+        
+        if (!collectionExists) {
+            console.log("❌ Aucune collection 'Rooms' trouvée");
+            return [];
         }
-        return {
-          name: room.id,
-          players: room.users.length
-        };
-      });
-  
+
+        const roomsCollection = db.collection("Rooms");
+        const rooms = await roomsCollection.find({}).toArray();
+
+        // 🔥 Validation des données pour éviter les erreurs
+        return rooms.map(room => {
+            if (!room.id || !Array.isArray(room.users)) {
+                console.warn("⚠️ Structure de room invalide:", room);
+                return { name: "Inconnue", players: 0 };
+            }
+            return {
+                name: room.id,
+                players: room.users.length
+            };
+        });
+
     } catch (error) {
-      console.error("Erreur critique dans getAllRooms:", error);
-      throw new Error("Impossible de charger les salles");
-    } finally {
-      if (client) {
-        await client.close();
-      }
+        console.error("🚨 Erreur critique dans getAllRooms:", error);
+        throw new Error("Impossible de charger les salles");
     }
   }
+
 
   async removeUserFromRoom(roomName, user) {
     try {
