@@ -57,10 +57,10 @@ class Rooms {
       const col1 = this.db.db("DB").collection("Rooms");
   
       // Chercher une room où l'userId est présent dans le tableau "users"
-      const room = await col1.findOne({ users: userId });
-      console.log(room);
-      // Si une room est trouvée, retourne son nom
-      return room ? room.id : null;
+      return col1.findOne(
+        { users: userId },
+        { ...options, projection: { _id: 0, id: 1 } }
+      ).then(room => room?.id);
     } catch (err) {
       console.error("Erreur lors de la récupération du roomname :", err);
       throw err;
@@ -84,25 +84,50 @@ class Rooms {
   }
 
   async addUserToRoom(roomName, user) {
+    if (!user) {
+      console.log("User invalide, on n'ajoute pas.");
+      return; // on arrête la fonction
+    }
+  
     await this.db.connect();
     const col1 = this.db.db("DB").collection("Rooms");
     await col1.updateOne(
-      { id: roomName }, // Filtre : Trouver la room par son id
-      { $addToSet: { users: user } } // Ajout du user dans le tableau
+      { id: roomName },
+      { $addToSet: { users: user } }
     );
     console.log("User ajouté");
   }
 
   async removeUserFromRoom(roomName, user) {
-    await this.db.connect();
-    const col1 = this.db.db("DB").collection("Rooms");
-    await col1.updateOne(
-      { id: roomName }, // Filtre : Trouver la room par son id
-      { $pull: { users: user } } // Supprime uniquement ce user du tableau
-    );
-    console.log("User removed");
-  }
+    try {
+      await this.db.connect();
+      const col = this.db.db("DB").collection("Rooms");
+      
+      // Vérifier que la room existe
+      const roomExists = await col.findOne({ id: roomName });
+      if (!roomExists) {
+        console.error("Room non trouvée :", roomName);
+        return false;
+      }
   
+      // Opération de mise à jour avec vérification
+      const result = await col.updateOne(
+        { id: roomName },
+        { 
+          $pull: { 
+            users: { $eq: user } // Syntaxe explicite
+          } 
+        }
+      );
+  
+      console.log("Résultat MongoDB:", JSON.stringify(result, null, 2));
+      return result.modifiedCount > 0;
+  
+    } catch (error) {
+      console.error("Erreur critique:", error.stack);
+      throw error;
+    }
+  }
   
 } 
 exports.default = Rooms;

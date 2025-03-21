@@ -88,36 +88,66 @@ function init(db){
   router.put('/rooms', async (req, res) => {
     // Initialisation des variables récupérées du front
     const id = req.body.id;
-    const roomName = req.body.user;
+    const users = req.body.user;
     console.log("RoomName Du back :", id);
+    const existingRoom = await rooms.getUsersInRoom(id);
+    
+    if (existingRoom !== null) {
+      return res.status(400).json({ error: "Nom de salle déjà utilisé" });
+    }
     //const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
-    await rooms.createRoom(id,roomName);
+    await rooms.createRoom(id,users);
   });
 
   //Permet la suppression d'un room
   router.delete('/rooms', async (req, res) => {
-    // Initialisation des variables récupérées du front
-    const room = req.body.room;
-    console.log("id recu : ", room);
-    await rooms.deleteRoom(room);
+    try {
+      const { room } = req.body;
+      const result = await rooms.deleteRoom(room);
+      
+      if(result) {
+        res.status(200).json({ success: true });
+      } else {
+        res.status(404).json({ error: "Room non trouvée" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Erreur serveur" });
+    }
   });
 
-//Permet la suppression d'un room
-router.post('/addUserToRoom', async (req, res) => {
-  // Initialisation des variables récupérées du front
-  const room = req.body.room;
-  const user = req.body.user;
-  console.log("j'ajoute");
-  await rooms.addUserToRoom(room,user);
-});
+  //Permet l'ajout d'un user à un room
+  router.post('/addUserToRoom', async (req, res) => {
+    // Initialisation des variables récupérées du front
+    const room = req.body.room;
+    const user = req.body.user;
+    console.log("j'ajoute");
+    await rooms.addUserToRoom(room,user);
+  });
 
-//Permet la suppression d'un room
-router.post('/removeUserFromRoom', async (req, res) => {
-  // Initialisation des variables récupérées du front
-  const room = req.body.room;
-  const user = req.body.user;
-  await rooms.removeUserFromRoom(room,user);
-});
+  //Permet la suppression d'un room
+  router.post('/removeUserFromRoom', async (req, res) => {
+    try {
+      const { room, user } = req.body;
+      console.log("Requête reçue - Room:", room, "User:", user);
+
+      const result = await rooms.removeUserFromRoom(room, user);
+
+      if (result) {
+        console.log("Suppression réussie !");
+        res.status(200).json({ success: true });
+      } else {
+        console.log("Aucune modification effectuée");
+        res.status(404).json({ error: "Non trouvé" });
+      }
+
+    } catch (error) {
+      console.error("Erreur API:", error.message);
+      res.status(500).json({ 
+        error: "Échec technique",
+        details: error.message
+      });
+    }
+  });
 
 
 

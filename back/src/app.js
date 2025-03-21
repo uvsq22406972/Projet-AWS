@@ -12,7 +12,21 @@ const Rooms = require("./entities/rooms.js");
 // Initialisation de la BDD -> MongoDB
 const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
-const client = new MongoClient(uri);
+// Remplacer la connexion actuelle par :
+const client = new MongoClient(uri, {
+  maxPoolSize: 15,
+  minPoolSize: 5,
+  serverSelectionTimeoutMS: 5000,
+});
+
+// Ajouter au début de app.js
+let db;
+async function initMongoDB() {
+  await client.connect();
+  db = client.db("DB");
+  console.log("🗄️ Connexion MongoDB établie !");
+}
+initMongoDB();
 
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
@@ -55,7 +69,7 @@ app.use(
 app.use(helmet());
 
 // Middleware pour servir le frontend
-app.use(express.static(path.join(__dirname, "../../frontend")));
+app.use(express.static(path.join(__dirname, "../../front")));
 
 // Initialisation de l'API MongoDB
 const api = apiRouter(client);
@@ -154,7 +168,6 @@ app.get("/random-sequence", async (req, res) => {
 const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
-  await client.connect();
   const db = client.db("DB");
   const collection = db.collection("Rooms");
   ws.on("message",async (message) => {
@@ -162,12 +175,21 @@ wss.on("connection", async (ws) => {
     console.log(`Message reçu: ${data.type}`);
 
     if (data.type === "create_room") {
+      if (!data.user) {
+        ws.send(JSON.stringify({ 
+          type: "error", 
+          message: "Nom d'utilisateur invalide" 
+        }));
+        return;
+      }
+      
       const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
       console.log("Room générée:", generatedRoomName);
+      const creator = data.user;
 
       const reponse = axios.put(`api/rooms`,{
         id : generatedRoomName,
-        user : data.user
+        user : creator
       });
       //retour utilisateur
       ws.send(
@@ -175,7 +197,7 @@ wss.on("connection", async (ws) => {
           type:'generatedRoom',
           message: `Room ${generatedRoomName} créée !`,
           room: generatedRoomName,
-          users: data.user,
+          users: [creator],
         })
       );
     }
@@ -279,30 +301,34 @@ wss.on("connection", async (ws) => {
       if (data.type === "leave_room") {
         const roomName = data.room;
         const user = data.user;
-        console.log("data envoyé : ",roomName )
-        const resp = await axios.get(`api/getUsersFromRoom`,{
-         params : {
-          room : roomName
-         }
-        }) ;
-        const usersFound = resp.data;
-        console.log("message recu ",usersFound);
-        console.log("Type de usersFound :", typeof usersFound, usersFound);
-
-        if(usersFound.length === 1 && usersFound[0] == user)
-          {
-            const reponse = await axios.delete(`api/rooms`,{
-              data: { 
-                room: roomName,
-                user: data.user
-              }
+        
+        try {
+          const resp = await axios.get(`api/getUsersFromRoom`, { 
+            params: { room: roomName } 
+          });
+          
+          const usersFound = resp.data;
+      
+          // Correction 1: Vérification stricte du contenu
+          if(usersFound?.length === 1 && usersFound[0].toString() === user.toString()) {
+            console.log("Suppression de la room...");
+            await axios.delete(`api/rooms`, { 
+              data: { room: roomName } // Correction 2: Format correct
+            });
+          } else {
+            console.log("Suppression de l'utilisateur...");
+            await axios.post(`api/removeUserFromRoom`, { 
+              room: roomName,
+              user: user 
             });
           }
-        else {
-          const response = await axios.post(`api/removeUserFromRoom`, {
-            room : roomName,
-            user : data.user
-          })
+          
+          // Correction 3: Rafraîchir les données
+          await new Promise(resolve => setTimeout(resolve, 500));
+          this.updateRooms();
+      
+        } catch (error) {
+          console.error("Erreur traitement leave_room:", error);
         }
       }
   });
@@ -320,10 +346,6 @@ wss.on("connection", async (ws) => {
   ws.on("close", () => {
     console.log("Un utilisateur a quitté la room");
   });
-});
-
-app.listen(port, () => {
-  console.log(`Serveur Express démarré sur http://localhost:${port}`);
 });
 
 console.log(`Serveur WebSocket à l'écoute sur le port ${wsPort}`);
