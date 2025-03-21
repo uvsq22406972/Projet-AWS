@@ -94,16 +94,15 @@ class Rooms {
         const db = this.db.useDb("ProjetAWS"); 
 
         // Vérification explicite de la collection "Rooms"
-        const collectionExists = db.listCollections({ name: "Rooms" }).hasNext();
+        const collectionExists = await db.listCollections({ name: "Rooms" }).toArray();
         
         if (!collectionExists) {
             console.log("❌ Aucune collection 'Rooms' trouvée");
             return [];
         }
 
-        const roomsCollection = db.collection("Rooms");
-        const rooms = await roomsCollection.find({}).toArray();
-
+        const rooms = await db.collection("Rooms").find({}).toArray();
+        
         // 🔥 Validation des données pour éviter les erreurs
         return rooms.map(room => {
             if (!room.id || !Array.isArray(room.users)) {
