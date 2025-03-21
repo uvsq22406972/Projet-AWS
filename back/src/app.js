@@ -228,6 +228,7 @@ wss.on("connection", async (ws) => {
     console.log(`Message reçu: ${data.type}`);
 
     if (data.type === "create_room") {
+      
       if (!data.user) {
         ws.send(JSON.stringify({ 
           type: "error", 
@@ -354,31 +355,33 @@ wss.on("connection", async (ws) => {
       if (data.type === "leave_room") {
         const roomName = data.room;
         const user = data.user;
-        console.log("data envoyé : ",roomName )
-        const resp = await axios.get(`api/getUsersFromRoom`,{
-         params : {
-          room : roomName
-         }
-        }) ;
-        const usersFound = resp.data;
-        console.log("message recu ",usersFound);
-        console.log("Type de usersFound :", typeof usersFound, usersFound);
-
-        if(usersFound.length === 1 && usersFound[0] == user)
-          {
-            console.log ("Suppression de la room...");
-            const reponse = await axios.delete(`api/rooms`,{
-              data: { 
-                room: roomName,
-                user: data.user
-              }
+        
+        try {
+          const resp = await axios.get(`api/getUsersFromRoom`, { 
+            params: { room: roomName } 
+          });
+          
+          const usersFound = resp.data;
+      
+          // Correction 1: Vérification stricte du contenu
+          if(usersFound?.length === 1 && usersFound[0].toString() === user.toString()) {
+            console.log("Suppression de la room...");
+            await axios.delete(`api/rooms`, { 
+              data: { room: roomName } // Correction 2: Format correct
+            });
+          } else {
+            console.log("Suppression de l'utilisateur...");
+            await axios.post(`api/removeUserFromRoom`, { 
+              room: roomName,
+              user: user 
             });
           }
-        else {
-          const response = await axios.post(`api/removeUserFromRoom`, {
-            room : roomName,
-            user : data.user
-          })
+          
+          // Correction 3: Rafraîchir les données
+          await new Promise(resolve => setTimeout(resolve, 500));
+      
+        } catch (error) {
+          console.error("Erreur traitement leave_room:", error);
         }
       }
   });

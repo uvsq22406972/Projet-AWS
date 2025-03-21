@@ -1,6 +1,6 @@
 //Importation
 import React, { useState,useEffect } from 'react';
-import { FaUserCircle } from "react-icons/fa";
+import { FaUsers, FaUserCircle } from "react-icons/fa";
 import "./PagePrincipale.css";
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -17,6 +17,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [compte, setCompte] = useState([]);
   const [roomCode, setRoomCode] = useState("");   
+  const [publicRooms, setPublicRooms] = useState([]);
 
 
   //Pour avoir un couleur unique
@@ -89,46 +90,66 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
       console.error('Erreur lors de la récupération des infos du compte :', error);
     }
   }
+
+  const fetchPublicRooms = async () => {
+    try {
+      const response = await axios.get('/api/rooms/public');
+      setPublicRooms(response.data);
+    } catch (error) {
+      toast.error('Erreur lors du chargement des salles');
+    }
+  };
+
   // Exécution des fonctions asynchrones
   useEffect(() => {
+    const interval = setInterval(fetchPublicRooms, 3000);
     checkSession();
     fetchAccount();
+    fetchPublicRooms();
+    return () => clearInterval(interval);
     // eslint-disable-next-line
   }, []);
 
+  useEffect(() => {
+    if (roomCode) {
+      console.log("✅ Mise à jour de roomCode :", roomCode);
+      handleJoinRoom(roomCode);
+    }
+  }, []);
+
   //  on gère les inputs utilisateurs et on passe a la game Room 
-  const handleJoinRoom = () => {
-
-    const socket = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
-    localStorage.setItem("room", roomCode);
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log("data recu on message",data.message);
-        if (data.type === 'no_room') {
-          console.log("Aucune room trouvé");
-          toast.error("Aucun salle de jeu ne porte ce nom");
-
-        } else {
-          setCurrentPage('gameroom',roomCode );
-          socket.close();
-          console.log("connexion fermée");
-        }
-      };
-    //quand la connexion est faite
+  const handleJoinRoom = (roomName) => {
+    console.log("🛠 Tentative de connexion à la salle :", roomName);
+  
+    localStorage.setItem("room", roomName); // 🔥 On enregistre AVANT de changer de page
+    console.log("✅ localStorage mis à jour :", localStorage.getItem("room"));
+  
+    const socket = new WebSocket('ws://localhost:4002');
+    
     socket.onopen = () => {
-      console.log('Connexion WebSocket établie');
-      console.log("valeur récupérer :" , roomCode);
-      // Envoie du message pour rejoindre la room
-      socket.send(
-        JSON.stringify({
-          type: 'join_room',
-          room: roomCode,
-          user: compte.username,
-        })
-      );
-      
+      console.log('✅ Connexion WebSocket établie');
+      socket.send(JSON.stringify({
+        type: 'join_room',
+        room: roomName,
+        user: compte.username,
+      }));
+    };
+  
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("📥 Réponse du serveur :", data);
+  
+      if (data.type === 'no_room') {
+        console.log("❌ Aucune salle trouvée !");
+        toast.error("Aucune salle de jeu ne porte ce nom");
+      } else {
+        console.log("✅ Salle trouvée, changement de page !");
+        setCurrentPage('gameroom', roomName);
+        socket.close();
+      }
+    };
   };
-  }
+  
   //CSS par ChatGPT, pour un bootstrap plus effectif
   return (
     <div>
@@ -190,7 +211,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
                 onChange={(e) => setRoomCode(e.target.value)} value={roomCode}
                 className="form-control" placeholder="Code de la salle"/>
 
-                <button className="btn"  onClick={handleJoinRoom}
+                <button className="btn"  onClick={() => handleJoinRoom(roomCode)}
                 >Rejoindre</button>
               </div>
             </div>
@@ -211,9 +232,51 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
         </div>
         {/* Rejoindre salles existantes */}
         <div className="text-center mt-5">
-          <h4>Rejoindre directement les salles publiques ouvertes actuellement:</h4>
-          <button className="btn mt-3">AOSKP</button>
+          <h4>
+            <FaUsers className="me-2" />
+            Salles publiques actives
+          </h4>
+
+          {publicRooms.length === 0 ? (
+            <div className="text-muted mt-3">Aucune salle publique ouverte</div>
+          ) : (
+            <div className="container mt-3">
+              <div className="row gx-3"> {/* 🔥 Ajoute un espace horizontal entre les salles */}
+                {publicRooms.map((room) => (
+                  <div key={room.name} className="col-12 col-md-6 mb-3">
+                    <div 
+                      className="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 room-item border rounded"
+                      style={{ cursor: "pointer", padding: "10px 15px" }}
+                      onClick={() => handleJoinRoom(room.name)}
+                    >
+                      {/* Nom de la salle */}
+                      <span className="fw-bold text-center text-md-start">{room.name}</span>
+                
+                      {/* Conteneur aligné à droite sur PC */}
+                      <div className="d-flex flex-column flex-md-row justify-content-end align-items-center gap-3 mt-2 mt-md-0">
+                        {/* Icône + Texte joueurs alignés */}
+                        <div className="d-flex align-items-center text-muted" style={{ minWidth: "100px" }}>
+                          <FaUsers className="me-1" size={18} />
+                          {room.players} joueur{room.players > 1 ? 's' : ''}
+                        </div>
+                
+                        {/* Bouton Rejoindre */}
+                        <button 
+                          className="btn btn-sm btn-success"
+                          onClick={(e) => { e.stopPropagation(); handleJoinRoom(room.name); }}
+                          style={{ minWidth: "90px", backgroundColor: "#E98B2A", borderColor: "#E98B2A", color: "black", marginTop: "20px" }}
+                        >
+                          Rejoindre
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
       </div>
       {/* Bas de la page */}
       <footer className="py-3 fixed-bottom w-100 d-flex align-items-center" style={gradientStyle}>

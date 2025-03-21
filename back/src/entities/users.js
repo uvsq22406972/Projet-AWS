@@ -1,4 +1,5 @@
 const encrypt = require('../encrypt'); 
+
 class Users {
   // Constructeur de la classe en appelant une bdd
   constructor(db) {
@@ -48,7 +49,7 @@ class Users {
       if (user) {
         const motDePasse = user.password;
              //On vérifie que le mot de passe rentrer est identique a celui encrypté dans la bdd
-        if (encrypt.verifyPassword(password, motDePasse)) {
+        if (await encrypt.verifyPassword(password, motDePasse)) {
           console.log("OK");
           return true;
         } else {

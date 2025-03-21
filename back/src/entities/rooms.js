@@ -50,10 +50,10 @@ class Rooms {
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
   
       // Chercher une room où l'userId est présent dans le tableau "users"
-      const room = await col1.findOne({ users: userId });
-      console.log(room);
-      // Si une room est trouvée, retourne son nom
-      return room ? room.id : null;
+      return col1.findOne(
+        { users: userId },
+        { ...options, projection: { _id: 0, id: 1 } }
+      ).then(room => room?.id);
     } catch (err) {
       console.error("Erreur lors de la récupération du roomname :", err);
       throw err;
@@ -76,23 +76,86 @@ class Rooms {
   }
 
   async addUserToRoom(roomName, user) {
+    if (!user) {
+      console.log("User invalide, on n'ajoute pas.");
+      return; // on arrête la fonction
+    }
     const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
     await col1.updateOne(
-      { id: roomName }, // Filtre : Trouver la room par son id
-      { $addToSet: { users: user } } // Ajout du user dans le tableau
+      { id: roomName },
+      { $addToSet: { users: user } }
     );
     console.log("User ajouté");
   }
 
-  async removeUserFromRoom(roomName, user) {
-    const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
-    await col1.updateOne(
-      { id: roomName }, // Filtre : Trouver la room par son id
-      { $pull: { users: user } } // Supprime uniquement ce user du tableau
-    );
-    console.log("User removed");
-  }
+  async getAllRooms() {
+    let client;
+    try {
+      client = await this.db.connect();
+      const db = client.db("DB");
   
+      // Vérification explicite du nom de la collection (case-sensitive)
+      const collectionExists = await db.listCollections({ name: "Rooms" }).hasNext();
+      
+      if (!collectionExists) {
+        console.log("Aucune collection 'Rooms' trouvée");
+        return [];
+      }
+  
+      const roomsCollection = db.collection("Rooms");
+      const rooms = await roomsCollection.find({}).toArray();
+  
+      // Validation des données
+      return rooms.map(room => {
+        if (!room.id || !Array.isArray(room.users)) {
+          console.warn("Structure de room invalide:", room);
+          return { name: "Inconnue", players: 0 };
+        }
+        return {
+          name: room.id,
+          players: room.users.length
+        };
+      });
+  
+    } catch (error) {
+      console.error("Erreur critique dans getAllRooms:", error);
+      throw new Error("Impossible de charger les salles");
+    } finally {
+      if (client) {
+        await client.close();
+      }
+    }
+  }
+
+  async removeUserFromRoom(roomName, user) {
+    try {
+      const col = this.db.useDb("ProjetAWS").collection("Rooms");
+      
+      // Vérifier que la room existe
+      const roomExists = await col.findOne({ id: roomName });
+      if (!roomExists) {
+        console.error("Room non trouvée :", roomName);
+        return false;
+      }
+  
+      // Opération de mise à jour avec vérification
+      const result = await col.updateOne(
+        { id: roomName },
+        { 
+          $pull: { 
+            users: { $eq: user } // Syntaxe explicite
+          } 
+        }
+      );
+  
+      console.log("Résultat MongoDB:", JSON.stringify(result, null, 2));
+      return result.modifiedCount > 0;
+  
+    } catch (error) {
+      console.error("Erreur critique:", error.stack);
+      throw error;
+    }
+  }
   
 } 
 exports.default = Rooms;

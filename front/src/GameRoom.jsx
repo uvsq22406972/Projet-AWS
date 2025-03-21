@@ -11,6 +11,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
     const [compte, setCompte] = useState([]);
+    const [isCreatingRoom, setIsCreatingRoom] = useState(false);
     const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
     const [gameTime, setGameTime] = useState(10);
     const [livesLostThreshold, setLivesLostThreshold] = useState(2);
@@ -48,10 +49,11 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
           console.error('Erreur:', error);
           return false;
         }
-    }
+      }
 
     const connectWS = useCallback(() => {
-
+        if (isWebSocketOpen.current) return;
+        
         ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
 
         ws.current.onopen = () => {
@@ -112,8 +114,9 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const handleRoomLogic = async () => {
         if (!compte?.username || !isWebSocketOpen) return;
 
+        const currentRoom = localStorage.getItem("room");
         console.log("storedRoom =", storedRoom);
-        if (!storedRoom) {
+        if (!currentRoom) {
             await createRoom();
         } else {
             await joinRoom();
@@ -146,8 +149,19 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         }
     }, [compte, isWebSocketOpen]); // Déclenché quand compte ou WS change
 
+    useEffect(() => {
+        return () => {
+          if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.close(1000, "Navigation normale");
+          }
+          //localStorage.removeItem("room");
+        };
+    }, []);
+    
     // Créer une room
     const createRoom = useCallback(async () => {
+        if (isCreatingRoom) return;
+        setIsCreatingRoom(true);
         try {
             await safeSend({
                 type: "create_room",
@@ -156,9 +170,10 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         } catch (error) {
             console.error("Échec critique création room:", error);
             alert("Problème de connexion - Veuillez rafraîchir");
+        } finally {
+            setIsCreatingRoom(false);
         }
-    }, [compte.username, safeSend]);
-
+    }, [compte.username, safeSend, isCreatingRoom]);
 
 // pour ajouter un joueur au jeu
     const addPlayer = () => {
@@ -193,7 +208,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             const message = {
                 type: "join_room",
                 room: storedRoom,
-                user: userid,
+                user: compte.username,
             };
             ws.current.send(JSON.stringify(message));
 
@@ -213,7 +228,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
             return;
         }
-        
+
         console.log("Stored Room avant envoi :", storedRoom);
         if (!storedRoom) {
             console.warn("La room est vide, impossible d'envoyer la requête.");
@@ -228,24 +243,21 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     };
 
     const leaveRoom = () => {
-        if (!isWebSocketOpen || !ws.current) {
-          console.warn("WebSocket n'est pas ouvert, impossible de quitter la salle.");
-          return;
+        // Envoyer la requête "leave_room" au serveur
+        if (ws.current?.readyState === WebSocket.OPEN) {
+          ws.current.send(JSON.stringify({
+            type: "leave_room",
+            room: storedRoom,
+            user: compte.username
+          }));
         }
       
-        //le joueur quitte la salle envoyé au serveur
-        const message = {
-          type: "leave_room",
-          room: storedRoom,  
-          user: userid,  
-        };
-        ws.current.send(JSON.stringify(message));
-        console.log(`Le joueur ${userid} quitte la room ${storedRoom}`);
-        
-       // redirection
-        setCurrentPage("pagePrincipale");
+        // Reset complet avec callback
         localStorage.removeItem("room");
-      };
+        
+        setUsers([]);
+        setCurrentPage("pagePrincipale");
+    };
     
     const showPlayer = () => {
         fetchUsersInRoom();
