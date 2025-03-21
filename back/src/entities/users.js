@@ -45,6 +45,7 @@ class Users {
     }
   }
 
+  
   // Vérifie si le mot de passe correspond au mot de passe stocké en bdd
   async checkPassword(login, password) {
     try {
@@ -86,6 +87,21 @@ class Users {
       await this.db.close();
     }
   }
+
+    // Récupère un utilisateur via son pseudo (username)
+    async getEmail(email) {
+      try {
+        await this.db.connect();
+        const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+        const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
+        const user = await col1.findOne(query); 
+        return user;
+      } catch (err) {
+        throw err;
+      } finally {
+        await this.db.close();
+      }
+    }
 
   // Récupère tous les utilisateurs
   async getAllUsers() {
