@@ -2,6 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import CustomSlider from './CustomSlider.jsx';
 import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
+import { Carousel } from 'react-responsive-carousel';
+import 'react-responsive-carousel/lib/styles/carousel.min.css';
 
 const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const storedRoom = localStorage.getItem("room");
@@ -19,10 +21,14 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const ws = useRef(null);
     const reconnectTimer = useRef(null);
     const isWebSocketOpen = useRef(false);
+
     // Vérifier si une session est déjà ouverte
     const checkSession = async () => {
         try {
             const response = await axios.get('/api/session');
+            const user = await axios.get('/api/users/detail');
+
+            console.log("find the user according to the session id : ");
             setUserid(response.data.userid);
             setIsUserReady(true);
         } catch (error) {
@@ -72,6 +78,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
             if (message.type === 'generatedRoom') {
                 localStorage.setItem("room", message.room);
+                
                 setRoom(message.room);
                 setUsers(message.users);
             }
@@ -228,7 +235,17 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
             return;
         }
-
+        
+        ws.current.onmessage = (event) => {
+            const response = JSON.parse(event.data);
+            if (response.type === 'users_list') {
+                console.log('Utilisateurs mis à jour:', response.users);
+                
+                setUsers(response.users);
+            }
+            else if (response.type === "error"){console.log("oula");}
+            
+        };
         console.log("Stored Room avant envoi :", storedRoom);
         if (!storedRoom) {
             console.warn("La room est vide, impossible d'envoyer la requête.");
@@ -259,10 +276,10 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         setCurrentPage("pagePrincipale");
     };
     
-    const showPlayer = () => {
-        fetchUsersInRoom();
-        console.log(users);
-    }
+   // const showPlayer = () => {
+    //    fetchUsersInRoom();
+    //    console.log(users);
+    //}
 
     // Démarrer le jeu
     const startGame = () => {
@@ -275,31 +292,39 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     return (
         <div>
-        <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="container d-flex justify-content-center align-items-center">
-                <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)" }}>
-                    <h2 className="mb-4 fw-bold text-white">Salle de Jeu</h2>
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100">
 
-                    {/* Nom de la salle */}
-                    <div className="game-room-salle">
-                        {room || "Chargement..."}
-                    </div>
+        <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)", width: "400px" }}>
+            <h2 className="mb-4 fw-bold text-white">Salle de Jeu</h2>
 
-                    {/* Liste des utilisateurs */}
-                    <div className="text-start mb-4">
-                        <h4 className="text-white">Utilisateurs dans la room :</h4>
-                        <ul className="list-group">
-                        {Array.isArray(users) && users.length > 0 ? (
-                            users.map(element => (
-                            <li key={element} className="list-group-item">
-                                {element}
-                            </li>
-                            ))
-                        ) : (
-                            <li className="list-group-item text-muted">Aucun utilisateur pour l'instant</li>
-                        )}
-                        </ul>
-                    </div>
+            {/* Nom de la salle */}
+            <div className="game-room-salle mb-3 text-white">{room || "Chargement..."}</div>
+
+            {/* Liste des utilisateurs */}
+            <div className="text-start mb-4">
+                <h4 className="text-white">Utilisateurs dans la room :</h4>
+                <ul className="list-group">
+                    {Array.isArray(users) && users.length > 0 ? (
+                        users.map((element, index) => {
+                            const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
+                            const userColor = colors[index % colors.length];
+                            
+                            return (
+                                <li 
+                                    key={element} 
+                                    className="list-group-item" 
+                                    style={{ backgroundColor: userColor, color: "white", border: "none" }}
+                                >
+                                    {element}
+                                </li>
+                            );
+                        })
+                    ) : (
+                        <li className="list-group-item text-muted">Aucun utilisateur pour l'instant</li>
+                    )}
+                </ul>
+            </div>
+
 
                     {/* Nb de vies */}
                     <div style={{ margin: '20px 0' }}>
@@ -340,28 +365,14 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                       />
                     </div>
 
-                    {/* Bouton démarrer */}
-                    <button className="custom-btn w-100" onClick={startGame}>
-                        Démarrer le jeu
-                    </button>
-                    <button className="custom-btn w-100 mt-3" onClick={leaveRoom}>
-                        Quitter la salle
-                    </button>
-
-                </div>
-            </div>
-
-            {/* Bouton ajouter un joueur */}
-            <button className="custom-btn w-100 mt-3" onClick={addPlayer}>
-                Ajouter un joueur
-            </button>
-
-             {/* Bouton afficher les jouers */}
-             <button className="custom-btn w-100 mt-3" onClick={showPlayer}>
-                Show joueurs
-            </button>
+            {/* Boutons */}
+            <button className="custom-btn w-100 mb-3" onClick={startGame}>Démarrer le jeu</button>
+            <button className="custom-btn w-100 mb-3" onClick={leaveRoom}>Quitter la salle</button>
+            <button className="custom-btn w-100" onClick={addPlayer}>Ajouter un joueur</button>
         </div>
     </div>
+</div>
+
     );
 };
 

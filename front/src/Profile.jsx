@@ -5,6 +5,10 @@ import "./Profile.css";
 import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-responsive-carousel/lib/styles/carousel.min.css';
+import { createAvatar } from '@dicebear/core';
+import { avataaars } from '@dicebear/collection';
+
 //Connexion avec le back
 axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
@@ -16,12 +20,46 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [compte, setCompte] = useState([]);
 
+  // États pour les choix de l'utilisateur
+  const [hairType, setHairType] = useState('shortFlat');
+  const [hairColor, setHairColor] = useState('2c1b18');
+  const [accessories, setAccessories] = useState('none');
+  const [facialHair, setFacialHair] = useState('none');
+  const [clothes, setClothes] = useState('shirtCrewNeck');
+  const [eyes, setEyes] = useState('default');
+  const [eyebrows, setEyebrows] = useState('default');
+  const [mouth, setMouth] = useState('default');
+  const [skinColor, setSkinColor] = useState('edb98a');
+  const [facialHairColor, setFacialHairColor] = useState('2c1b18');
+  const [clothesColor, setClothesColor] = useState('3c4f5c');
+  const [svgDataUri, setSvgDataUri] = useState('');
+
+  // État pour gérer la catégorie avatar active
+  const [selectedCategory, setSelectedCategory] = useState('coiffure');
+
   // États pour la modification du mot de passe
   const [email, setEmail] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [message, setMessage] = useState('');
+
+  //Couleur du clavier
+  const [keyboardColor, setKeyboardColor] = useState("#FFFFFF");
+  const [showColors, setShowColors] = useState(false);
+
+  const colors = [
+    { name: "Rouge", hex: "#FF0000" },
+    { name: "Bleu", hex: "#0000FF" },
+    { name: "Vert", hex: "#008000" },
+    { name: "Jaune", hex: "#FFFF00" },
+    { name: "Rose", hex: "#FFC0CB" },
+    { name: "Violet", hex: "#800080" },
+    { name: "Orange", hex: "#FFA500" },
+    { name: "Marron", hex: "#A52A2A" },
+    { name: "Gris", hex: "#808080" },
+    { name: "Noir", hex: "#000000" }
+  ];
 
   //Pour avoir une couleur unique
   const gradientStyle = {
@@ -69,27 +107,28 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   // Récupérer les attributs de la collection Compte sous forme array
   async function fetchAccount() {
     try {
-      // Récupérer les attributs dans la bdd
       const response = await axios.get('/api/users/all');
       const fetchedAccount = response.data;
-
-      // Récupérer le userid dans la session
-      const responses = await axios.get('/api/session');
-      let userid = responses.data.userid;
-
-      // Initialiser les valeurs de chaque attribut
-      const Account = fetchedAccount.map(account => ({
-        _id: account._id,
-        username: account.username,
-        password: account.password,
-      }));
-
-      // Si des comptes existent dans la BDD
-      if (Account.length > 0) {
-        const selectedAccount = Account.find((account) => account._id === userid);
-        setCompte(selectedAccount);
+  
+      const userid = (await axios.get('/api/session')).data.userid;
+      const selectedAccount = fetchedAccount.find(account => account._id === userid);
+  
+      if (selectedAccount?.avatarSettings) {
+        // Initialiser les états avec les paramètres sauvegardés
+        setHairType(selectedAccount.avatarSettings.hairType || 'shortFlat');
+        setHairColor(selectedAccount.avatarSettings.hairColor || '2c1b18');
+        setAccessories(selectedAccount.avatarSettings.accessories || 'none');
+        setFacialHair(selectedAccount.avatarSettings.facialHair || 'none');
+        setClothes(selectedAccount.avatarSettings.clothes || 'shirtCrewNeck');
+        setEyes(selectedAccount.avatarSettings.eyes || 'default');
+        setEyebrows(selectedAccount.avatarSettings.eyebrows || 'default');
+        setMouth(selectedAccount.avatarSettings.mouth || 'default');
+        setSkinColor(selectedAccount.avatarSettings.skinColor || 'edb98a');
+        setFacialHairColor(selectedAccount.avatarSettings.facialHairColor || '2c1b18');
+        setClothesColor(selectedAccount.avatarSettings.clothesColor || '3c4f5c');
       }
-
+  
+      setCompte(selectedAccount || {});
     } catch (error) {
       console.error('Erreur lors de la récupération des infos du compte :', error);
     }
@@ -172,6 +211,11 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     }
   };
 
+  const changeKeyboardColor = (color) => {
+    setKeyboardColor(color);
+    localStorage.setItem("keyboardColor", color); // Sauvegarde la couleur pour GamePage
+  };
+
   // Exécution des fonctions asynchrones
   useEffect(() => {
     checkSession();
@@ -179,11 +223,356 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     // eslint-disable-next-line
   }, []);
 
+  const handleSaveAvatar = async () => {
+
+    if (!email) {
+      toast.error("Connectez-vous avant de sauvegarder");
+      return;
+    }
+  
+    const accessoriesParam = accessories === "none" ? [] : [accessories];
+    const facialHairParam = facialHair === "none" ? [] : [facialHair];
+    
+    const svg = createAvatar(avataaars, {
+      size: 200,
+      top: [hairType],
+      hairColor: [hairColor],
+      accessories: accessoriesParam,
+      accessoriesProbability: accessoriesParam.length > 0 ? 100 : 0,
+      facialHair: [facialHair],
+      facialHairProbability: facialHairParam.length > 0 ? 100 : 0,
+      clothing: [clothes],
+      eyes: [eyes],
+      eyebrows: [eyebrows],
+      mouth: [mouth],
+      skinColor: [skinColor],
+      facialHairColor: [facialHairColor],
+      clothesColor: [clothesColor]
+    });
+
+    try {
+      await axios.post('/api/save-avatar', {
+        avatar: svg.toDataUri(),
+        avatarSettings: { // Ajoutez ceci
+          hairType,
+          hairColor,
+          accessories,
+          facialHair,
+          clothes,
+          eyes,
+          eyebrows,
+          mouth,
+          skinColor,
+          facialHairColor,
+          clothesColor
+        },
+        email: email
+      });
+      toast.success("Avatar sauvegardé !");
+    } catch (error) {
+      console.error("Erreur sauvegarde :", error);
+      toast.error("Échec de la sauvegarde");
+    }
+  };
+
+  useEffect(() => {
+    const generateAvatar = () => {
+      const accessoriesParam = accessories === "none" ? [] : [accessories];
+      const facialHairParam = facialHair === "none" ? [] : [facialHair];
+      const svg = createAvatar(avataaars, {
+        size: 200,
+        top: [hairType],            // Coiffure
+        hairColor: [hairColor],     // Couleur de cheveux
+        accessories: accessoriesParam, // Accessoires (lunettes, etc.)
+        accessoriesProbability: accessoriesParam.length > 0 ? 100 : 0, // 100% de chance d'avoir l'accessoire
+        facialHair: [facialHair],
+        facialHairProbability: facialHairParam.length > 0 ? 100 : 0, // 100% de chance d'avoir une pilosité faciale
+        clothing: [clothes],
+        eyes: [eyes],
+        eyebrows: [eyebrows],
+        mouth: [mouth],
+        skinColor: [skinColor],
+        facialHairColor: [facialHairColor],
+        clothesColor: [clothesColor]
+      });
+
+      // 4. Convertit le résultat en Data URI pour l’afficher
+      const avatarDataUri = svg.toDataUri();
+      setSvgDataUri(avatarDataUri); //  
+      console.log(svg.toDataUri());
+    };
+
+    generateAvatar();
+  }, [
+    hairType, hairColor, accessories, facialHair, clothes,
+    eyes, eyebrows, mouth, skinColor, facialHairColor, clothesColor, email
+  ]);
+
+  useEffect(() => {
+    if (compte.avatarSettings) {
+      setHairType(compte.avatarSettings.hairType || 'shortFlat');
+      setHairColor(compte.avatarSettings.hairColor || '2c1b18');
+      setAccessories(compte.avatarSettings.accessories || 'none');
+      setFacialHair(compte.avatarSettings.facialHair || 'none');
+      setClothes(compte.avatarSettings.clothes || 'shirtCrewNeck');
+      setEyes(compte.avatarSettings.eyes || 'default');
+      setEyebrows(compte.avatarSettings.eyebrows || 'default');
+      setMouth(compte.avatarSettings.mouth || 'default');
+      setSkinColor(compte.avatarSettings.skinColor || 'edb98a');
+    }
+  }, [compte]);
+
+  useEffect(() => {
+    if (email) { // S'assurer que l'email est disponible
+      axios.get('/api/get-avatar', { params: { email: email } })
+        .then(response => {
+          if (response.data.avatar) {
+            setSvgDataUri(response.data.avatar);
+          }
+        })
+        .catch(error => {
+          console.error("Erreur lors de la récupération de l'avatar :", error);
+        });
+    }
+  }, [email]); // Déclencher uniquement quand `email` change
+
+  const getCategoryLabel = (cat) => {
+    const labels = {
+      teint: '🎨 Teint',
+      coiffure: '💇 Coiffure',
+      vetements: '👕 Vêtements',
+      yeux: '👀 Yeux',
+      sourcils: '✏️ Sourcils',
+      bouche: '👄 Bouche',
+      pilosite: '🧔 Pilosité',
+      accessoires: '🕶️ Accessoires'
+    };
+    return labels[cat] || cat;
+  };
+
+  const renderCategoryContent = () => {
+    switch(selectedCategory) {
+      case 'teint':
+        return (
+          <div className="option-category">
+            <h3>Teint</h3>
+            <div className="options-row">
+              {['614335', 'ae5d29', 'd08b5b', 'edb98a', 'f8d25c', 'fd9841', 'ffdbb4'].map((color) => (
+              <button
+                  key={color}
+                  className={`color-option ${skinColor === color ? 'selected' : ''}`}
+                  style={{ backgroundColor: `#${color}`, border: skinColor === color ? '2px solid black' : 'none' }}
+                  onClick={() => setSkinColor(color)}
+                />
+              ))}
+            </div>
+          </div>     
+        );
+      case 'coiffure':
+        return (
+          <>
+            <div className="option-category">
+              <h3>Coiffure</h3>
+              <div className="options-grid">
+                {[
+                  "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
+                  'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
+                  'sides', 'theCaesar', 'shortCurly',
+                  'turban', 'winterHat03', 'winterHat02'
+                ].map((style) => (
+                  <button
+                    key={style}
+                    className={`style-option ${hairType === style ? 'selected' : ''}`}
+                    onClick={() => setHairType(style)}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="option-category">
+              <h3>Couleur des cheveux</h3>
+              <div className="options-row">
+                {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
+                <button
+                    key={color}
+                    className={`color-option ${hairColor === color ? 'selected' : ''}`}
+                    style={{ backgroundColor: `#${color}`, border: hairColor === color ? '2px solid black' : 'none' }}
+                    onClick={() => setHairColor(color)}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        );
+      case 'vetements':
+        return (
+          <>
+            <div className="option-category">
+              <h3>Vêtements</h3>
+              <div className="options-grid">
+                {[
+                  "blazerAndShirt", 'blazerAndSweater', 'collarAndSweater',
+                  'graphicShirt', 'shirtVNeck', 'hoodie',
+                  'shirtCrewNeck', 'shirtScoopNeck', 'overall',
+                ].map((style) => (
+                  <button
+                    key={style}
+                    className={`style-option ${clothes === style ? 'selected' : ''}`}
+                    onClick={() => setClothes(style)}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="option-category">
+              <h3>Couleur du vêtement</h3>
+              <div className="options-row">
+                {['3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1', 'ffffff'].map((color) => (
+                <button
+                    key={color}
+                    className={`color-option ${clothesColor === color ? 'selected' : ''}`}
+                    style={{ backgroundColor: `#${color}`, border: clothesColor === color ? '2px solid black' : 'none' }}
+                    onClick={() => setClothesColor(color)}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        );
+      case 'yeux':
+        return (
+          <div className="option-category">
+            <h3>Yeux</h3>
+            <div className="options-grid">
+              {[
+                'default', "cry", 'closed',
+                'eyeRoll', 'happy', 'hearts', 'side',
+                'squint', 'surprised', 'wink', 'xDizzy'
+              ].map((style) => (
+                <button
+                  key={style}
+                  className={`style-option ${eyes === style ? 'selected' : ''}`}
+                  onClick={() => setEyes(style)}
+                >
+                  {style}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 'sourcils':
+        return (
+          <div className="option-category">
+            <h3>Sourcils</h3>
+            <div className="options-grid">
+              {[
+                'default', "angry", 'frownNatural',
+                'raisedExcited', 'upDown',
+                'sadConcerned', 'unibrowNatural',
+              ].map((style) => (
+                <button
+                  key={style}
+                  className={`style-option ${eyebrows === style ? 'selected' : ''}`}
+                  onClick={() => setEyebrows(style)}
+                >
+                  {style}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 'bouche':
+        return (
+          <div className="option-category">
+            <h3>Bouche</h3>
+            <div className="options-grid">
+              {[
+                'default', "concerned", 'disbelief',
+                'eating', 'sad',
+                'serious', 'smile', 'tongue',
+              ].map((style) => (
+                <button
+                  key={style}
+                  className={`style-option ${mouth === style ? 'selected' : ''}`}
+                  onClick={() => setMouth(style)}
+                >
+                  {style}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 'pilosite':
+        return (
+          <>
+            <div className="option-category">
+              <h3>Pilosité faciale</h3>
+              <div className="options-grid">
+                {[
+                  'none', "blank", 'beardMedium',
+                  'beardLight', 'beardMajestic',
+                  'moustacheFancy', 'moustacheMagnum',
+                ].map((style) => (
+                  <button
+                    key={style}
+                    className={`style-option ${facialHair === style ? 'selected' : ''}`}
+                    onClick={() => setFacialHair(style)}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="option-category">
+              <h3>Couleur de la pilosité faciale</h3>
+              <div className="options-row">
+                {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
+                <button
+                    key={color}
+                    className={`color-option ${facialHairColor === color ? 'selected' : ''}`}
+                    style={{ backgroundColor: `#${color}`, border: facialHairColor === color ? '2px solid black' : 'none' }}
+                    onClick={() => setFacialHairColor(color)}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        );
+
+        case 'accessoires':
+          return (
+            <div className="option-category">
+              <h3>Accessoires</h3>
+              <div className="options-grid">
+                {[
+                  'none', "eyepatch", 'kurt',
+                  'prescription01', 'prescription02', 'round',
+                  'sunglasses', 'wayfarers'
+                ].map((style) => (
+                  <button
+                    key={style}
+                    className={`style-option ${accessories === style ? 'selected' : ''}`}
+                    onClick={() => setAccessories(style)}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+      default:
+        return null;
+    }
+  };
+
   // Affichage des différentes sections
   function renderRightContent() {
     // Affichage menu info du compte
     if (activeSection === 'info') {
       return (
+        
         <div id="section-info" className="mb-5">
           <h3 className="mb-4">Information du compte</h3>
           <form>
@@ -199,7 +588,77 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         </div>
       );
     // Affichage menu modifier le mot de passe
-    } else if (activeSection === 'password') {
+    } else if (activeSection === 'avatar') {
+      return (
+        <div id="section-avatar" className="mb-5">
+          <div className="avatar-section" >
+            <h2 className="section-title">Personnaliser ton Avatar</h2>
+            <div className="avatar-preview">
+              {/* Affiche l'avatar si svgDataUri n'est pas vide */}
+              {svgDataUri ? (
+                <img 
+                  src={svgDataUri} 
+                  alt="DiceBear Avataaars" 
+                  style={{ width: 150, height: 150 }}
+                />
+              ) : (
+                <p>Chargement de l'avatar...</p>
+              )}
+            </div>
+            <div className="category-scroller">
+              <div className="category-tabs">
+                {['teint', 'coiffure', 'vetements', 'yeux', 'sourcils', 'bouche', 'pilosite', 'accessoires'].map((cat) => (
+                  <button
+                    key={cat}
+                    className={`tab ${selectedCategory === cat ? 'active' : ''}`}
+                    onClick={() => setSelectedCategory(cat)}
+                  >
+                    {getCategoryLabel(cat)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="category-content">
+              {renderCategoryContent()}
+            </div>
+            <button onClick={handleSaveAvatar}>Ok</button>
+          </div>
+        </div>
+      );
+    } else if (activeSection === 'clavier') {
+      return (
+        <div id="section-clavier" className="mb-5">
+          <label className="form-label fw-semibold">Customisation clavier</label>
+          <div className="mb-2"></div>
+          <button type="button" className="btn btn-secondary" onClick={() => setShowColors(!showColors)}>Choisir une couleur</button>
+          {showColors && (
+            <div className="color-options">
+              {colors.map((color) => (
+                <button
+                  key={color.name}
+                  onClick={() => {
+                    changeKeyboardColor(color.hex);
+                    setShowColors(false); // Fermer la palette de couleurs après sélection
+                  }}
+                  style={{
+                    backgroundColor: color.hex,
+                    color: color.hex === "#FFFF00" ? "black" : "white",
+                    padding: "10px",
+                    margin: "5px",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {color.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
+    
+    else if (activeSection === 'password') {
       return (
         <div id="section-password" className="mb-5">
           <h3 className="mb-4">Modifier votre mot de passe</h3>
@@ -332,6 +791,12 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           <div className="col-md-3">
             <div className={`menu-box mb-3 ${activeSection === 'info' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('info')}>
               <strong>Information du compte</strong>
+            </div>
+            <div className={`menu-box mb-3 ${activeSection === 'avatar' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('avatar')}>
+              <strong>Personnaliser votre avatar</strong>
+            </div>
+            <div className={`menu-box mb-3 ${activeSection === 'clavier' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('clavier')}>
+              <strong>Personnaliser votre clavier</strong>
             </div>
             <div className={`menu-box mb-3 ${activeSection === 'password' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('password')}>
               <strong>Modifier votre mot de passe</strong>

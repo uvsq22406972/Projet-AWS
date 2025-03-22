@@ -19,6 +19,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const [roomCode, setRoomCode] = useState("");   
   const [publicRooms, setPublicRooms] = useState([]);
 
+  const [userCoins, setUserCoins] = useState(0); 
 
   //Pour avoir un couleur unique
   const gradientStyle = {
@@ -78,12 +79,14 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
         _id: account._id,
         username: account.username,
         password: account.password,
+        avatar: account.avatar
       }));
 
       // Si des comptes existent dans la BDD
       if (Account.length > 0) {
         const selectedAccount = Account.find((account) => account._id === userid);
         setCompte(selectedAccount);
+        setUserCoins(selectedAccount.coins);
       }
 
     } catch (error) {
@@ -163,7 +166,23 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           </div>
           {/* Hover menu choix utilisateur */}
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
+            <span className="text-white me-4">{userCoins} Pièces</span>
+            {compte.avatar ? (
+              <img 
+                src={compte.avatar} 
+                alt="Avatar utilisateur" 
+                className="me-3"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  border: '2px solid black',
+                  backgroundColor: "grey"
+                }}
+              />
+            ) : (
             <FaUserCircle size={40} className="me-3 text-white"/>
+            )}
             <span className="text-white">{compte.username}</span>
             {/* Affichage menu choix utilisateur */}
             <div className="hover-box position-absolute">
