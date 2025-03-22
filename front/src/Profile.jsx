@@ -371,25 +371,25 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       case 'coiffure':
         return (
           <>
-            <div className="option-category">
-              <h3>Coiffure</h3>
-              <div className="options-grid">
-                {[
-                  "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
-                  'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
-                  'sides', 'theCaesar', 'shortCurly',
-                  'turban', 'winterHat03', 'winterHat02'
-                ].map((style) => (
-                  <button
-                    key={style}
-                    className={`style-option ${hairType === style ? 'selected' : ''}`}
-                    onClick={() => setHairType(style)}
-                  >
-                    {style}
-                  </button>
-                ))}
+              <div className="option-category">
+                <h3>Coiffure</h3>
+                <div className="coiffure-grid">
+                  {[
+                    "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
+                    'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
+                    'sides', 'theCaesar', 'shortCurly',
+                    'turban', 'winterHat03', 'winterHat02'
+                  ].map((style) => (
+                    <button
+                      key={style}
+                      className={`style-option ${hairType === style ? 'selected' : ''}`}
+                      onClick={() => setHairType(style)}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
             <div className="option-category">
               <h3>Couleur des cheveux</h3>
               <div className="options-row">
@@ -511,7 +511,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
               <h3>Pilosité faciale</h3>
               <div className="options-grid">
                 {[
-                  'none', "blank", 'beardMedium',
+                  'none', 'beardMedium',
                   'beardLight', 'beardMajestic',
                   'moustacheFancy', 'moustacheMagnum',
                 ].map((style) => (

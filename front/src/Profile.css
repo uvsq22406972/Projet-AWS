@@ -292,3 +292,23 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1rem;
 }
+
+/* Conteneur de la grille */
+.coiffure-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 colonnes */
+  gap: 12px; /* Espacement entre les éléments */
+  max-height: 250px; /* Hauteur pour 3 lignes (ajustez selon votre design) */
+  overflow-y: auto; /* Scroll vertical si besoin */
+  padding-right: 8px; /* Évite le chevauchement avec la scrollbar */
+}
+
+/* Style de la scrollbar (optionnel) */
+.coiffure-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.coiffure-grid::-webkit-scrollbar-thumb {
+  background: #888; 
+  border-radius: 4px;
+}
