@@ -19,6 +19,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const [roomCode, setRoomCode] = useState("");   
   const [publicRooms, setPublicRooms] = useState([]);
 
+  const [userCoins, setUserCoins] = useState(0); 
 
   //Pour avoir un couleur unique
   const gradientStyle = {
@@ -85,6 +86,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
       if (Account.length > 0) {
         const selectedAccount = Account.find((account) => account._id === userid);
         setCompte(selectedAccount);
+        setUserCoins(selectedAccount.coins);
       }
 
     } catch (error) {
@@ -164,6 +166,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           </div>
           {/* Hover menu choix utilisateur */}
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
+            <span className="text-white me-4">{userCoins} Pièces</span>
             {compte.avatar ? (
               <img 
                 src={compte.avatar} 
