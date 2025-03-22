@@ -524,7 +524,6 @@ router.get('/getRoomFromUsers', async (req, res) => {
     }
   });
   
-
   return router;
 }
 

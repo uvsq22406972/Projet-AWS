@@ -123,8 +123,7 @@ class Users {
     // Récupère le nombre de pièces d'un utilisateur via son email
   async getCoins(email) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const user = await col1.findOne({ _id: email });
       if (user) {
         return user.coins;
@@ -132,15 +131,12 @@ class Users {
       return 0; // Retourne 0 si l'utilisateur n'existe pas
     } catch (err) {
       throw err;
-    } finally {
-      await this.db.close();
     }
   }
     // Met à jour le nombre de pièces d'un utilisateur
   async updateCoins(email, newCoinCount) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const result = await col1.updateOne(
         { _id: email },
         { $set: { coins: newCoinCount } }
@@ -151,15 +147,12 @@ class Users {
     } catch (error) {
       console.error("Erreur lors de la mise à jour des pièces :", error);
       throw error;
-    } finally {
-      await this.db.close();
     }
   }
     // Ajoute ou soustrait des pièces d'un utilisateur
   async modifyCoins(email, amount) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const result = await col1.updateOne(
         { _id: email },
         { $inc: { coins: amount } } // Utilisation de $inc pour incrémenter ou décrémenter
@@ -170,8 +163,6 @@ class Users {
     } catch (error) {
       console.error("Erreur lors de la modification des pièces :", error);
       throw error;
-    } finally {
-      await this.db.close();
     }
   }
 
@@ -210,8 +201,7 @@ class Users {
 
   async saveAvatar(email, avatar, avatarSettings) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
   
       // Met à jour l'avatar de l'utilisateur dans la base de données
       const result = await col1.updateOne(
@@ -225,8 +215,6 @@ class Users {
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'avatar :", error);
       throw error;
-    } finally {
-      await this.db.close();
     }
   }
 }
