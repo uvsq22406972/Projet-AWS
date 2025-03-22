@@ -80,7 +80,7 @@ class Users {
     // Récupère un utilisateur via son pseudo (username)
     async getEmail(email) {
       try {
-        const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+        const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
         const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
         const user = await col1.findOne(query); 
         return user;
