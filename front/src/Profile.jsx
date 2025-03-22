@@ -372,25 +372,25 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         return (
           <>
             <div className="option-category">
-              <h3>Coiffure</h3>
-              <div className="options-grid">
-                {[
-                  "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
-                  'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
-                  'sides', 'theCaesar', 'shortCurly',
-                  'turban', 'winterHat03', 'winterHat02'
-                ].map((style) => (
-                  <button
-                    key={style}
-                    className={`style-option ${hairType === style ? 'selected' : ''}`}
-                    onClick={() => setHairType(style)}
-                  >
-                    {style}
-                  </button>
-                ))}
+                <h3>Coiffure</h3>
+                <div className="coiffure-grid">
+                  {[
+                    "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
+                    'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
+                    'sides', 'theCaesar', 'shortCurly',
+                    'turban', 'winterHat03', 'winterHat02'
+                  ].map((style) => (
+                    <button
+                      key={style}
+                      className={`style-option ${hairType === style ? 'selected' : ''}`}
+                      onClick={() => setHairType(style)}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="option-category">
+              <div className="option-category">
               <h3>Couleur des cheveux</h3>
               <div className="options-row">
                 {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
@@ -511,7 +511,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
               <h3>Pilosité faciale</h3>
               <div className="options-grid">
                 {[
-                  'none', "blank", 'beardMedium',
+                  'none', 'beardMedium',
                   'beardLight', 'beardMajestic',
                   'moustacheFancy', 'moustacheMagnum',
                 ].map((style) => (
@@ -754,7 +754,22 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             bran.fun
           </div>
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
+            {compte.avatar ? (
+              <img 
+                src={compte.avatar} 
+                alt="Avatar utilisateur" 
+                className="me-3"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  border: '2px solid black',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)'
+                }}
+              />
+            ) : (
             <FaUserCircle size={40} className="me-3 text-white"/>
+            )}
             <span className="text-white">{compte.username}</span>
             {/* Affichage menu choix utilisateur */}
             <div className="hover-box position-absolute">

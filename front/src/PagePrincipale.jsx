@@ -177,7 +177,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
                   height: '40px',
                   borderRadius: '50%',
                   border: '2px solid black',
-                  backgroundColor: "grey"
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)'
                 }}
               />
             ) : (
