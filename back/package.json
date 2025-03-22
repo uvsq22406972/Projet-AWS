@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@dicebear/collection": "^9.2.2",
+    "avataaars": "^2.0.0",
     "axios": "^1.7.9",
     "back": "file:",
     "bcrypt": "^5.1.1",

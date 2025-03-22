@@ -463,6 +463,49 @@ router.get('/getRoomFromUsers', async (req, res) => {
     });
   });
 
+  router.post('/save-avatar', async (req, res) => {
+    const { avatar, avatarSettings, email } = req.body;
+  
+    if (!avatar || !email) {
+      return res.status(400).send({ message: "Avatar et email sont requis" });
+    }
+  
+    try {
+      const user = await users.getEmail(email);  // Récupère l'utilisateur par son email
+      if (!user) {
+        return res.status(404).send({ message: "Utilisateur non trouvé" });
+      }
+  
+      // Sauvegarder l'avatar dans la base de données
+      await users.saveAvatar(email, avatar, avatarSettings);
+  
+      res.status(200).send({ message: "Avatar sauvegardé avec succès" });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde de l'avatar :", error);
+      res.status(500).send({ message: "Erreur serveur lors de la sauvegarde de l'avatar" });
+    }
+  });
+
+  router.get('/get-avatar', async (req, res) => {
+    const { email } = req.query;
+  
+    if (!email || !isEmailValid(email)) { // Utilisez la fonction de validation existante
+      return res.status(400).send({ message: "Email invalide ou manquant" });
+    }
+  
+    try {
+      const user = await users.getEmail(email);
+      if (!user) {
+        return res.status(404).send({ message: "Utilisateur non trouvé" });
+      }
+      res.status(200).send({ avatar: user.avatar || "" }); // Renvoyer une valeur par défaut si nécessaire
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'avatar :", error);
+      res.status(500).send({ message: "Erreur serveur" });
+    }
+  });
+  
+
   return router;
 }
 

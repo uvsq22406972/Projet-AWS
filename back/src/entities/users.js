@@ -171,6 +171,28 @@ class Users {
       await this.db.close();
     }
   }
+
+  async saveAvatar(email, avatar, avatarSettings) {
+    try {
+      await this.db.connect();
+      const col1 = this.db.db("DB").collection("Compte");
+  
+      // Met à jour l'avatar de l'utilisateur dans la base de données
+      const result = await col1.updateOne(
+        { _id: email },
+        { $set: { avatar, avatarSettings } }
+      );
+  
+      if (result.modifiedCount === 0) {
+        throw new Error("La mise à jour de l'avatar a échoué.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'avatar :", error);
+      throw error;
+    } finally {
+      await this.db.close();
+    }
+  }
 }
 
 exports.default = Users;

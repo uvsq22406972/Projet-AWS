@@ -78,6 +78,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
         _id: account._id,
         username: account.username,
         password: account.password,
+        avatar: account.avatar
       }));
 
       // Si des comptes existent dans la BDD
@@ -163,7 +164,22 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           </div>
           {/* Hover menu choix utilisateur */}
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
+            {compte.avatar ? (
+              <img 
+                src={compte.avatar} 
+                alt="Avatar utilisateur" 
+                className="me-3"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  border: '2px solid black',
+                  backgroundColor: "grey"
+                }}
+              />
+            ) : (
             <FaUserCircle size={40} className="me-3 text-white"/>
+            )}
             <span className="text-white">{compte.username}</span>
             {/* Affichage menu choix utilisateur */}
             <div className="hover-box position-absolute">

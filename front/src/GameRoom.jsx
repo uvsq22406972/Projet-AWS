@@ -21,19 +21,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const ws = useRef(null);
     const reconnectTimer = useRef(null);
     const isWebSocketOpen = useRef(false);
-    const [selectedAvatar, setSelectedAvatar] = useState(null)
-
-    // Chemins des avatars (placer ces images dans public/images)
-    const avatars = [
-        '/images/avatar1.jpg',
-        '/images/avatar2.jpg',
-        '/images/avatar3.jpg',
-        '/images/avatar4.jpg',
-        '/images/avatar5.jpg',
-        '/images/avatar6.jpg',
-        '/images/avatar7.jpg',
-        '/images/avatar8.jpg'
-    ];
 
     // Vérifier si une session est déjà ouverte
     const checkSession = async () => {
@@ -72,11 +59,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     const connectWS = useCallback(() => {
         if (isWebSocketOpen.current) return;
-
-        const savedAvatar = localStorage.getItem('selectedAvatar');
-        if (savedAvatar) {
-            setSelectedAvatar(savedAvatar);
-        }
         
         ws.current = new WebSocket("ws://localhost:4002");
 
@@ -308,31 +290,9 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
     };
 
-    // Fonction pour sélectionner un avatar
-    const handleAvatarSelect = (avatar) => {
-        setSelectedAvatar(avatar); // Met à jour l'état local
-        localStorage.setItem('selectedAvatar', avatar); // Enregistre l'avatar dans localStorage
-    };
-
     return (
         <div>
     <div className="d-flex flex-column justify-content-center align-items-center vh-100">
-        {/* Carrousel d'avatars */}
-        <div className="w-96 mb-4">  {/* Limite la largeur à 24rem */}
-            <Carousel showThumbs={false} infiniteLoop autoPlay>
-                {avatars.map((avatar, index) => (
-                    <div key={index} className="flex justify-center items-center">
-                        <img 
-                                    src={avatar} 
-                                    alt={`Avatar ${index + 1}`}
-                                    className={`rounded-full border-4 border-gray-400 object-cover cursor-pointer ${selectedAvatar === avatar ? 'ring-4 ring-blue-500' : ''}`}
-                                    style={{ width: "250px", height: "250px", borderRadius: "50%", border: "2px solid black", marginTop: "60px" }}
-                                    onClick={() => handleAvatarSelect(avatar)} // Ajout de l'événement onClick
-                                />
-                    </div>
-                ))}
-            </Carousel>
-        </div>
 
         <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)", width: "400px" }}>
             <h2 className="mb-4 fw-bold text-white">Salle de Jeu</h2>
@@ -356,14 +316,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                                     style={{ backgroundColor: userColor, color: "white", border: "none" }}
                                 >
                                     {element}
-                                    {selectedAvatar && (
-                                                <img 
-                                                    src={selectedAvatar} 
-                                                    alt="Avatar"
-                                                    className="rounded-full ml-2"
-                                                    style={{ width: "30px", height: "30px" }}
-                                                />
-                                            )}
                                 </li>
                             );
                         })
