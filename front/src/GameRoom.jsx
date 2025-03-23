@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
-import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 
 const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
@@ -179,7 +178,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             if (reconnectTimer.current) {
                 clearTimeout(reconnectTimer.current);
             }
-            isWebSocketOpen.current = false;
+            setIsWebSocketOpen(false);
         };
     }, []);
 
@@ -327,23 +326,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     return (
         <div>
     <div className="d-flex flex-column justify-content-center align-items-center vh-100">
-        {/* Carrousel d'avatars */}
-        <div className="w-96 mb-4">  {/* Limite la largeur à 24rem */}
-            <Carousel showThumbs={false} infiniteLoop autoPlay>
-                {avatars.map((avatar, index) => (
-                    <div key={index} className="flex justify-center items-center">
-                        <img 
-                                    src={avatar} 
-                                    alt={`Avatar ${index + 1}`}
-                                    className={`rounded-full border-4 border-gray-400 object-cover cursor-pointer ${selectedAvatar === avatar ? 'ring-4 ring-blue-500' : ''}`}
-                                    style={{ width: "250px", height: "250px", borderRadius: "50%", border: "2px solid black", marginTop: "60px" }}
-                                    onClick={() => handleAvatarSelect(avatar)} // Ajout de l'événement onClick
-                                />
-                    </div>
-                ))}
-            </Carousel>
-        </div>
-
         <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)", width: "400px" }}>
             <h2 className="mb-4 fw-bold text-white">Salle de Jeu</h2>
 

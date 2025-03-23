@@ -7,6 +7,7 @@ import Login from './Login.jsx';
 import Profile from './Profile.jsx';
 import GameRoom from './GameRoom.jsx';
 import GamePage from './GamePage.jsx';
+import FinalPage from './FinalPage.jsx';
 import axios from 'axios';
 
 //Connexion avec le back

@@ -8,7 +8,7 @@ function removeAccents(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold }) => {
+const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold,keyboardColor }) => {
   let storedUsers;
   try {
     storedUsers = JSON.parse(localStorage.getItem('users')) || [];
@@ -144,7 +144,10 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   useEffect(() => {
   //  if(currentPlayer?.id === storedUID) {
       console.log(currentPlayer?.id , "  === ", storedUID);
+      if (ws.current?.readyState === WebSocket.OPEN) {
       generateSequence();
+      }
+      else {setTimeout(generateSequence,500)}
     //}
     
   }, [currentPlayer]);

@@ -37,11 +37,11 @@ class Rooms {
         console.log("Room supprimée avec succès.");
         return true;
       } else {
-        console.log("Échec de la suppression du compte.");
+        console.log("Échec de la suppression de la room.");
         return false;
       }
     } catch (error) {
-      console.error("Erreur lors de la suppression du compte :", error);
+      console.error("Erreur lors de la suppression de la room :", error);
       throw error;
     } finally {
       await this.db.close();
