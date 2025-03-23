@@ -61,34 +61,34 @@ function init(db) {
 
     // Vérifie si tous les champs sont remplis
     if (!pseudo || !mdp1 || !mdp2 || !email) {
-      return res.send({ message: "Tous les champs sont nécessaires" });
+      return res.status(400).json({ message: "Tous les champs sont nécessaires" });
     }
 
     // Vérifie si les mots de passe sont identiques
     if (mdp1 !== mdp2) {
-      return res.send({ message: "Les mots de passe ne correspondent pas" });
+      return res.status(400).json({ message: "Les mots de passe ne correspondent pas" });
     }
 
     // Vérifie si l'email est valide ou pas
     if (exist) {
-      return res.send({ message: "Email déjà utilisé" });
+      return res.status(400).json({ message: "Email déjà utilisé" });
     }
 
     // Validation de l'email et du mot de passe
     if (!isEmailValid(email)) {
-      return res.send({ message: "L'email n'est pas valide" });
+      return res.status(400).json({ message: "L'email n'est pas valide" });
     }
     if (!validatePassword(mdp1)) {
-      return res.send({ message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre" });
+      return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre" });
     }
 
     try {
       const hashedPassword = await encrypt.hashPassword(mdp1); // Utilisation de la fonction pour encrypter les données
       await users.creerCompte(pseudo, email, hashedPassword);
-      return res.status(200).send({ message: "Utilisateur créé avec succès" });
+      return res.status(200).json({ message: "Utilisateur créé avec succès" });
     } catch (error) {
       console.error("Erreur lors de la création de l'utilisateur :", error);
-      return res.status(500).send({ message: "Erreur serveur" });
+      return res.status(500).json({ message: "Erreur serveur" });
     }
   });
 
@@ -96,9 +96,9 @@ function init(db) {
   router.post('/users', async (req, res) => {
     const { email, mdp } = req.body;
 
-    if (!email || !mdp) return res.send({ status: 400 });
+    if (!email || !mdp) return res.status(400).json({ status: 400 });
 
-    if (!await users.exist(email)) return res.send({ status: 402 });
+    if (!await users.exist(email)) return res.status(404).json({ status: 404 });
 
     if (await users.checkPassword(email, mdp)) {
       const code = generateVerificationCode();
@@ -113,12 +113,12 @@ function init(db) {
           text: `Votre code de vérification est : ${code}`
         });
 
-        res.send({ status: 200, message: "Code envoyé avec succès" });
+        res.status(200).json({ status: 200, message: "Code envoyé avec succès" });
       } catch (error) {
-        res.send({ status: 500, message: "Erreur lors de l'envoi de l'email" });
+        res.status(500).json({ status: 500, message: "Erreur lors de l'envoi de l'email" });
       }
     } else {
-      res.send({ status: 401, message: "Mot de passe incorrect" });
+      res.status(401).json({ status: 401, message: "Mot de passe incorrect" });
     }
   });
 
@@ -127,14 +127,14 @@ function init(db) {
     const { code } = req.body; // Récupère seulement le code de vérification envoyé par le frontend
 
     if (!req.session.verificationCode) {
-      return res.send({ status: 403, message: "Aucun code généré. Veuillez vous connecter d'abord." });
+      return res.status(403).json({ status: 403, message: "Aucun code généré. Veuillez vous connecter d'abord." });
     }
 
     if (req.session.verificationCode === code) {
       req.session.verified = true;
-      res.send({ status: 200, message: "Code validé avec succès !" });
+      res.status(200).json({ status: 200, message: "Code validé avec succès !" });
     } else {
-      res.send({ status: 401, message: "Code invalide." });
+      res.status(401).json({ status: 401, message: "Code invalide." });
     }
   });
 
@@ -151,6 +151,7 @@ function init(db) {
     }
 
     await rooms.createRoom(id, users);
+    res.status(200).json({ message: "Room créée avec succès" });
   });
 
   // Récupérer toutes les salles publiques
@@ -189,6 +190,7 @@ function init(db) {
     const user = req.body.user;
     console.log("j'ajoute");
     await rooms.addUserToRoom(room, user);
+    res.status(200).json({ message: "Utilisateur ajouté à la room" });
   });
 
   // Permet la suppression d'un user d'une room
@@ -257,33 +259,33 @@ function init(db) {
   });
 
   // Création d'une session
-  router.post('/users', async (req, res) => {
+  router.post('/login', async (req, res) => {
     const login = req.body.email;
     const password = req.body.mdp;
 
     if (!login || !password) {
-      res.send({ status: 400 });
+      res.status(400).json({ status: 400 });
       return;
     }
 
     if (!await users.exist(login)) {
-      res.send({ status: 402 });
+      res.status(404).json({ status: 404 });
       return;
     }
 
     if (await users.checkPassword(login, password)) {
       req.session.regenerate(function (err) {
         if (err) {
-          res.send({ status: 500, message: "Erreur interne" });
+          res.status(500).json({ status: 500, message: "Erreur interne" });
         } else {
           req.session.userid = login;
-          res.send({ status: 200, message: "Login et mot de passe accepté" });
+          res.status(200).json({ status: 200, message: "Login et mot de passe accepté" });
         }
       });
       return;
     } else {
       req.session.destroy((err) => {});
-      res.send({ status: 401, message: "login et/ou le mot de passe invalide(s)" });
+      res.status(401).json({ status: 401, message: "login et/ou le mot de passe invalide(s)" });
       return;
     }
   });
@@ -437,23 +439,6 @@ function init(db) {
     } catch (error) {
       console.error("Erreur lors de la récupération de l'avatar :", error);
       res.status(500).send({ message: "Erreur serveur" });
-    }
-  });
-
-  // Récupérer le nombre de pièces d'un utilisateur
-  router.get('/users/coins', async (req, res) => {
-    try {
-      const email = req.query.email;
-
-      if (!email || !isEmailValid(email)) {
-        return res.status(400).json({ message: "Email invalide ou manquant" });
-      }
-
-      const coins = await users.getCoins(email);
-      res.status(200).json({ coins });
-    } catch (error) {
-      console.error("Erreur lors de la récupération des pièces :", error);
-      res.status(500).json({ message: "Erreur serveur" });
     }
   });
 

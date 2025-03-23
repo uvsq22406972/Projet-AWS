@@ -33,6 +33,11 @@ function CreateAccount({ onLoginClick }) {
   const handleRePasswordChange = (e) => setRePassword(e.target.value);
   const handleCodeChange = (e) => setVerificationCode(e.target.value);
 
+  // Empêcher le copier-coller dans les champs de mot de passe
+  const handlePaste = (e) => {
+    e.preventDefault(); // Empêche l'action de coller
+  };
+
   // Action lorsqu'on clique sur "S'inscrire"
   const handleCreerCompteClick = () => {
     //Initialisation des variables
@@ -119,6 +124,7 @@ function CreateAccount({ onLoginClick }) {
                     id='create_mdp1'
                     value={password}
                     onChange={handlePasswordChange}
+                    onPaste={handlePaste} // Désactiver le copier-coller
                   />
                   <label>Mot de passe</label>
                   <span
@@ -137,6 +143,7 @@ function CreateAccount({ onLoginClick }) {
                     id='create_mdp2'
                     value={repassword}
                     onChange={handleRePasswordChange}
+                    onPaste={handlePaste} // Désactiver le copier-coller
                   />
                   <label>Confirmer le mot de passe</label>
                   <span
