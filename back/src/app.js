@@ -12,7 +12,6 @@ const Rooms = require("./entities/rooms.js");
 // Initialisation de la BDD -> MongoDB
 const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
-<<<<<<< HEAD
 // Remplacer la connexion actuelle par :
 const client = new MongoClient(uri, {
   maxPoolSize: 15,
@@ -28,9 +27,6 @@ async function initMongoDB() {
   console.log("🗄️ Connexion MongoDB établie !");
 }
 initMongoDB();
-=======
-const client = new MongoClient(uri);
->>>>>>> Version20mars
 
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
@@ -73,11 +69,7 @@ app.use(
 app.use(helmet());
 
 // Middleware pour servir le frontend
-<<<<<<< HEAD
 app.use(express.static(path.join(__dirname, "../../front")));
-=======
-app.use(express.static(path.join(__dirname, "../../frontend")));
->>>>>>> Version20mars
 
 // Initialisation de l'API MongoDB
 const api = apiRouter(client);
@@ -176,10 +168,7 @@ app.get("/random-sequence", async (req, res) => {
 const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
-<<<<<<< HEAD
-=======
   await client.connect();
->>>>>>> Version20mars
   const db = client.db("DB");
   const collection = db.collection("Rooms");
   ws.on("message",async (message) => {
@@ -187,7 +176,6 @@ wss.on("connection", async (ws) => {
     console.log(`Message reçu: ${data.type}`);
 
     if (data.type === "create_room") {
-<<<<<<< HEAD
       if (!data.user) {
         ws.send(JSON.stringify({ 
           type: "error", 
@@ -203,14 +191,6 @@ wss.on("connection", async (ws) => {
       const reponse = axios.put(`api/rooms`,{
         id : generatedRoomName,
         user : creator
-=======
-      const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
-      console.log("Room générée:", generatedRoomName);
-
-      const reponse = axios.put(`api/rooms`,{
-        id : generatedRoomName,
-        user : data.user
->>>>>>> Version20mars
       });
       //retour utilisateur
       ws.send(
@@ -218,11 +198,7 @@ wss.on("connection", async (ws) => {
           type:'generatedRoom',
           message: `Room ${generatedRoomName} créée !`,
           room: generatedRoomName,
-<<<<<<< HEAD
-          users: [creator],
-=======
           users: data.user,
->>>>>>> Version20mars
         })
       );
     }
@@ -231,25 +207,6 @@ wss.on("connection", async (ws) => {
       const roomName = data.room;
       console.log("données recu on join" ,data);
       try {
-<<<<<<< HEAD
-        const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
-        if (resp.status === 200) {
-          console.log("Envoi du message WebSocket :");
-            ws.send(
-              JSON.stringify({
-                type: "cool",
-                room:roomName,
-                message: `Room rejointe`,
-              })
-            );
-          await axios.post(`api/addUserToRoom`,{
-            room: roomName,
-            user:data.user
-          });
-        }
-       } catch (error) {
-        ws.send(
-=======
         const res = await axios.post(`api/addUserToRoom`,{
           room: roomName,
           user:data.user
@@ -265,44 +222,23 @@ wss.on("connection", async (ws) => {
           );
         } else { 
           ws.send(
->>>>>>> Version20mars
           JSON.stringify({
             type: "no_room",
             message: `La room ${roomName} n'existe pas.`,
           })
         );
       }
-<<<<<<< HEAD
-=======
         
     
        } catch (error) {
         console.log("Erreur inattendue ",error)
       }
->>>>>>> Version20mars
       
     }
 
     if (data.type === "get_users") {
      const roomName = data.room;
-<<<<<<< HEAD
-     console.log("aojzebcpaoje cpjia éé",roomName)
       try {
-       
-        const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
-        console.log("ceci est un test",resp);
-        if (resp) {
-          ws.send(
-            JSON.stringify({
-              type: "users_list",
-              room: roomName,
-              users: resp.data, 
-            })
-          );
-          console.log("ceci est les datas envoyés :",resp.data);
-=======
-      try {
-       
         const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
         if (resp) {
           wss.clients.forEach((client) => {
@@ -316,7 +252,6 @@ wss.on("connection", async (ws) => {
               );
             }
             });
->>>>>>> Version20mars
         }
       } catch (error) {
         ws.send(
@@ -355,9 +290,6 @@ wss.on("connection", async (ws) => {
     if (data.type === "start_game") {
       const roomName = data.room;
       console.log(`Le jeu commence dans la room: ${roomName}`);
-<<<<<<< HEAD
-
-=======
       const lives = data.lives;
         if(lives != 3) {
          //    console.log("Attention : lives =", lives ," et la room ", roomName)
@@ -369,7 +301,6 @@ wss.on("connection", async (ws) => {
          });
         }
         
->>>>>>> Version20mars
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(
@@ -381,55 +312,6 @@ wss.on("connection", async (ws) => {
         }
         });
       }
-<<<<<<< HEAD
-      if (data.type === "leave_room") {
-        const roomName = data.room;
-        const user = data.user;
-        
-        try {
-          const resp = await axios.get(`api/getUsersFromRoom`, { 
-            params: { room: roomName } 
-          });
-          
-          const usersFound = resp.data;
-      
-          // Correction 1: Vérification stricte du contenu
-          if(usersFound?.length === 1 && usersFound[0].toString() === user.toString()) {
-            console.log("Suppression de la room...");
-            await axios.delete(`api/rooms`, { 
-              data: { room: roomName } // Correction 2: Format correct
-            });
-          } else {
-            console.log("Suppression de l'utilisateur...");
-            await axios.post(`api/removeUserFromRoom`, { 
-              room: roomName,
-              user: user 
-            });
-          }
-          
-          // Correction 3: Rafraîchir les données
-          await new Promise(resolve => setTimeout(resolve, 500));
-      
-        } catch (error) {
-          console.error("Erreur traitement leave_room:", error);
-        }
-      }
-  });
-  const sendToGameRoom = (data) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      setTimeout(() => {
-        console.log('Envoi des données à GameRoom après 3 secondes :', data);
-        ws.send(JSON.stringify(data)); // Envoie les données à GameRoom via WebSocket
-      }, 3000);
-    } else {
-      console.warn('WebSocket n\'est pas prêt pour envoyer des données');
-    }
-  };
-
-  ws.on("close", () => {
-    console.log("Un utilisateur a quitté la room");
-  });
-=======
       if (data.type === "game_over") {  
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
@@ -446,31 +328,30 @@ wss.on("connection", async (ws) => {
         const user = data.user;
         console.log("data envoyé : ",roomName )
        try {
-        const resp = await axios.get(`api/getUsersFromRoom`,{
-         params : {
-          room : roomName
-         }
-        }) ;
-        const usersFound = resp.data;
-        console.log("message recu ",usersFound);
-        console.log("Type de usersFound :", typeof usersFound, usersFound);
-
-        if(usersFound.length === 1 && usersFound[0] == user)
-          {
-            const reponse = await axios.delete(`api/rooms`,{
-              data: { 
-                room: roomName,
-                user: data.user
-              }
-            });
+          const resp = await axios.get(`api/getUsersFromRoom`,{
+          params : {
+            room : roomName
           }
-        else {
-          const response = await axios.post(`api/removeUserFromRoom`, {
-            room : roomName,
-            user : data.user
-          })
-        }
-       }catch(error) {console.error("Erreur lors de la destruction de salle : Pas de salle ?", error)}
+          }) ;
+          const usersFound = resp.data;
+          console.log("message recu ",usersFound);
+          console.log("Type de usersFound :", typeof usersFound, usersFound);
+
+          if(usersFound?.length === 1 && usersFound[0].toString() === user.toString()) {
+              console.log("Suppression de la room...");
+              await axios.delete(`api/rooms`, { 
+                data: { room: roomName } 
+              });
+            } 
+          else {
+              console.log("Suppression de l'utilisateur...");
+              await axios.post(`api/removeUserFromRoom`, { 
+                room: roomName,
+                user: data.user 
+              });
+              }
+          await new Promise(resolve => setTimeout(resolve, 500));
+       }catch(error) {console.error("Erreur lors de la destruction de salle ", error)}
         
       }
       if (data.type === 'lose_life'){
@@ -576,7 +457,6 @@ wss.on("connection", async (ws) => {
 
 app.listen(port, () => {
   console.log(`Serveur Express démarré sur http://localhost:${port}`);
->>>>>>> Version20mars
 });
 
 console.log(`Serveur WebSocket à l'écoute sur le port ${wsPort}`);
