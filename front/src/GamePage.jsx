@@ -52,6 +52,19 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
       setGameStarted(true);
     }
   }, [countdown]);
+  
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.key === "Enter" && inputValue.trim() !== "" && !gameOver) {
+        handleSubmit();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [inputValue, gameOver]);
 
   function loseLife() {
     // Réduire le nombre de vies

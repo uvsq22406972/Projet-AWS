@@ -1,4 +1,3 @@
-// Importation
 import React, { useState } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -72,7 +71,7 @@ function CreateAccount({ onLoginClick }) {
       else if (response.data.message === "L'email n'est pas valide"){
         toast.error("L'email n'est pas valide");
       }
-      else if (response.data.message === "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre"){
+      else if (response.data.message === "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole"){
         toast.error(response.data.message);
       }
     })
@@ -117,6 +116,16 @@ function CreateAccount({ onLoginClick }) {
               <div className="mb-10 input-box">
                 <input type="password" id='create_mdp2' value={repassword} onChange={handleRePasswordChange} />
                 <label>Confirmer le mot de passe</label>
+              </div>
+              <div className="password-recommendations">
+                <h6>Recommandations pour le mot de passe :</h6>
+                <ul style={{ fontSize: '0.7em' }}> {/* Ajustez la taille selon vos besoins */}
+                  <li>Au moins une lettre majuscule</li>
+                  <li>Au moins une lettre minuscule</li>
+                  <li>Au moins un chiffre</li>
+                  <li>Au moins un symbole</li>
+                  <li>Au moins 8 caractères</li>
+                </ul>
               </div>
               <button type="button" className="btn custom-btn w-100" onClick={handleCreerCompteClick}>S'inscrire</button>
               <p className="mt-3 text-white">

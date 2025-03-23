@@ -1,21 +1,21 @@
-//Importation
+// Importation
 import React, { useState, useEffect } from 'react';
 import { FaUserCircle } from "react-icons/fa";
 import "./Profile.css";
-import axios from 'axios'
+import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import { createAvatar } from '@dicebear/core';
 import { avataaars } from '@dicebear/collection';
 
-//Connexion avec le back
+// Connexion avec le back
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
 
-//Page qui permet d'être sur la page menu utilisateur
+// Page qui permet d'être sur la page menu utilisateur
 function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }) {
-  //Initialisation des états
+  // Initialisation des états
   const [activeSection, setActiveSection] = useState('info');
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [compte, setCompte] = useState([]);
@@ -33,6 +33,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [facialHairColor, setFacialHairColor] = useState('2c1b18');
   const [clothesColor, setClothesColor] = useState('3c4f5c');
   const [svgDataUri, setSvgDataUri] = useState('');
+  const [coins, setCoins] = useState(0);
 
   // État pour gérer la catégorie avatar active
   const [selectedCategory, setSelectedCategory] = useState('coiffure');
@@ -43,8 +44,9 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [message, setMessage] = useState('');
+  
 
-  //Couleur du clavier
+  // Couleur du clavier
   const [keyboardColor, setKeyboardColor] = useState("#FFFFFF");
   const [showColors, setShowColors] = useState(false);
 
@@ -61,22 +63,67 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     { name: "Noir", hex: "#000000" }
   ];
 
-  //Pour avoir une couleur unique
+  // Pour avoir une couleur unique
   const gradientStyle = {
     background: "linear-gradient(to top, #3B7088, #4FE9DE)",
   };
+
+  // Fonction pour acheter une couleur de clavier
+  const handleColorSelection = async (color) => {
+    try {
+      // Vérifier que l'utilisateur a assez de pièces
+      const coinsResponse = await axios.get('/api/users/coins', { params: { email } });
+      const coins = coinsResponse.data.coins;
+      
+
+      if (coins < 20) {
+        toast.error("Vous n'avez pas assez de pièces pour acheter cette couleur.");
+        return;
+      }
+
+      // Acheter la couleur
+      const response = await axios.post('/api/users/buy-color', { email, color: color.hex });
+      if (response.data.message) {
+        toast.success(response.data.message);
+      }
+
+      // Mettre à jour l'état local
+      setKeyboardColor(color.hex);
+      localStorage.setItem("keyboardColor", color.hex); // Sauvegarde dans le localStorage
+    } catch (error) {
+      toast.error("Erreur lors de l'achat de la couleur : " + error.message);
+    }
+  };
+
+  // Récupérer la couleur du clavier au chargement de la page
+  useEffect(() => {
+    const fetchKeyboardColor = async () => {
+      try {
+        const response = await axios.get('/api/users/keyboard-color', { params: { email } });
+        if (response.data.color) {
+          setKeyboardColor(response.data.color);
+          localStorage.setItem("keyboardColor", response.data.color);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération de la couleur du clavier :", error);
+      }
+    };
+
+    if (email) {
+      fetchKeyboardColor();
+    }
+  }, [email]);
 
   // Action lorsqu'on clique sur "Se déconnecter"
   const handleLogoutClick = async () => {
     try {
       // Envoie une requête à l'API pour détruire la session (le cookie)
       await axios.post('/api/logout');
-      
+
       // Met à jour l'état pour indiquer que l'utilisateur est déconnecté
       setIsConnected(false);
       // Redirige l'utilisateur vers la page de connexion
       setCurrentPage('login');
-
     } catch (error) {
       // console.error('Erreur lors de la déconnexion :', error);
     }
@@ -109,10 +156,10 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     try {
       const response = await axios.get('/api/users/all');
       const fetchedAccount = response.data;
-  
+
       const userid = (await axios.get('/api/session')).data.userid;
       const selectedAccount = fetchedAccount.find(account => account._id === userid);
-  
+
       if (selectedAccount?.avatarSettings) {
         // Initialiser les états avec les paramètres sauvegardés
         setHairType(selectedAccount.avatarSettings.hairType || 'shortFlat');
@@ -127,14 +174,14 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         setFacialHairColor(selectedAccount.avatarSettings.facialHairColor || '2c1b18');
         setClothesColor(selectedAccount.avatarSettings.clothesColor || '3c4f5c');
       }
-  
+
       setCompte(selectedAccount || {});
     } catch (error) {
       console.error('Erreur lors de la récupération des infos du compte :', error);
     }
   }
 
-  //Action lorsque'on clique sur "supprimer votre compte"
+  // Action lorsque'on clique sur "supprimer votre compte"
   const handleDeleteAccount = (e) => {
     e.preventDefault(); // Empêcher le rechargement de la page
     console.log("test");
@@ -143,14 +190,13 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     const loginInput = document.getElementById("delete_username");
     const passwordInput = document.getElementById("delete_password"); // 🛠 Correction ici !
     const confirmDeleteInput = document.getElementById("confirmDelete");
-  
-    
+
     // Vérifier si les éléments existent
     if (!emailInput || !loginInput || !passwordInput || !confirmDeleteInput) {
       console.log("test1 - Un ou plusieurs champs sont introuvables !");
       toast.error("Erreur : Un ou plusieurs champs sont introuvables.");
       return;
-  }
+    }
 
     // Récupérer les valeurs
     const email = emailInput.value.trim();
@@ -163,8 +209,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       console.log("test1 - Un ou plusieurs champs sont introuvables !");
       toast.error("Erreur : Un ou plusieurs champs sont introuvables.");
       return;
-  }
-
+    }
 
     if (!confirmDelete) {
       console.log("test3");
@@ -175,20 +220,19 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     console.log("Email:", email);
     console.log("Password:", password);
     console.log(login);
-  
+
     // Appel à l'API pour supprimer l'utilisateur
     axios.post('http://localhost:4000/api/delete', { email, login, password })
-    .then(response => {
-      console.log("Réponse de l'API :", response.data.message);
-      toast.success(response.data.message); // Afficher un message de succès si tout se passe bien
-      setTimeout(() => {handleLogoutClick();}, 1000);
-    })
-    .catch(error => {
-      console.error("Erreur lors de la requête:", error);
-      toast.error("Oups ! Il semble y avoir une erreur dans les informations que vous avez saisies. Pourriez-vous vérifier et essayer à nouveau");
-    });
+      .then(response => {
+        console.log("Réponse de l'API :", response.data.message);
+        toast.success(response.data.message); // Afficher un message de succès si tout se passe bien
+        setTimeout(() => { handleLogoutClick(); }, 1000);
+      })
+      .catch(error => {
+        console.error("Erreur lors de la requête:", error);
+        toast.error("Oups ! Il semble y avoir une erreur dans les informations que vous avez saisies. Pourriez-vous vérifier et essayer à nouveau");
+      });
   };
-  
 
   // Fonction de soumission pour le changement de mot de passe
   const handlePasswordSubmit = async (e) => {
@@ -211,11 +255,6 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     }
   };
 
-  const changeKeyboardColor = (color) => {
-    setKeyboardColor(color);
-    localStorage.setItem("keyboardColor", color); // Sauvegarde la couleur pour GamePage
-  };
-
   // Exécution des fonctions asynchrones
   useEffect(() => {
     checkSession();
@@ -224,15 +263,14 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   }, []);
 
   const handleSaveAvatar = async () => {
-
     if (!email) {
       toast.error("Connectez-vous avant de sauvegarder");
       return;
     }
-  
+
     const accessoriesParam = accessories === "none" ? [] : [accessories];
     const facialHairParam = facialHair === "none" ? [] : [facialHair];
-    
+
     const svg = createAvatar(avataaars, {
       size: 200,
       top: [hairType],
@@ -321,6 +359,20 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       setSkinColor(compte.avatarSettings.skinColor || 'edb98a');
     }
   }, [compte]);
+  useEffect(() => {
+    const fetchCoins = async () => {
+      if (email) {
+        try {
+          const response = await axios.get('/api/users/coins', { params: { email } });
+          setCoins(response.data.coins);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des pièces :", error);
+        }
+      }
+    };
+  
+    fetchCoins();
+  }, [email]);
 
   useEffect(() => {
     if (email) { // S'assurer que l'email est disponible
@@ -351,14 +403,14 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   };
 
   const renderCategoryContent = () => {
-    switch(selectedCategory) {
+    switch (selectedCategory) {
       case 'teint':
         return (
           <div className="option-category">
             <h3>Teint</h3>
             <div className="options-row">
               {['614335', 'ae5d29', 'd08b5b', 'edb98a', 'f8d25c', 'fd9841', 'ffdbb4'].map((color) => (
-              <button
+                <button
                   key={color}
                   className={`color-option ${skinColor === color ? 'selected' : ''}`}
                   style={{ backgroundColor: `#${color}`, border: skinColor === color ? '2px solid black' : 'none' }}
@@ -366,35 +418,35 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
                 />
               ))}
             </div>
-          </div>     
+          </div>
         );
       case 'coiffure':
         return (
           <>
-              <div className="option-category">
-                <h3>Coiffure</h3>
-                <div className="coiffure-grid">
-                  {[
-                    "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
-                    'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
-                    'sides', 'theCaesar', 'shortCurly',
-                    'turban', 'winterHat03', 'winterHat02'
-                  ].map((style) => (
-                    <button
-                      key={style}
-                      className={`style-option ${hairType === style ? 'selected' : ''}`}
-                      onClick={() => setHairType(style)}
-                    >
-                      {style}
-                    </button>
-                  ))}
-                </div>
+            <div className="option-category">
+              <h3>Coiffure</h3>
+              <div className="options-grid">
+                {[
+                  "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
+                  'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
+                  'sides', 'theCaesar', 'shortCurly',
+                  'turban', 'winterHat03', 'winterHat02'
+                ].map((style) => (
+                  <button
+                    key={style}
+                    className={`style-option ${hairType === style ? 'selected' : ''}`}
+                    onClick={() => setHairType(style)}
+                  >
+                    {style}
+                  </button>
+                ))}
               </div>
+            </div>
             <div className="option-category">
               <h3>Couleur des cheveux</h3>
               <div className="options-row">
                 {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
-                <button
+                  <button
                     key={color}
                     className={`color-option ${hairColor === color ? 'selected' : ''}`}
                     style={{ backgroundColor: `#${color}`, border: hairColor === color ? '2px solid black' : 'none' }}
@@ -430,7 +482,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
               <h3>Couleur du vêtement</h3>
               <div className="options-row">
                 {['3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1', 'ffffff'].map((color) => (
-                <button
+                  <button
                     key={color}
                     className={`color-option ${clothesColor === color ? 'selected' : ''}`}
                     style={{ backgroundColor: `#${color}`, border: clothesColor === color ? '2px solid black' : 'none' }}
@@ -511,7 +563,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
               <h3>Pilosité faciale</h3>
               <div className="options-grid">
                 {[
-                  'none', 'beardMedium',
+                  'none', "blank", 'beardMedium',
                   'beardLight', 'beardMajestic',
                   'moustacheFancy', 'moustacheMagnum',
                 ].map((style) => (
@@ -529,7 +581,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
               <h3>Couleur de la pilosité faciale</h3>
               <div className="options-row">
                 {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
-                <button
+                  <button
                     key={color}
                     className={`color-option ${facialHairColor === color ? 'selected' : ''}`}
                     style={{ backgroundColor: `#${color}`, border: facialHairColor === color ? '2px solid black' : 'none' }}
@@ -541,27 +593,27 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           </>
         );
 
-        case 'accessoires':
-          return (
-            <div className="option-category">
-              <h3>Accessoires</h3>
-              <div className="options-grid">
-                {[
-                  'none', "eyepatch", 'kurt',
-                  'prescription01', 'prescription02', 'round',
-                  'sunglasses', 'wayfarers'
-                ].map((style) => (
-                  <button
-                    key={style}
-                    className={`style-option ${accessories === style ? 'selected' : ''}`}
-                    onClick={() => setAccessories(style)}
-                  >
-                    {style}
-                  </button>
-                ))}
-              </div>
+      case 'accessoires':
+        return (
+          <div className="option-category">
+            <h3>Accessoires</h3>
+            <div className="options-grid">
+              {[
+                'none', "eyepatch", 'kurt',
+                'prescription01', 'prescription02', 'round',
+                'sunglasses', 'wayfarers'
+              ].map((style) => (
+                <button
+                  key={style}
+                  className={`style-option ${accessories === style ? 'selected' : ''}`}
+                  onClick={() => setAccessories(style)}
+                >
+                  {style}
+                </button>
+              ))}
             </div>
-          );
+          </div>
+        );
       default:
         return null;
     }
@@ -572,7 +624,6 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     // Affichage menu info du compte
     if (activeSection === 'info') {
       return (
-        
         <div id="section-info" className="mb-5">
           <h3 className="mb-4">Information du compte</h3>
           <form>
@@ -587,7 +638,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           </form>
         </div>
       );
-    // Affichage menu modifier le mot de passe
+      // Affichage menu modifier le mot de passe
     } else if (activeSection === 'avatar') {
       return (
         <div id="section-avatar" className="mb-5">
@@ -596,9 +647,9 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             <div className="avatar-preview">
               {/* Affiche l'avatar si svgDataUri n'est pas vide */}
               {svgDataUri ? (
-                <img 
-                  src={svgDataUri} 
-                  alt="DiceBear Avataaars" 
+                <img
+                  src={svgDataUri}
+                  alt="DiceBear Avataaars"
                   style={{ width: 150, height: 150 }}
                 />
               ) : (
@@ -634,10 +685,10 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           {showColors && (
             <div className="color-options">
               {colors.map((color) => (
-                <button
+                <><button
                   key={color.name}
                   onClick={() => {
-                    changeKeyboardColor(color.hex);
+                    handleColorSelection(color);
                     setShowColors(false); // Fermer la palette de couleurs après sélection
                   }}
                   style={{
@@ -650,47 +701,81 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
                   }}
                 >
                   {color.name}
-                </button>
+                </button><span className="price-tag">20 pièces</span></>
               ))}
             </div>
           )}
+          {/* Afficher un aperçu du clavier avec la couleur sélectionnée */}
+          <div className="keyboard-preview" style={{ marginTop: '20px' }}>
+            <div className="keyboard-row">
+              {['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((key) => (
+                <div
+                  key={key}
+                  className="keyboard-key"
+                  style={{ backgroundColor: keyboardColor }}
+                >
+                  {key}
+                </div>
+              ))}
+            </div>
+            <div className="keyboard-row">
+              {['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map((key) => (
+                <div
+                  key={key}
+                  className="keyboard-key"
+                  style={{ backgroundColor: keyboardColor }}
+                >
+                  {key}
+                </div>
+              ))}
+            </div>
+            <div className="keyboard-row">
+              {['W', 'X', 'C', 'V', 'B', 'N'].map((key) => (
+                <div
+                  key={key}
+                  className="keyboard-key"
+                  style={{ backgroundColor: keyboardColor }}
+                >
+                  {key}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      )
-    }
-    
-    else if (activeSection === 'password') {
+      );
+    } else if (activeSection === 'password') {
       return (
         <div id="section-password" className="mb-5">
           <h3 className="mb-4">Modifier votre mot de passe</h3>
           <form onSubmit={handlePasswordSubmit}>
             <div className="mb-3">
               <label className="form-label fw-semibold">Mot de passe actuelle</label>
-              <input 
-                type="password" 
-                className="form-control custom-input" 
-                value={oldPassword} 
+              <input
+                type="password"
+                className="form-control custom-input"
+                value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
-                required 
+                required
               />
             </div>
             <div className="mb-3">
               <label className="form-label fw-semibold">Nouveau mot de passe</label>
-              <input 
-                type="password" 
-                className="form-control custom-input" 
-                value={newPassword} 
+              <input
+                type="password"
+                className="form-control custom-input"
+                value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                required 
+                required
               />
             </div>
             <div className="mb-4">
               <label className="form-label fw-semibold">Resaisir votre nouveau mot de passe</label>
-              <input 
-                type="password" 
-                className="form-control custom-input" 
-                value={confirmNewPassword} 
+              <input
+                type="password"
+                className="form-control custom-input"
+                value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
-                required 
+                required
               />
             </div>
             <button type="submit" className="btn btn-primary">
@@ -700,7 +785,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           {message && <p>{message}</p>}
         </div>
       );
-    // Affichage menu supprimer le compte
+      // Affichage menu supprimer le compte
     } else if (activeSection === 'delete') {
       return (
         <div id="section-delete" className="mb-5">
@@ -710,14 +795,14 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
               <label className="form-label fw-semibold">
                 Saisissez votre nom d'utilisateur
               </label>
-              <input type="text" id = "delete_username" className="form-control custom-input" />
+              <input type="text" id="delete_username" className="form-control custom-input" />
             </div>
 
             <div className="mb-3">
               <label className="form-label fw-semibold">
                 Saisissez votre email
               </label>
-              <input type="text" id = "delete-email" className="form-control custom-input" />
+              <input type="text" id="delete-email" className="form-control custom-input" />
             </div>
 
             <div className="mb-3">
@@ -750,11 +835,11 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       <nav className="navbar navbar-expand-lg sticky-top" style={gradientStyle}>
         <div className="container-fluid">
           <div className="navbar-brand text-white fw-bold" onClick={onBackToPagePrincipaleClick}>
-            <img className="rounded-circle me-2" src="/images/logo-web.jpg" alt="Logo web" width="50" height="50"/>
+            <img className="rounded-circle me-2" src="/images/logo-web.jpg" alt="Logo web" width="50" height="50" />
             bran.fun
           </div>
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
-            <FaUserCircle size={40} className="me-3 text-white"/>
+            <FaUserCircle size={40} className="me-3 text-white" />
             <span className="text-white">{compte.username}</span>
             {/* Affichage menu choix utilisateur */}
             <div className="hover-box position-absolute">

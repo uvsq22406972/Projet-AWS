@@ -1,25 +1,26 @@
-const encrypt = require('../encrypt'); 
+const encrypt = require('../encrypt');
 
 class Users {
   // Constructeur de la classe en appelant une bdd
   constructor(db) {
     this.db = db;
   }
-  
+
   // Crée un compte utilisateur
   async creerCompte(username, email, mdp1, mdp2) {
     try {
       await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.db("DB").collection("Compte"); // Accès au collection Compte
       await col1.insertOne({
-         username: username,
-         _id: email,
-         password: mdp1,
-         coins: 0 // Ajoute un champ coins initialisé à 0
-        });
+        username: username,
+        _id: email,
+        password: mdp1,
+        coins: 100,
+        keyboardColor: "#FFFFFF" // Couleur par défaut du clavier
+      });
     } catch (e) {
       console.error("Erreur lors de la création du compte :", e);
-      throw e;  // Retourne l'erreur pour la traiter dans le composant React
+      throw e; // Retourne l'erreur pour la traiter dans le composant React
     } finally {
       await this.db.close();
     }
@@ -29,9 +30,9 @@ class Users {
   async exist(email) {
     try {
       await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.db("DB").collection("Compte"); // Accès au collection Compte
       const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
-      const res = await col1.findOne(query); //True si email existe, faux sinon
+      const res = await col1.findOne(query); // True si email existe, faux sinon
 
       if (res) {
         return true;
@@ -46,18 +47,16 @@ class Users {
     }
   }
 
-  
   // Vérifie si le mot de passe correspond au mot de passe stocké en bdd
   async checkPassword(login, password) {
     try {
       await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
-      const user = await col1.findOne({ _id: { $eq: login } }); //True si email existe, faux sinon
-      // Sécurité contre les injections NoSql en empêchant l'injection de certains opérateurs NoSqL
-      
+      const col1 = this.db.db("DB").collection("Compte"); // Accès au collection Compte
+      const user = await col1.findOne({ _id: { $eq: login } }); // True si email existe, faux sinon
+
       if (user) {
         const motDePasse = user.password;
-             //On vérifie que le mot de passe rentrer est identique a celui encrypté dans la bdd
+        // On vérifie que le mot de passe rentré est identique à celui encrypté dans la bdd
         if (await encrypt.verifyPassword(password, motDePasse)) {
           console.log("OK");
           return true;
@@ -89,20 +88,20 @@ class Users {
     }
   }
 
-    // Récupère un utilisateur via son pseudo (username)
-    async getEmail(email) {
-      try {
-        await this.db.connect();
-        const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
-        const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
-        const user = await col1.findOne(query); 
-        return user;
-      } catch (err) {
-        throw err;
-      } finally {
-        await this.db.close();
-      }
+  // Récupère un utilisateur via son email
+  async getEmail(email) {
+    try {
+      await this.db.connect();
+      const col1 = this.db.db("DB").collection("Compte"); // Accès au collection Compte
+      const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
+      const user = await col1.findOne(query);
+      return user;
+    } catch (err) {
+      throw err;
+    } finally {
+      await this.db.close();
     }
+  }
 
   // Récupère tous les utilisateurs
   async getAllUsers() {
@@ -115,7 +114,7 @@ class Users {
       throw err;
     }
   }
-  
+
   // Met à jour le mot de passe d'un utilisateur dans la bdd
   async updatePassword(email, newPassword) {
     try {
@@ -136,7 +135,8 @@ class Users {
       await this.db.close();
     }
   }
-    // Récupère le nombre de pièces d'un utilisateur via son email
+
+  // Récupère le nombre de pièces d'un utilisateur via son email
   async getCoins(email) {
     try {
       await this.db.connect();
@@ -152,7 +152,8 @@ class Users {
       await this.db.close();
     }
   }
-    // Met à jour le nombre de pièces d'un utilisateur
+
+  // Met à jour le nombre de pièces d'un utilisateur
   async updateCoins(email, newCoinCount) {
     try {
       await this.db.connect();
@@ -171,7 +172,8 @@ class Users {
       await this.db.close();
     }
   }
-    // Ajoute ou soustrait des pièces d'un utilisateur
+
+  // Ajoute ou soustrait des pièces d'un utilisateur
   async modifyCoins(email, amount) {
     try {
       await this.db.connect();
@@ -191,6 +193,61 @@ class Users {
     }
   }
 
+  // Méthode pour acheter une couleur de clavier
+  async acheterCouleurClavier(email, color) {
+    try {
+      await this.db.connect();
+      const col1 = this.db.db("DB").collection("Compte");
+
+      // Vérifier que l'utilisateur a assez de pièces
+      const user = await col1.findOne({ _id: email });
+      if (!user) {
+        throw new Error("Utilisateur introuvable.");
+      }
+
+      const coins = user.coins;
+      if (coins < 20) {
+        throw new Error("Vous n'avez pas assez de pièces pour acheter cette couleur.");
+      }
+
+      // Déduire 20 pièces
+      await this.modifyCoins(email, -20);
+
+      // Enregistrer la couleur choisie
+      await col1.updateOne(
+        { _id: email },
+        { $set: { keyboardColor: color } }
+      );
+
+      console.log("Couleur achetée et enregistrée avec succès.");
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de l'achat de la couleur :", error);
+      throw error;
+    } finally {
+      await this.db.close();
+    }
+  }
+
+  // Récupère la couleur du clavier d'un utilisateur
+  async getKeyboardColor(email) {
+    try {
+      await this.db.connect();
+      const col1 = this.db.db("DB").collection("Compte");
+      const user = await col1.findOne({ _id: email });
+      if (user && user.keyboardColor) {
+        return user.keyboardColor;
+      }
+      return "#FFFFFF"; // Couleur par défaut si aucune n'est définie
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la couleur du clavier :", error);
+      throw error;
+    } finally {
+      await this.db.close();
+    }
+  }
+
+  // Supprime un compte utilisateur
   async supprimerCompte(email, password) {
     try {
       await this.db.connect();
@@ -227,17 +284,18 @@ class Users {
     }
   }
 
+  // Sauvegarde l'avatar de l'utilisateur
   async saveAvatar(email, avatar, avatarSettings) {
     try {
       await this.db.connect();
       const col1 = this.db.db("DB").collection("Compte");
-  
+
       // Met à jour l'avatar de l'utilisateur dans la base de données
       const result = await col1.updateOne(
         { _id: email },
         { $set: { avatar, avatarSettings } }
       );
-  
+
       if (result.modifiedCount === 0) {
         throw new Error("La mise à jour de l'avatar a échoué.");
       }
