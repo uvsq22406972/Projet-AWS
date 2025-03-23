@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import des icônes
 
 // Connexion avec le back
 axios.defaults.baseURL = 'http://localhost:4000';
@@ -22,6 +23,8 @@ function CreateAccount({ onLoginClick }) {
   const [repassword, setRePassword] = useState('');
   const [isVerificationSent, setIsVerificationSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // État pour afficher/cacher le mot de passe
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // État pour afficher/cacher la confirmation du mot de passe
 
   // Mise à jour des inputs
   const handleUsernameChange = (e) => setUsername(e.target.value);
@@ -109,13 +112,40 @@ function CreateAccount({ onLoginClick }) {
                 <input type="email" id='create_email' value={email} onChange={handleEmailChange} />
                 <label>Email</label>
               </div>
-              <div className="mb-10 input-box">
-                <input type="password" id='create_mdp1' value={password} onChange={handlePasswordChange} />
-                <label>Mot de passe</label>
+              <div className="mb-10 input-box password-input">
+                <div className="password-input-wrapper">
+                  <input
+                    type={showPassword ? "text" : "password"} // Basculer entre texte et mot de passe
+                    id='create_mdp1'
+                    value={password}
+                    onChange={handlePasswordChange}
+                  />
+                  <label>Mot de passe</label>
+                  <span
+                    className="password-toggle-icon"
+                    onClick={() => setShowPassword(!showPassword)} // Basculer la visibilité
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />} {/* Afficher l'icône appropriée */}
+                  </span>
+                </div>
               </div>
-              <div className="mb-10 input-box">
-                <input type="password" id='create_mdp2' value={repassword} onChange={handleRePasswordChange} />
-                <label>Confirmer le mot de passe</label>
+
+              <div className="mb-10 input-box password-input">
+                <div className="password-input-wrapper">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"} // Basculer entre texte et mot de passe
+                    id='create_mdp2'
+                    value={repassword}
+                    onChange={handleRePasswordChange}
+                  />
+                  <label>Confirmer le mot de passe</label>
+                  <span
+                    className="password-toggle-icon"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)} // Basculer la visibilité
+                  >
+                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />} {/* Afficher l'icône appropriée */}
+                  </span>
+                </div>
               </div>
               <div className="password-recommendations">
                 <h6>Recommandations pour le mot de passe :</h6>

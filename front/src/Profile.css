@@ -312,3 +312,46 @@ body {
   background: #888; 
   border-radius: 4px;
 }
+.color-options {
+  display: flex;
+  flex-direction: column; /* Afficher les éléments en colonne */
+  gap: 10px; /* Espacement entre les éléments */
+}
+
+.color-option-item {
+  display: flex;
+  align-items: center; /* Aligner les éléments verticalement */
+  justify-content: space-between; /* Espacer le bouton et le prix */
+  width: 100%; /* Prendre toute la largeur disponible */
+}
+
+.color-option-item button {
+  text-align: center; /* Centrer le texte dans le bouton */
+  padding: 10px; /* Padding pour un meilleur espacement */
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%; /* Prendre toute la largeur disponible */
+}
+
+.price-tag {
+  margin-left: 10px; /* Espacement entre le bouton et le prix */
+  font-size: 0.9em; /* Taille de la police pour le prix */
+  color: #666; /* Couleur du texte pour le prix */
+}
+
+/* Styles pour les appareils mobiles */
+@media (max-width: 768px) {
+  .color-options {
+    gap: 5px; /* Réduire l'espacement sur les petits écrans */
+  }
+
+  .color-option-item button {
+    padding: 8px; /* Réduire le padding sur les petits écrans */
+    font-size: 0.9em; /* Réduire la taille de la police sur les petits écrans */
+  }
+
+  .price-tag {
+    font-size: 0.8em; /* Réduire la taille de la police pour le prix sur les petits écrans */
+  }
+}

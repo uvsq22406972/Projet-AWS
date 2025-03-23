@@ -53,3 +53,27 @@
     background: #F48516D2;
     color: white;
 }
+.password-input {
+    position: relative;
+  }
+  
+  .password-input-wrapper {
+    display: flex; /* Aligner les éléments en ligne */
+    align-items: center; /* Centrer verticalement */
+    position: relative;
+  }
+  
+  .password-input-wrapper input {
+    flex: 1; /* Prendre tout l'espace disponible */
+    margin-right: 10px; /* Espacement entre le champ et l'icône */
+  }
+  
+  .password-toggle-icon {
+    cursor: pointer;
+    color: #3B7088; /* Couleur de l'icône */
+    margin-left: 10px; /* Espacement entre le champ et l'icône */
+  }
+  
+  .password-toggle-icon:hover {
+    color: #4FE9DE; /* Changement de couleur au survol */
+  }

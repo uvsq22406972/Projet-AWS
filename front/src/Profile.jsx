@@ -685,62 +685,30 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           {showColors && (
             <div className="color-options">
               {colors.map((color) => (
-                <><button
-                  key={color.name}
-                  onClick={() => {
-                    handleColorSelection(color);
-                    setShowColors(false); // Fermer la palette de couleurs après sélection
-                  }}
-                  style={{
-                    backgroundColor: color.hex,
-                    color: color.hex === "#FFFF00" ? "black" : "white",
-                    padding: "10px",
-                    margin: "5px",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {color.name}
-                </button><span className="price-tag">20 pièces</span></>
+                <div key={color.name} className="color-option-item">
+                  <button
+                    onClick={() => {
+                      handleColorSelection(color);
+                      setShowColors(false); // Fermer la palette de couleurs après sélection
+                    }}
+                    style={{
+                      backgroundColor: color.hex,
+                      color: color.hex === "#FFFF00" ? "black" : "white",
+                      padding: "10px",
+                      margin: "5px",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      width: "100%", // Prendre toute la largeur disponible
+                      textAlign: "center", // Centrer le texte
+                    }}
+                  >
+                    {color.name}
+                  </button>
+                  <span className="price-tag">20 pièces</span>
+                </div>
               ))}
             </div>
           )}
-          {/* Afficher un aperçu du clavier avec la couleur sélectionnée */}
-          <div className="keyboard-preview" style={{ marginTop: '20px' }}>
-            <div className="keyboard-row">
-              {['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((key) => (
-                <div
-                  key={key}
-                  className="keyboard-key"
-                  style={{ backgroundColor: keyboardColor }}
-                >
-                  {key}
-                </div>
-              ))}
-            </div>
-            <div className="keyboard-row">
-              {['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map((key) => (
-                <div
-                  key={key}
-                  className="keyboard-key"
-                  style={{ backgroundColor: keyboardColor }}
-                >
-                  {key}
-                </div>
-              ))}
-            </div>
-            <div className="keyboard-row">
-              {['W', 'X', 'C', 'V', 'B', 'N'].map((key) => (
-                <div
-                  key={key}
-                  className="keyboard-key"
-                  style={{ backgroundColor: keyboardColor }}
-                >
-                  {key}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       );
     } else if (activeSection === 'password') {
