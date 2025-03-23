@@ -1,5 +1,4 @@
 const encrypt = require('../encrypt'); 
-
 class Users {
   // Constructeur de la classe en appelant une bdd
   constructor(db) {

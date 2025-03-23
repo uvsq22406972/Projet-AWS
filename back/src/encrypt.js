@@ -11,7 +11,11 @@ async function verifyPassword(password, hash) {
     }
     
     return await bcrypt.compare(password, hash);
+<<<<<<< HEAD
 }
+=======
+  }
+>>>>>>> Version20mars
 
 // Exporter les fonctions pour les utiliser ailleurs
 module.exports = {

@@ -1,12 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import CustomSlider from './CustomSlider.jsx';
 import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 
 const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
-    const storedRoom = localStorage.getItem("room");
+    var storedRoom = localStorage.getItem("room");
     const [room, setRoom] = useState(storedRoom);
     const [users, setUsers] = useState([]);
     const [gameStarted, setGameStarted] = useState(false);
@@ -14,13 +13,27 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [isUserReady, setIsUserReady] = useState(false);
     const [compte, setCompte] = useState([]);
     const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+    const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
     const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
     const [gameTime, setGameTime] = useState(10);
     const [livesLostThreshold, setLivesLostThreshold] = useState(2);
 
+    const [selectedAvatar, setSelectedAvatar] = useState(null)
+
+    // Chemins des avatars (placer ces images dans public/images)
+    const avatars = [
+        '/images/avatar1.jpg',
+        '/images/avatar2.jpg',
+        '/images/avatar3.jpg',
+        '/images/avatar4.jpg',
+        '/images/avatar5.jpg',
+        '/images/avatar6.jpg',
+        '/images/avatar7.jpg',
+        '/images/avatar8.jpg'
+    ];
+
     const ws = useRef(null);
     const reconnectTimer = useRef(null);
-    const isWebSocketOpen = useRef(false);
 
     // Vérifier si une session est déjà ouverte
     const checkSession = async () => {
@@ -58,13 +71,13 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
       }
 
     const connectWS = useCallback(() => {
-        if (isWebSocketOpen.current) return;
+        if (isWebSocketOpen) return;
         
         ws.current = new WebSocket("ws://localhost:4002");
 
         ws.current.onopen = () => {
             console.log("WebSocket connecté !");
-            isWebSocketOpen.current = true;
+            setIsWebSocketOpen(true);
 
             console.log("storedRoom =", storedRoom);
             handleRoomLogic();
@@ -72,36 +85,56 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         console.log("code de room ; ",room);
         
         // Gérer les messages du serveur WebSocket
-        ws.current.onmessage = (event) => {
+        ws.current.onmessage = async (event) => {
             const message = JSON.parse(event.data);
             console.log('Message reçu:', message);
 
             if (message.type === 'generatedRoom') {
                 localStorage.setItem("room", message.room);
-                
-                setRoom(message.room);
-                setUsers(message.users);
+                storedRoom = message.room;
+                await setRoom(message.room);
+                await setUsers(message.users);
+                await joinRoom();
+                fetchUsersInRoom();
             }
-
+            
             if (message.type === 'users_list') {
                 console.log('Utilisateurs mis à jour:', message.users);
-                setUsers(message.users);
+                await setUsers(message.users);
+                console.log(users);
             }
-            else if (message.type === "error"){console.log("oula");}
+
+            if(message.type === 'ok') {
+                fetchUsersInRoom();
+            }
+
+            else if (message.type === "error"){console.log("Erreur Interne");}
+
+            if (message.type === 'game_started') {
+               
+                console.log("Le jeu a été lancé");
+                setGameStarted(true);
+                localStorage.setItem("users", JSON.stringify(users));
+                setUsers([]);
+                setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
+            }
+            
+           
         };
 
-        ws.current.onclose = (e) => {
-            console.warn("⚠️ WS fermé :", e.code, e.reason);
-            isWebSocketOpen.current = false;
-      
-            //Reconnexion auto après 3s
-            reconnectTimer.current = setTimeout(() => {
-              console.log("🔄 Tentative de reconnexion...");
-              connectWS();
+        ws.current.onclose = (event) => {
+            console.warn("⚠️ WebSocket fermé :", event);
+            setIsWebSocketOpen(false);
+            // Auto-reconnexion après 3 secondes
+            setTimeout(() => {
+                console.log("🔄 Tentative de reconnexion...");
+                ws.current = new WebSocket("ws://localhost:4002");
             }, 3000);
         };
-    }, []);
 
+    }, [room, userid, isUserReady]);
+
+                
     const safeSend = useCallback((message, retries = 3) => {
         return new Promise((resolve, reject) => {
             const attempt = (attemptCount) => {
@@ -204,77 +237,68 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     };
 
     // pour rejoindre une room
-    const joinRoom = () => {
-        if (!isWebSocketOpen) {
-            console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
-            return;
-        }
+    const joinRoom = async () => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            console.log("Ajout du joueur:", userid);
+            console.log("Le joueur suivant rejoint la room:", userid," dans ", room);
 
             const message = {
                 type: "join_room",
-                room: storedRoom,
-                user: compte.username,
+                room: room,
+                user: userid,
             };
             ws.current.send(JSON.stringify(message));
-
-            setTimeout(() => {
-                fetchUsersInRoom();
-            }, 200);
+            
         } else {
             console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
             setTimeout(joinRoom, 500); // Réessaye après 500ms
         }
     };
 
-    // Récupérer les utilisateurs dans la room
     const fetchUsersInRoom = () => {
         console.log("fetching");
-        if (!isWebSocketOpen) {
-            console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
-            return;
-        }
-        
-        ws.current.onmessage = (event) => {
-            const response = JSON.parse(event.data);
-            if (response.type === 'users_list') {
-                console.log('Utilisateurs mis à jour:', response.users);
-                
-                setUsers(response.users);
+    
+        const attemptFetch = () => {
+            if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+                console.warn("WebSocket pas encore prêt, réessai dans 2 secondes...");
+                setTimeout(attemptFetch, 2000); // Réessaye après 2 secondes
+                return;
             }
-            else if (response.type === "error"){console.log("oula");}
-            
+    
+            console.log(" Room avant envoi :", room);
+            console.log("Stored Room avant envoi :", storedRoom);
+            if (!storedRoom) {
+                console.warn("La room est vide, impossible d'envoyer la requête.");
+                return;
+            }
+    
+            const message = { type: "get_users", room: storedRoom };
+            ws.current.send(JSON.stringify(message));
         };
-        console.log("Stored Room avant envoi :", storedRoom);
-        if (!storedRoom) {
-            console.warn("La room est vide, impossible d'envoyer la requête.");
-            return;
-        }
-   
-        const message = { type: "get_users", room: room };
-        ws.current.send(JSON.stringify(message));
-        
-
-        
+    
+        // Démarre la première tentative
+        attemptFetch();
     };
 
     const leaveRoom = () => {
-        // Envoyer la requête "leave_room" au serveur
-        if (ws.current?.readyState === WebSocket.OPEN) {
-          ws.current.send(JSON.stringify({
-            type: "leave_room",
-            room: storedRoom,
-            user: compte.username
-          }));
+        if (!isWebSocketOpen || !ws.current) {
+          console.warn("WebSocket n'est pas ouvert, impossible de quitter la salle.");
+          return;
         }
       
-        // Reset complet avec callback
-        localStorage.removeItem("room");
+        //le joueur quitte la salle envoyé au serveur
+        const message = {
+          type: "leave_room",
+          room: room,  
+          user: userid,  
+        };
+        ws.current.send(JSON.stringify(message));
+        console.log(`Le joueur ${userid} quitte la room ${room}`);
         
-        setUsers([]);
+       // redirection
+       fetchUsersInRoom();
         setCurrentPage("pagePrincipale");
-    };
+        localStorage.removeItem("room");
+      };
     
    // const showPlayer = () => {
     //    fetchUsersInRoom();
@@ -284,15 +308,41 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     // Démarrer le jeu
     const startGame = () => {
         console.log("Le bouton Démarrer a été cliqué ");
-        ws.current.send(JSON.stringify({ type: "start_game", room }));
+        ws.current.send(JSON.stringify({ type: "start_game", room:room,lives: livesToPlay, }));
         setGameStarted(true);
         // Passe livesToPlay comme prop en plus de changer de page
+        console.log("users passe : " , users)
+        localStorage.setItem("users", JSON.stringify(users));
+        setUsers([]);
+        localStorage.setItem("myUser", userid);
         setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
+    };
+
+    // Fonction pour sélectionner un avatar
+    const handleAvatarSelect = (avatar) => {
+        setSelectedAvatar(avatar); // Met à jour l'état local
+        localStorage.setItem('selectedAvatar', avatar); // Enregistre l'avatar dans localStorage
     };
 
     return (
         <div>
     <div className="d-flex flex-column justify-content-center align-items-center vh-100">
+        {/* Carrousel d'avatars */}
+        <div className="w-96 mb-4">  {/* Limite la largeur à 24rem */}
+            <Carousel showThumbs={false} infiniteLoop autoPlay>
+                {avatars.map((avatar, index) => (
+                    <div key={index} className="flex justify-center items-center">
+                        <img 
+                                    src={avatar} 
+                                    alt={`Avatar ${index + 1}`}
+                                    className={`rounded-full border-4 border-gray-400 object-cover cursor-pointer ${selectedAvatar === avatar ? 'ring-4 ring-blue-500' : ''}`}
+                                    style={{ width: "250px", height: "250px", borderRadius: "50%", border: "2px solid black", marginTop: "60px" }}
+                                    onClick={() => handleAvatarSelect(avatar)} // Ajout de l'événement onClick
+                                />
+                    </div>
+                ))}
+            </Carousel>
+        </div>
 
         <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)", width: "400px" }}>
             <h2 className="mb-4 fw-bold text-white">Salle de Jeu</h2>
@@ -308,14 +358,21 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                         users.map((element, index) => {
                             const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
                             const userColor = colors[index % colors.length];
-                            
                             return (
                                 <li 
-                                    key={element} 
+                                    key={element.id} 
                                     className="list-group-item" 
                                     style={{ backgroundColor: userColor, color: "white", border: "none" }}
                                 >
-                                    {element}
+                                    {element.id}
+                                    {selectedAvatar && (
+                                                <img 
+                                                    src={selectedAvatar} 
+                                                    alt="Avatar"
+                                                    className="rounded-full ml-2"
+                                                    style={{ width: "30px", height: "30px" }}
+                                                />
+                                            )}
                                 </li>
                             );
                         })

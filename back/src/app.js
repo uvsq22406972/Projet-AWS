@@ -12,6 +12,7 @@ const Rooms = require("./entities/rooms.js");
 // Initialisation de la BDD -> MongoDB
 const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
+<<<<<<< HEAD
 // Remplacer la connexion actuelle par :
 const client = new MongoClient(uri, {
   maxPoolSize: 15,
@@ -27,6 +28,9 @@ async function initMongoDB() {
   console.log("🗄️ Connexion MongoDB établie !");
 }
 initMongoDB();
+=======
+const client = new MongoClient(uri);
+>>>>>>> Version20mars
 
 axios.defaults.baseURL = 'http://localhost:4000';
 axios.defaults.withCredentials = true;
@@ -69,7 +73,11 @@ app.use(
 app.use(helmet());
 
 // Middleware pour servir le frontend
+<<<<<<< HEAD
 app.use(express.static(path.join(__dirname, "../../front")));
+=======
+app.use(express.static(path.join(__dirname, "../../frontend")));
+>>>>>>> Version20mars
 
 // Initialisation de l'API MongoDB
 const api = apiRouter(client);
@@ -168,6 +176,10 @@ app.get("/random-sequence", async (req, res) => {
 const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
+<<<<<<< HEAD
+=======
+  await client.connect();
+>>>>>>> Version20mars
   const db = client.db("DB");
   const collection = db.collection("Rooms");
   ws.on("message",async (message) => {
@@ -175,6 +187,7 @@ wss.on("connection", async (ws) => {
     console.log(`Message reçu: ${data.type}`);
 
     if (data.type === "create_room") {
+<<<<<<< HEAD
       if (!data.user) {
         ws.send(JSON.stringify({ 
           type: "error", 
@@ -190,6 +203,14 @@ wss.on("connection", async (ws) => {
       const reponse = axios.put(`api/rooms`,{
         id : generatedRoomName,
         user : creator
+=======
+      const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
+      console.log("Room générée:", generatedRoomName);
+
+      const reponse = axios.put(`api/rooms`,{
+        id : generatedRoomName,
+        user : data.user
+>>>>>>> Version20mars
       });
       //retour utilisateur
       ws.send(
@@ -197,7 +218,11 @@ wss.on("connection", async (ws) => {
           type:'generatedRoom',
           message: `Room ${generatedRoomName} créée !`,
           room: generatedRoomName,
+<<<<<<< HEAD
           users: [creator],
+=======
+          users: data.user,
+>>>>>>> Version20mars
         })
       );
     }
@@ -206,6 +231,7 @@ wss.on("connection", async (ws) => {
       const roomName = data.room;
       console.log("données recu on join" ,data);
       try {
+<<<<<<< HEAD
         const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
         if (resp.status === 200) {
           console.log("Envoi du message WebSocket :");
@@ -223,17 +249,43 @@ wss.on("connection", async (ws) => {
         }
        } catch (error) {
         ws.send(
+=======
+        const res = await axios.post(`api/addUserToRoom`,{
+          room: roomName,
+          user:data.user
+        });
+        if(res.data.status === 200) {
+          console.log("Envoi du message WebSocket :");
+          ws.send(
+            JSON.stringify({
+              type: "ok",
+              room:roomName,
+              message: `Room rejointe`,
+            })
+          );
+        } else { 
+          ws.send(
+>>>>>>> Version20mars
           JSON.stringify({
             type: "no_room",
             message: `La room ${roomName} n'existe pas.`,
           })
         );
       }
+<<<<<<< HEAD
+=======
+        
+    
+       } catch (error) {
+        console.log("Erreur inattendue ",error)
+      }
+>>>>>>> Version20mars
       
     }
 
     if (data.type === "get_users") {
      const roomName = data.room;
+<<<<<<< HEAD
      console.log("aojzebcpaoje cpjia éé",roomName)
       try {
        
@@ -248,6 +300,23 @@ wss.on("connection", async (ws) => {
             })
           );
           console.log("ceci est les datas envoyés :",resp.data);
+=======
+      try {
+       
+        const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
+        if (resp) {
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(
+                JSON.stringify({
+                  type: "users_list",
+                  room: roomName,
+                  users: resp.data, 
+                })
+              );
+            }
+            });
+>>>>>>> Version20mars
         }
       } catch (error) {
         ws.send(
@@ -286,7 +355,21 @@ wss.on("connection", async (ws) => {
     if (data.type === "start_game") {
       const roomName = data.room;
       console.log(`Le jeu commence dans la room: ${roomName}`);
+<<<<<<< HEAD
 
+=======
+      const lives = data.lives;
+        if(lives != 3) {
+         //    console.log("Attention : lives =", lives ," et la room ", roomName)
+          const resp = await axios.post(`api/modifyLives`,{
+          
+           room : roomName,
+           lives : lives
+          
+         });
+        }
+        
+>>>>>>> Version20mars
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(
@@ -298,6 +381,7 @@ wss.on("connection", async (ws) => {
         }
         });
       }
+<<<<<<< HEAD
       if (data.type === "leave_room") {
         const roomName = data.room;
         const user = data.user;
@@ -345,6 +429,154 @@ wss.on("connection", async (ws) => {
   ws.on("close", () => {
     console.log("Un utilisateur a quitté la room");
   });
+=======
+      if (data.type === "game_over") {  
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(
+              JSON.stringify({
+                type: "game_over"
+              })
+            );
+          }
+          });
+        }
+      if (data.type === "leave_room") {
+        const roomName = data.room;
+        const user = data.user;
+        console.log("data envoyé : ",roomName )
+       try {
+        const resp = await axios.get(`api/getUsersFromRoom`,{
+         params : {
+          room : roomName
+         }
+        }) ;
+        const usersFound = resp.data;
+        console.log("message recu ",usersFound);
+        console.log("Type de usersFound :", typeof usersFound, usersFound);
+
+        if(usersFound.length === 1 && usersFound[0] == user)
+          {
+            const reponse = await axios.delete(`api/rooms`,{
+              data: { 
+                room: roomName,
+                user: data.user
+              }
+            });
+          }
+        else {
+          const response = await axios.post(`api/removeUserFromRoom`, {
+            room : roomName,
+            user : data.user
+          })
+        }
+       }catch(error) {console.error("Erreur lors de la destruction de salle : Pas de salle ?", error)}
+        
+      }
+      if (data.type === 'lose_life'){
+        handleLoseLife(data);
+      }
+      if(data.type === 'validate_word'){
+        handleValidateWord(ws, data);
+      }
+
+      if(data.type === 'sequence'){
+        const seq = data.seq;
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(
+              JSON.stringify({
+                type: "get_sequence",
+                sequence : seq
+              })
+            );
+          }
+          });
+
+      }
+
+      if(data.type === 'update_timer') {
+        getNextPlayerAndSend(data.room,data.user);
+        //On leur envoie le dernier mot écrit par le joueur
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(
+              JSON.stringify({
+                type: "get_inputValue",
+                value:data.iv
+              })
+            );
+          }
+          });
+      }
+
+      if(data.type === "change_lives") {
+        const roomName = data.room;
+        const lives = data.lives
+        const resp = await axios.post(`api/modifyLives`,{
+          params : {
+           room : roomName,
+           lives : lives
+          }
+         });
+      }
+
+  });
+  
+  async function handleLoseLife(data) {
+    const roomname = data.room;
+    const userid  = data.user;
+    // Envoie a l'api du back pour gérer la perte de vie
+    const response = await axios.post(`api/loseLife`, {
+      room : roomname,
+      user : userid
+    })
+    if(response.data.status === 200) {
+      await getNextPlayerAndSend(roomname,userid);
+    }
+    else {
+      const respWinner = await axios.get(`api/getWinner`, {
+       params : { room: roomname}
+      })
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(
+            JSON.stringify({
+              type: "game_over",
+              winner : respWinner.data.winner
+            })
+          );
+        }
+        });
+    }
+    
+    // Envoyer a tous les clients la maj
+  }
+  
+  //Renvoie a tous les clients le currentPlayer et ils reinitialiseront 
+  //leurs timers en recevant ces données
+  async function getNextPlayerAndSend(roomname, userid) {
+    const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomname } });
+      const nextPlayer = await axios.get(`api/getNextPlayer`, { params: { room: roomname, user : userid } });
+      console.log("envoie des données :", nextPlayer.data);
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(
+            JSON.stringify({
+              type: "reset_timer",
+              users : resp.data,
+              newCurrentPlayer : nextPlayer.data.nextPlayer
+            })
+          );
+        }
+        });
+  }
+
+});
+
+app.listen(port, () => {
+  console.log(`Serveur Express démarré sur http://localhost:${port}`);
+>>>>>>> Version20mars
 });
 
 console.log(`Serveur WebSocket à l'écoute sur le port ${wsPort}`);

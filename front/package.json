@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+<<<<<<< HEAD
     "@dicebear/collection": "^9.2.2",
     "@dicebear/core": "^9.2.2",
+=======
+>>>>>>> Version20mars
     "axios": "^1.8.1",
     "bootstrap": "^5.3.3",
     "cra-template": "1.2.0",

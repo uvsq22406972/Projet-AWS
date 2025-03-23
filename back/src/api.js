@@ -232,15 +232,6 @@ router.post('/verify-code', (req, res) => {
     }
   });
 
-  //Permet l'ajout d'un user à un room
-  router.post('/addUserToRoom', async (req, res) => {
-    // Initialisation des variables récupérées du front
-    const room = req.body.room;
-    const user = req.body.user;
-    console.log("j'ajoute");
-    await rooms.addUserToRoom(room,user);
-  });
-
   //Permet la suppression d'un room
   router.post('/removeUserFromRoom', async (req, res) => {
     try {
@@ -264,7 +255,58 @@ router.post('/verify-code', (req, res) => {
         details: error.message
       });
     }
+    // Initialisation des variables récupérées du front
+    const room = req.body.room;
+    console.log("id recu : ", room);
+    await rooms.deleteRoom(room);
   });
+
+//Permet la suppression d'un room
+router.post('/addUserToRoom', async (req, res) => {
+  // Initialisation des variables récupérées du front
+  const room = req.body.room;
+  const user = req.body.user;
+  console.log("j'ajoute", room , " room , user ", user);
+  if(await rooms.exist(room) !== null) {
+    await rooms.addUserToRoom(room,user);
+    res.send({status:200})
+    console.log("Room rejointe (api.js)")
+  }
+  else {console.log("roomNonrejointe");res.send({status:401} )}
+});
+
+//permet le changement de vie au démarage de la partie
+router.post('/modifyLives', async (req,res) =>{
+  await rooms.changeLives(req.body.room,req.body.lives);
+})
+
+//permet le changement de vie au démarage de la partie
+router.post('/loseLife', async (req,res) =>{
+  const temp = await rooms.loseLife(req.body.room,req.body.user);
+  if(await rooms.checkGameOver(req.body.room)) {
+    res.send({status : 200})
+  }
+  else res.send({status : 401})
+})
+
+//Récupere le winner dans une room
+router.get('/getWinner', async (req,res) =>{
+  console.log("je passe a getWinner ",req.query.room);
+  const temp = await rooms.getWinner(req.query.room);
+  if(temp) {
+    res.send({status : 200,winner : temp})
+  }
+  else res.send({status : 401})
+})
+
+router.get('/getNextPlayer', async (req,res) =>{
+  console.log("arguemts : ",req.query.room , " ' ", req.query.user);
+  const temp = await rooms.nextPlayer(req.query.room,req.query.user);
+  if(temp) {
+    res.send({status : 200,nextPlayer : temp})
+  }
+  else res.send({status : 401})
+})
 
 
 
@@ -276,15 +318,19 @@ router.post('/verify-code', (req, res) => {
         return res.status(400).json({ error: "Room non spécifiée" });
       }
       const usersFound = await rooms.getUsersInRoom(room);
+      
       if (usersFound === null) {
-        return res.status(404).json({ error: "Room non trouvée" }); // Retourne 404 si la salle n'existe pas
+        return res.status(400).json({ error: "Aucune room ne porte ce nom" });
       }
-      res.json(usersFound);
+      
+      res.json(usersFound); 
+      console.log("Users found :", usersFound);
+      
     } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs :", error);
       res.status(500).json({ error: "Erreur interne du serveur" });
     }
   });
-  
 
 //Permet de récupérer les room d'une user
 router.get('/getRoomFromUsers', async (req, res) => {
