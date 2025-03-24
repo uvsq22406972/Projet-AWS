@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import CustomSlider from './CustomSlider.jsx';
+import "./GameRoom.css"
+import { FaUsers } from "react-icons/fa";
+import "./Profile.css";
 import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
 import { Carousel } from 'react-responsive-carousel';
@@ -13,7 +15,9 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [userid, setUserid] = useState("");
     const [isUserReady, setIsUserReady] = useState(false);
     const [compte, setCompte] = useState([]);
+    const [avatars, setAvatars] = useState({});
     const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+    const [publicRooms, setPublicRooms] = useState([]);
     const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
     const [gameTime, setGameTime] = useState(10);
     const [livesLostThreshold, setLivesLostThreshold] = useState(2);
@@ -164,6 +168,31 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
           //localStorage.removeItem("room");
         };
     }, []);
+
+    useEffect(() => {
+      const fetchAvatars = async () => {
+          const newAvatars = {};
+          
+          await Promise.all(users.map(async (user) => {
+              try {
+                  const response = await axios.get('/api/get-avatar-by-username', {
+                      params: { username: user.trim() } // Normaliser le nom
+                  });
+                  if (response.data?.avatar) {
+                      newAvatars[user] = response.data.avatar;
+                  }
+              } catch (error) {
+                  console.error(`Avatar non trouvé pour ${user}`);
+                  newAvatars[user] = "";
+              }
+          }));
+          
+          setAvatars(prev => ({ ...prev, ...newAvatars }));
+      };
+  
+      if (users.length > 0) fetchAvatars();
+  }, [users]);
+    
     
     // Créer une room
     const createRoom = useCallback(async () => {
@@ -197,7 +226,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             user: randomUsername,
         };
         ws.current.send(JSON.stringify(message));
-
         
         fetchUsersInRoom();
         
@@ -210,7 +238,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             return;
         }
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-            console.log("Ajout du joueur:", userid);
+            console.log("Ajout du joueur:", compte.username);
 
             const message = {
                 type: "join_room",
@@ -291,87 +319,101 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     };
 
     return (
-        <div>
-    <div className="d-flex flex-column justify-content-center align-items-center vh-100">
-
-        <div className="register-box text-center p-5 shadow-lg rounded" style={{ background: "linear-gradient(to top, #3B7088, #4FE9DE)", width: "400px" }}>
-            <h2 className="mb-4 fw-bold text-white">Salle de Jeu</h2>
-
-            {/* Nom de la salle */}
-            <div className="game-room-salle mb-3 text-white">{room || "Chargement..."}</div>
-
-            {/* Liste des utilisateurs */}
-            <div className="text-start mb-4">
-                <h4 className="text-white">Utilisateurs dans la room :</h4>
-                <ul className="list-group">
-                    {Array.isArray(users) && users.length > 0 ? (
-                        users.map((element, index) => {
-                            const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
-                            const userColor = colors[index % colors.length];
-                            
-                            return (
-                                <li 
-                                    key={element} 
-                                    className="list-group-item" 
-                                    style={{ backgroundColor: userColor, color: "white", border: "none" }}
-                                >
-                                    {element}
-                                </li>
-                            );
-                        })
+      <div className="game-room-container">
+      {/* HEADER */}
+      <header className="game-room-header" style={{marginTop:"20px"}}>
+        <h2>Salle de Jeu</h2>
+        <p className="room-name">{room || "Chargement..."}</p>
+      </header>
+    
+      {/* CORPS (deux colonnes) */}
+      <div className="game-room-body">
+        <div className="game-room-left">
+          <h5 className="text-center text-black">Utilisateurs dans la room</h5>
+          <div className="d-flex align-items-center justify-content-center text-muted" style={{ minWidth: "100px" }}>
+            <FaUsers className="me-1" size={18} />
+            {users.length} joueur{users.length > 1 ? 's' : ''}
+          </div>
+          <ul className="list-group" style={{
+            maxHeight: '180px',
+            overflowY: 'auto',
+            margin: "20px",
+            padding: "10px",
+            background: "white",
+          }}>
+            {Array.isArray(users) && users.length > 0 ? (
+              users.map((element, index) => {
+                const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
+                const userColor = colors[index % colors.length];
+                return (
+                  <li 
+                    key={element} 
+                    className="list-group-item" 
+                    style={{ backgroundColor: userColor, color: "white", border: "none", width: "80%", display: "flex", alignItems: "center", gap: "10px" }}
+                  >
+                    {avatars[element] ? (
+                      <img 
+                        src={avatars[element]} 
+                        alt="avatar" 
+                        style={{ width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px', backgroundColor:'rgba(255, 255, 255, 0.9)', border:"2px solid black" }}
+                      />
                     ) : (
-                        <li className="list-group-item text-muted">Aucun utilisateur pour l'instant</li>
+                      <div style={{
+                        width: '30px',
+                        height: '30px',
+                        borderRadius: '50%',
+                        background: '#ccc',
+                        marginRight: '10px'
+                      }}></div>
                     )}
-                </ul>
-            </div>
-
-
-                    {/* Nb de vies */}
-                    <div style={{ margin: '20px 0' }}>
-                      <label htmlFor="livesSlider">
-                        Nombre de vies : <strong>{livesToPlay}</strong>
-                      </label>
-                      <CustomSliderWithTooltip
-                        value={livesToPlay}
-                        onChange={setLivesToPlay}
-                        min={1}
-                        max={5}
-                      />
-                    </div>
-
-                    {/* Choix du temps de jeu */}
-                    <div style={{ margin: '20px 0' }}>
-                        <label htmlFor="timeSlider">
-                          Temps de jeu : <strong>{gameTime} secondes</strong>
-                        </label>
-                        <CustomSliderWithTooltip
-                          value={gameTime}
-                          onChange={setGameTime}
-                          min={5}
-                          max={15}
-                        />
-                    </div>
-
-                    {/* Choix de changement de séquence */}
-                    <div style={{ margin: '20px 0' }}>
-                      <label htmlFor="changeSequenceSlider">
-                        Changer la séquence : <strong>{livesLostThreshold}</strong> vies perdues
-                      </label>
-                      <CustomSliderWithTooltip
-                        value={livesLostThreshold}
-                        onChange={setLivesLostThreshold}
-                        min={1}
-                        max={5}
-                      />
-                    </div>
-
-            {/* Boutons */}
-            <button className="custom-btn w-100 mb-3" onClick={startGame}>Démarrer le jeu</button>
-            <button className="custom-btn w-100 mb-3" onClick={leaveRoom}>Quitter la salle</button>
-            <button className="custom-btn w-100" onClick={addPlayer}>Ajouter un joueur</button>
+                    <span>{element}</span>
+                  </li>
+                );
+              })
+            ) : (
+              <li className="list-group-item text-muted">Aucun utilisateur pour l'instant</li>
+            )}
+          </ul>
         </div>
-    </div>
-</div>
+        <div className="game-room-right">
+          <h5 className="text-center text-black">Options de jeu</h5>
+          <div className="slider-block">
+            <label>Nombre de vies : {livesToPlay}</label>
+            <CustomSliderWithTooltip
+              value={livesToPlay}
+              onChange={setLivesToPlay}
+              min={1}
+              max={5}
+            />
+          </div>
+          <div className="slider-block">
+            <label>Temps de jeu : {gameTime} secondes</label>
+            <CustomSliderWithTooltip
+              value={gameTime}
+              onChange={setGameTime}
+              min={5}
+              max={15}
+            />
+          </div>
+          <div className="slider-block">
+            <label>Changer la séquence : {livesLostThreshold} vies perdues</label>
+            <CustomSliderWithTooltip
+              value={livesLostThreshold}
+              onChange={setLivesLostThreshold}
+              min={1}
+              max={5}
+            />
+          </div>
+        </div>
+      </div>
+    
+      {/* FOOTER (boutons) */}
+      <footer className="game-room-footer">
+        <button onClick={startGame}>Démarrer le jeu</button>
+        <button onClick={leaveRoom}>Quitter la salle</button>
+        <button onClick={addPlayer}>Ajouter un joueur</button>
+      </footer>
+    </div>    
 
     );
 };

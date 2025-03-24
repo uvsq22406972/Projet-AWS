@@ -44,9 +44,10 @@ body {
 .avatar-section {
   background: rgb(255, 255, 255);
   padding: 20px;
+  margin-left : 30px;
   border-radius: 12px;
+  border: 2px solid black;
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1);
-  max-width: 600px; /* Réduit la largeur maximale */
 }
 
 .avatar-preview {
@@ -93,6 +94,7 @@ body {
 
 .custom-input {
   border: 2px solid #F48516;
+  padding-right: 40px;
 }
 
 .footer-link{
@@ -311,4 +313,82 @@ body {
 .coiffure-grid::-webkit-scrollbar-thumb {
   background: #888; 
   border-radius: 4px;
+}
+
+/* Par défaut, on suppose que .sidebar-panel est “hors écran” sur mobile */
+.sidebar-panel {
+  position: fixed;         /* On le fixe pour qu’il glisse par-dessus la page */
+  top: 60px;
+  left: 0;
+  width: 220px;            /* Largeur du panel */
+  height: 100vh;           /* Prend toute la hauteur */
+  background: #fff;        /* Fond blanc (ou ce que vous voulez) */
+  border-right: 2px solid #ccc;
+  transform: translateX(-100%); /* Caché à gauche */
+  transition: transform 0.3s ease;
+  z-index: 999;            /* Au-dessus du contenu */
+  padding: 1rem;
+}
+
+.sidebar-panel .menu-box:first-child {
+  margin-top: 2rem; /* Espace de 2rem pour le premier bouton seulement */
+}
+
+
+/* Quand isMenuOpen = true => on ajoute .open => slide-in */
+.sidebar-panel.open {
+  transform: translateX(0);
+}
+
+/* Le bouton “menu-toggle” en mobile */
+.menu-toggle {
+  display: block;
+  margin-bottom: 1rem;
+  background: none;
+  border: none;
+  color: #000; /* ou autre */
+  cursor: pointer;
+  /* z-index: 1000 si besoin d’être au-dessus du panel */
+}
+
+/* Sur desktop (≥ 768px) */
+@media (min-width: 768px) {
+  .menu-toggle {
+    display: none; /* Cache le bouton hamburger */
+  }
+  
+  .sidebar-panel {
+    position: fixed; /* Maintient le menu fixe */
+    left: 0;
+    top: 60px;
+    height: calc(100vh - 60px);
+    width: 300px;
+    transform: none; /* Annule la translation mobile */
+    border-right: 2px solid #ccc;
+    box-shadow: 4px 0 6px rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
+  }
+
+  /* Contenu principal décalé */
+  .col-md-9 {
+    margin-left: 220px;
+    width: calc(100% - 220px);
+    padding: 2rem;
+  }
+
+  /* Supprime l'espace réservé au premier élément */
+  .sidebar-panel .menu-box:first-child {
+    margin-top: 1rem;
+  }
+}
+
+/* Conservation du comportement mobile */
+@media (max-width: 767px) {
+  .sidebar-panel {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-panel.open {
+    transform: translateX(0);
+  }
 }

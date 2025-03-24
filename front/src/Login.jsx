@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './Login.css';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -12,6 +13,7 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [recaptchaValue, setRecaptchaValue] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
   const gradientStyle = {
     background: "linear-gradient(to top, #3B7088, #4FE9DE)",
@@ -19,6 +21,9 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
 
   const handleEmailChange = (e) => setEmail(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
+  const handleShowPasswordChange = () => {
+    setShowPassword(!showPassword);
+  };
   const handleRecaptchaChange = (value) => setRecaptchaValue(value);
 
   const handleLoginClick = async (e) => {
@@ -62,8 +67,23 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
               <label>Email</label>
             </div>
             <div className="mb-10 input-box">
-              <input type="password" value={password} onChange={handlePasswordChange} />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={handlePasswordChange}
+              />
               <label>Mot de passe</label>
+              <span 
+                className="position-absolute end-0 top-50 translate-middle-y me-3"
+                style={{ cursor: 'pointer' }}
+                onClick={handleShowPasswordChange}
+              >
+                {showPassword ? (
+                  <FaEyeSlash size={20} className="password-toggle-icon" />
+                ) : (
+                  <FaEye size={20} className="password-toggle-icon" />
+                )}
+              </span>
             </div>
             <ReCAPTCHA
               sitekey="6LdtjdcqAAAAAJiQiqVsDxWDDVgDTH_hdzOgRzcP"

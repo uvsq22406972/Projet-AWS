@@ -44,68 +44,63 @@ function init(db){
   };
 
   // Validation du mot de passe
-  const validatePassword = (password) => {
-    // Vérifie si le mot de passe a au moins 8 caractères, un chiffre et un symbole
-    const regex = /^(?=.*[0-9])(?=.*[!@#$%^&*?.])[A-Za-z0-9!@#$%^&*?.]{8,}$/;
-    return regex.test(password);
-  };
+const validatePassword = (password) => {
+  // Au moins 1 minuscule, 1 majuscule, 1 chiffre, 1 caractère spécial (!@#$%^&*?.), longueur >= 8
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*?.])[A-Za-z\d!@#$%^&*?.]{8,}$/; 
+  return regex.test(password);
+};
+
   
   /**module.exports = { isEmailValid, isPasswordValid };
      routes.js - Fichier contenant vos routes
      const { isEmailValid, isPasswordValid } = require('./api');
   **/
 
-  //Permet la création d'un compte
+  //demande création compte, envoi du code seulement
   router.put('/users', async (req, res) => {
-    // Initialisation des variables récupérées du front
-    const pseudo = req.body.pseudo;
-    const email = req.body.email;
-    const mdp1 = req.body.mdp1;
-    const mdp2 = req.body.mdp2;
-    const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
-    
-   
-    
-   
-    //Vérifie si tous les champs sont remplis
-    if (!pseudo || !mdp1 || !mdp2 || !email) {
+    const { pseudo, email, mdp1, mdp2 } = req.body;
+  
+    if (!pseudo || !email || !mdp1 || !mdp2) {
       return res.send({ message: "Tous les champs sont nécessaires" });
     }
-
-    // Vérifie si les mots de passe sont identiques
+  
     if (mdp1 !== mdp2) {
       return res.send({ message: "Les mots de passe ne correspondent pas" });
     }
-    
-    //Vérifie si l'email est valide ou pas
+  
+    if (!isEmailValid(email)) {
+      return res.send({ message: "L'email n'est pas valide" });
+    }
+  
+    if (!validatePassword(mdp1)) {
+      return res.send({ message: "Le mot de passe doit respecter les critères de sécurité." });
+    }
+  
+    const exist = await users.exist(email);
     if (exist) {
       return res.send({ message: "Email deja utilisé" });
     }
 
-    // Validation de l'email et du mot de passe
-    if (!isEmailValid(email)) {
-      return res.send({ message: "L'email n'est pas valide" });
+    const existUsername = await users.existUsername(pseudo);
+    if (existUsername) {
+      return res.send({ message: "Username deja utilisé" });
     }
-    if (!validatePassword(mdp1)) {
-          return res.send({ message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre" });
-        }
-        
+    // Génération et envoi du code de vérification
+    const verificationCode = generateVerificationCode();
+    req.session.verificationCode = verificationCode;
+    req.session.pendingUser = { pseudo, email, password: await encrypt.hashPassword(mdp1) };
+  
     try {
-      const hashedPassword = await encrypt.hashPassword(mdp1); // Utilisation de la fonction pour encrypter les datas
-      await users.creerCompte(pseudo, email, hashedPassword);
-      return res.status(200).send({ message: "Utilisateur créé avec succès" });
+      await transporter.sendMail({
+        from: 'bellearnaude@gmail.com',
+        to: email,
+        subject: 'Code de vérification',
+        text: `Votre code de vérification est : ${verificationCode}`
+      });
+      res.status(200).send({ message: "Code envoyé avec succès" });
     } catch (error) {
-      console.error("Erreur lors de la création de l'utilisateur :", error);
-      return res.status(500).send({ message: "Erreur serveur" });
+      res.status(500).send({ message: "Erreur lors de l'envoi de l'email" });
     }
-    
-    /** try {
-      await users.creerCompte(pseudo, email, mdp1, mdp2);
-      return res.status(200).send({ message: "Utilisateur créé avec succès" });
-    } catch (error) {
-        console.error("Erreur lors de la création de l'utilisateur :", error);
-        return res.status(500).send({ message: "Erreur lors de la création de l'utilisateur" });
-    } **/
   });
 
   // Connexion et envoi du code de vérification
@@ -117,72 +112,39 @@ function init(db){
     if (!await users.exist(email)) return res.send({ status: 402 });
 
     if (await users.checkPassword(email, mdp)) {
-      const code = generateVerificationCode();
-      req.session.verificationCode = code;
       req.session.userid = email; 
-
-      try {
-        await transporter.sendMail({
-          from: 'bellearnaude@gmail.com',
-          to: email,
-          subject: 'Code de vérification',
-          text: `Votre code de vérification est : ${code}`
-        });
-
-        res.send({ status: 200, message: "Code envoyé avec succès" });
-      } catch (error) {
-        res.send({ status: 500, message: "Erreur lors de l'envoi de l'email" });
-      }
+      return res.send({ status: 200, message: "Login validé" });
     } else {
-      res.send({ status: 401, message: "Mot de passe incorrect" });
+      return res.send({ status: 401, message: "Mot de passe incorrect" });
     }
-  });
 
-  //Connexion et envoi du code de vérification
-  router.post('/users', async (req, res) => {
-    const { email, mdp } = req.body;
-
-    if (!email || !mdp) return res.send({ status: 400 });
-
-    if (!await users.exist(email)) return res.send({ status: 402 });
-
-    if (await users.checkPassword(email, mdp)) {
-      const code = generateVerificationCode();
-      req.session.verificationCode = code;
-      req.session.userid = email; 
-
-      try {
-        await transporter.sendMail({
-          from: 'bellearnaude@gmail.com',
-          to: email,
-          subject: 'Code de vérification',
-          text: `Votre code de vérification est : ${code}`
-        });
-
-        res.send({ status: 200, message: "Code envoyé avec succès" });
-      } catch (error) {
-        res.send({ status: 500, message: "Erreur lors de l'envoi de l'email" });
-      }
-    } else {
-      res.send({ status: 401, message: "Mot de passe incorrect" });
-    }
   });
 
    // Route de vérification du code
-router.post('/verify-code', (req, res) => {
-  const { code } = req.body; // Récupère seulement le code de vérification envoyé par le frontend
-
-  if (!req.session.verificationCode) {
-      return res.send({ status: 403, message: "Aucun code généré. Veuillez vous connecter d'abord." });
-  }
-
-  if (req.session.verificationCode === code) {
-      req.session.verified = true; 
-      res.send({ status: 200, message: "Code validé avec succès !" });
-  } else {
-      res.send({ status: 401, message: "Code invalide." });
-  }
-});
+   router.post('/verify-code', async (req, res) => {
+    const { code } = req.body;
+  
+    if (!req.session.verificationCode || !req.session.pendingUser) {
+      return res.send({ status: 403, message: "Session expirée, veuillez recommencer." });
+    }
+  
+    if (req.session.verificationCode === code) {
+      const { pseudo, email, password } = req.session.pendingUser;
+  
+      try {
+        await users.creerCompte(pseudo, email, password);
+        delete req.session.pendingUser;
+        delete req.session.verificationCode;
+  
+        return res.send({ status: 200, message: "Compte créé avec succès !" });
+      } catch (error) {
+        console.error(error);
+        return res.status(500).send({ message: "Erreur lors de la création définitive du compte." });
+      }
+    } else {
+      return res.send({ status: 401, message: "Code invalide." });
+    }
+  });
 
 
 
@@ -416,7 +378,7 @@ router.get('/getRoomFromUsers', async (req, res) => {
     // Vérifier si le nouveau mot de passe respecte les critères de sécurité
     if (!validatePassword(newPassword)) {
       return res.status(400).json({
-        message: "Le mot de passe doit comporter au moins 8 caractères, un chiffre et un symbole.",
+        message: "Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre, un symbole",
       });
     }
 
@@ -505,7 +467,27 @@ router.get('/getRoomFromUsers', async (req, res) => {
     }
   });
   
-
+  router.get('/get-avatar-by-username', async (req, res) => {
+    const { username } = req.query;
+  
+    if (!username) {
+      return res.status(400).send({ message: "Username requis" });
+    }
+  
+    try {
+      const user = await users.getUser(username);
+      
+      if (!user) {
+        return res.status(404).send({ message: "Utilisateur non trouvé" });
+      }
+  
+      res.status(200).send({ avatar: user.avatar || "" });
+    } catch (error) {
+      console.error("Erreur récupération avatar par username :", error);
+      res.status(500).send({ message: "Erreur serveur" });
+    }
+  });
+  
   return router;
 }
 

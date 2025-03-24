@@ -16,7 +16,7 @@ axios.defaults.withCredentials = true;
 //Gestion des pages affichés
 function Page() {
   //Initialisation des états
-  const [currentPage, setCurrentPage] = useState('login');
+  const [currentPage, setCurrentPage] = useState('loading');
   // eslint-disable-next-line
   const [isConnected, setIsConnected] = useState(false);
 
@@ -30,7 +30,12 @@ function Page() {
       if(userid){
         console.log(userid)
         setIsConnected(true);
-        setCurrentPage('pagePrincipale');
+        if (currentPage === 'profile'){
+          setCurrentPage('profile');
+        }
+        else {
+          setCurrentPage('pagePrincipale');
+        }
       }else{
         setIsConnected(false);
         setCurrentPage('login');
@@ -65,7 +70,7 @@ function Page() {
   }
 
   const handleGamePageClick = () => {
-    setCurrentPage('game');
+    setCurrentPage('gamepage');
   }
 
   const handleCreateAccountClick = () => {

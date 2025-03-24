@@ -53,3 +53,12 @@
     background: #F48516D2;
     color: white;
 }
+
+.password-toggle-icon {
+    color: white;
+    transition: color 0.3s;
+  }
+  
+  .password-toggle-icon:hover {
+    color: rgba(242, 235, 235, 0.844);
+  }

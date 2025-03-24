@@ -25,6 +25,27 @@ class Users {
     }
   }
 
+    // Vérifie si un email existe déjà dans la bdd
+    async existUsername(pseudo) {
+      try {
+        await this.db.connect();
+        const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+        const query = { username: { $eq: pseudo } }; // Requête Préparées pour contrer les injections noSQL
+        const res = await col1.findOne(query); //True si email existe, faux sinon
+  
+        if (res) {
+          return true;
+        } else {
+          return false;
+        }
+      } catch (e) {
+        console.error("Erreur lors de la vérification de l'existence de l'username :", e);
+        return false;
+      } finally {
+        await this.db.close();
+      }
+    }
+
   // Vérifie si un email existe déjà dans la bdd
   async exist(email) {
     try {
