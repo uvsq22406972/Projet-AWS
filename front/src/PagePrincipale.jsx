@@ -158,14 +158,23 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
 
   //  on gère les inputs utilisateurs et on passe a la game Room 
   const handleJoinRoom = async (roomName) => {
-    try {
-      if (!roomName) return toast.error("Veuillez entrer un code de salle");
-      // Si la salle existe, on va sur GameRoom
-      localStorage.setItem("room", roomName);
-      setCurrentPage("gameroom");
-    } catch (error) {
-      toast.error("Aucune salle de jeu ne porte ce nom");
-    }
+      if (!roomName){
+        toast.error("Veuillez entrer un code de salle");
+        return;
+      }
+
+      try {
+        const resp = await axios.get(`/api/roomExists?room=${roomName}`);
+        if (!resp.data.ok) {
+          toast.error("Cette salle n'existe pas !");
+          return;
+        }
+        // Sinon, la salle existe
+        localStorage.setItem("room", roomName);
+        setCurrentPage("gameroom");
+      } catch (error) {
+        toast.error("Erreur technique");
+      }
   };
   
   //CSS par ChatGPT, pour un bootstrap plus effectif
