@@ -198,7 +198,7 @@ const validatePassword = (password) => {
   router.get('/roomExists', async (req, res) => {
     const roomName = req.query.room;
     // check en BDD si la room existe
-    const found = await collectionRooms.findOne({ id: roomName });
+    const found = await rooms.exist(roomName);
     if (found) {
       res.json({ ok: true });
     } else {
