@@ -429,6 +429,7 @@ wss.on("connection", async (ws) => {
                   );
                 }
               });
+              return;
             } else {
               console.log("Il reste encore des joueurs, la room est conservée.");
             }
@@ -532,19 +533,33 @@ wss.on("connection", async (ws) => {
   //leurs timers en recevant ces données
   async function getNextPlayerAndSend(roomname, userid) {
     const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomname } });
-      const nextPlayer = await axios.get(`api/getNextPlayer`, { params: { room: roomname, user : userid } });
-      console.log("envoie des données :", nextPlayer.data);
+    const updatedUsers = resp.data;
+    const nextPlayerResp = await axios.get(`api/getNextPlayer`, { params: { room: roomname, user : userid } });
+    console.log("envoie des données :", nextPlayer.data);
+    if (nextPlayerResp.data.status === 200 && nextPlayerResp.data.nextPlayer) {
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(
             JSON.stringify({
               type: "reset_timer",
               users : resp.data,
-              newCurrentPlayer : nextPlayer.data.nextPlayer
+              newCurrentPlayer : nextPlayerResp.data.nextPlayer
             })
           );
         }
-        });
+      });
+    } else {
+  
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: "users_list",
+            room: roomname,
+            users: updatedUsers
+          }));
+        }
+      });
+    }
   }
 
 });

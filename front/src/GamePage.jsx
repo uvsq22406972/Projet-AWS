@@ -245,7 +245,18 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, [currentPlayer])
   
   const handleReturn = () => {
-    setCurrentPage('gameroom');
+    ws.current.send(JSON.stringify({
+      type: "leave_room",
+      room: localStorage.getItem("room"), // ou un état local "room"
+      user: storedUID                      // ex. localStorage.getItem("myUserrr")
+    }));
+  
+    // 2) Nettoyer localStorage
+    localStorage.removeItem("room");
+    // éventuellement localStorage.removeItem("users"); etc.
+  
+    // 3) Revenir à la page précédente (GameRoom ou pagePrincipale, selon votre navigation)
+    setCurrentPage("pagePrincipale");
   };
 
   function blackenLetters(word) {
