@@ -535,7 +535,7 @@ wss.on("connection", async (ws) => {
     const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomname } });
     const updatedUsers = resp.data;
     const nextPlayerResp = await axios.get(`api/getNextPlayer`, { params: { room: roomname, user : userid } });
-    console.log("envoie des données :", nextPlayer.data);
+    console.log("envoie des données :", nextPlayerResp.data);
     if (nextPlayerResp.data.status === 200 && nextPlayerResp.data.nextPlayer) {
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
