@@ -352,7 +352,7 @@ wss.on("connection", async (ws) => {
       const roomName = data.room;
       console.log(`Le jeu commence dans la room: ${roomName}`);
       const lives = data.lives;
-      
+
       if(lives != 3) {
        //    console.log("Attention : lives =", lives ," et la room ", roomName)
         const resp = await axios.post(`api/modifyLives`,{
@@ -371,6 +371,7 @@ wss.on("connection", async (ws) => {
             JSON.stringify({
               type: "game_started",
               room: roomName,
+              users: roomUsers
             })
           );
         }
