@@ -127,8 +127,8 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
         }
 
         if (message.type === 'users_list') {
-          setUsers(Array.isArray(message.users) ? message.users : []);
-          console.log("Mise à jour après le leave :", message.users);
+          setUsers(Array.isArray(data.users) ? data.users : []);
+          console.log("Mise à jour après le leave :", data.users);
         }
       };
   }, []);
