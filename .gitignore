@@ -1,0 +1,13 @@
+#  Node.js
+node_modules/         # Ne jamais versionner les dépendances
+npm-debug.log         # Logs d'erreur de npm
+yarn-error.log        # Logs d'erreur de Yarn
+.env                 # Fichier contenant les variables d'environnement (⚠️ jamais en prod)
+*.log                # Tous les fichiers logs
+
+# IDE/Éditeurs de code
+.vscode/             # Dossier spécifique à VS Code
+.idea/               # Dossier de JetBrains (WebStorm, IntelliJ)
+.DS_Store            # Fichier spécifique à macOS
+Thumbs.db            # Fichier spécifique à Windows
+

@@ -1,5 +1,4 @@
 const encrypt = require('../encrypt'); 
-
 class Users {
   // Constructeur de la classe en appelant une bdd
   constructor(db) {
@@ -105,8 +104,6 @@ class Users {
       return user;
     } catch (err) {
       throw err;
-    } finally {
-      await this.db.close();
     }
   }
 

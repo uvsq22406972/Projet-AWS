@@ -84,13 +84,15 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                 localStorage.setItem("room", message.room);
                 
                 setRoom(message.room);
-                setUsers(message.users);
+                setUsers(Array.isArray(message.users) ? message.users : []); 
             }
 
             if (message.type === 'users_list') {
+                setUsers(Array.isArray(message.users) ? message.users : []);
                 console.log('Utilisateurs mis à jour:', message.users);
-                setUsers(message.users);
             }
+
+
             else if (message.type === "error"){console.log("oula");}
         };
 
@@ -171,19 +173,24 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     useEffect(() => {
       const fetchAvatars = async () => {
+          if (!Array.isArray(users)) { // ✅ Vérification cruciale
+            console.error("Erreur : 'users' n'est pas un tableau", users);
+            return;
+          }
           const newAvatars = {};
           
           await Promise.all(users.map(async (user) => {
+            const username = user.id;
               try {
                   const response = await axios.get('/api/get-avatar-by-username', {
-                      params: { username: user.trim() } // Normaliser le nom
+                      params: { username: username.trim() } // Normaliser le nom
                   });
                   if (response.data?.avatar) {
-                      newAvatars[user] = response.data.avatar;
+                      newAvatars[username] = response.data.avatar;
                   }
               } catch (error) {
-                  console.error(`Avatar non trouvé pour ${user}`);
-                  newAvatars[user] = "";
+                  console.error(`Avatar non trouvé pour ${username}`);
+                  newAvatars[username] = "";
               }
           }));
           
@@ -264,16 +271,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             return;
         }
         
-        ws.current.onmessage = (event) => {
-            const response = JSON.parse(event.data);
-            if (response.type === 'users_list') {
-                console.log('Utilisateurs mis à jour:', response.users);
-                
-                setUsers(response.users);
-            }
-            else if (response.type === "error"){console.log("oula");}
-            
-        };
         console.log("Stored Room avant envoi :", storedRoom);
         if (!storedRoom) {
             console.warn("La room est vide, impossible d'envoyer la requête.");
@@ -311,12 +308,16 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     // Démarrer le jeu
     const startGame = () => {
-        console.log("Le bouton Démarrer a été cliqué ");
-        ws.current.send(JSON.stringify({ type: "start_game", room }));
-        setGameStarted(true);
-        // Passe livesToPlay comme prop en plus de changer de page
-        setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
-    };
+      console.log("Le bouton Démarrer a été cliqué ");
+      ws.current.send(JSON.stringify({ type: "start_game", room:room,lives: livesToPlay, }));
+      setGameStarted(true);
+      // Passe livesToPlay comme prop en plus de changer de page
+      console.log("users passe : " , users)
+      localStorage.setItem("users", JSON.stringify(users));
+      setUsers([]);
+      localStorage.setItem("myUser", userid);
+      setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
+  };
 
     return (
       <div className="game-room-container">
@@ -342,18 +343,19 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             background: "white",
           }}>
             {Array.isArray(users) && users.length > 0 ? (
-              users.map((element, index) => {
+              users.map((user, index) => {
+                const username = user.id;
                 const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
                 const userColor = colors[index % colors.length];
                 return (
                   <li 
-                    key={element} 
+                    key={username} 
                     className="list-group-item" 
                     style={{ backgroundColor: userColor, color: "white", border: "none", width: "80%", display: "flex", alignItems: "center", gap: "10px" }}
                   >
-                    {avatars[element] ? (
+                    {avatars[username] ? (
                       <img 
-                        src={avatars[element]} 
+                        src={avatars[username]} 
                         alt="avatar" 
                         style={{ width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px', backgroundColor:'rgba(255, 255, 255, 0.9)', border:"2px solid black" }}
                       />
@@ -366,7 +368,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                         marginRight: '10px'
                       }}></div>
                     )}
-                    <span>{element}</span>
+                    <span>{username}</span>
                   </li>
                 );
               })

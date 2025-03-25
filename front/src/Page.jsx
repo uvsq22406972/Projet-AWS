@@ -7,6 +7,7 @@ import Login from './Login.jsx';
 import Profile from './Profile.jsx';
 import GameRoom from './GameRoom.jsx';
 import GamePage from './GamePage.jsx';
+import FinalPage from './FinalPage.jsx';
 import axios from 'axios';
 
 //Connexion avec le back
@@ -76,6 +77,9 @@ function Page() {
   const handleCreateAccountClick = () => {
     setCurrentPage('createAccount')
   }
+  const handleFinalScreenClick = () => {
+    setCurrentPage('final')
+  }
 
   return (
     //Affichage de la page selon la valeur du setCurrentPage
@@ -91,7 +95,9 @@ function Page() {
       ) : currentPage === 'gameroom' ? (
         <GameRoom onBackToPagePrincipaleClick={handlePagePrincipaleClick} onLoginClick={handleGameRoomClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage}/>
       ) : currentPage.page === 'gamepage' ? (
-        <GamePage onBackToGameRoomClick={handleGameRoomClick} onGameRoomClick={handleGamePageClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage} initialLives={currentPage.initialLives || 2} initialTime={currentPage.initialTime || 10} livesLostThreshold={currentPage.livesLostThreshold || 2}/>
+        <GamePage onBackToGameRoomClick={handleGameRoomClick} onGameRoomClick={handleGamePageClick} onFinalScreenClick={handleFinalScreenClick}  setIsConnected={setIsConnected} setCurrentPage={setCurrentPage} user={currentPage.users || []} initialLives={currentPage.initialLives || 2} initialTime={currentPage.initialTime || 10} livesLostThreshold={currentPage.livesLostThreshold || 2}/>
+      ): currentPage === 'final' ? (
+        <FinalPage setIsConnected={setIsConnected} setCurrentPage={setCurrentPage} />
       ) : (  
         <Loading/>
       )}    
