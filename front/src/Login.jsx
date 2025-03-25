@@ -29,18 +29,18 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
 
   const handleLoginClick = async (e) => {
     e.preventDefault();
-    /*
+
     if (!recaptchaValue) {
       toast.error("Veuillez valider le reCAPTCHA !");
       return;
     }
-      */
+
 
     try {
       const response = await axios.post(`/api/users`, {
         email,
         mdp: password,
-        /*recaptchaToken: recaptchaValue*/
+        recaptchaToken: recaptchaValue
       });
 
       if (response.data.status === 200) {
@@ -87,10 +87,10 @@ function Login({ onCreateAccountClick, onPagePrincipaleClick }) {
                 )}
               </span>
             </div>
-            {/* <ReCAPTCHA
+            <ReCAPTCHA
               sitekey="6LdtjdcqAAAAAJiQiqVsDxWDDVgDTH_hdzOgRzcP"
               onChange={handleRecaptchaChange}
-            /> */}
+            />
             <button type="submit" className="btn custom-btn w-100" onClick={handleLoginClick}>
               Se connecter
             </button>

@@ -132,7 +132,7 @@ app.use("/api", api);
 // Vérification du reCAPTCHA v2
 app.post("/verify-recaptcha", async (req, res) => {
   const { recaptchaToken } = req.body;
-
+  
   if (!recaptchaToken) {
     return res.status(400).json({ success: false, message: "reCAPTCHA requis" });
   }
