@@ -432,6 +432,16 @@ wss.on("connection", async (ws) => {
             } else {
               console.log("Il reste encore des joueurs, la room est conservée.");
             }
+
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: "users_list",
+                  room: roomName,
+                  users: updatedUsers
+                }));
+              }
+            });
         
           } catch (error) {
             console.error("Erreur lors du leave_room :", error);
