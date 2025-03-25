@@ -215,9 +215,10 @@ wss.on("connection", async (ws) => {
           console.log("Envoi du message WebSocket :");
           ws.send(
             JSON.stringify({
-              type: "ok",
-              room:roomName,
-              message: `Room rejointe`,
+              type: "joined_room_ok", 
+              room: roomName,
+              message: "Room rejointe",
+              user: data.user
             })
           );
         } else { 
@@ -317,6 +318,18 @@ wss.on("connection", async (ws) => {
             })
           );
         }
+        });
+      }
+      if (data.type === "typing") {
+        // On vérifie room, user, partial...
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: "typing_update",
+              user: data.user,
+              partial: data.partial
+            }));
+          }
         });
       }
       if (data.type === "game_over") {  

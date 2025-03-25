@@ -446,6 +446,34 @@ router.get('/getRoomFromUsers', async (req, res) => {
     }
   });
 
+  // Route pour changer le nom d'utilisateur
+  router.patch('/users/username', async (req, res) => {
+    const { email, newUsername } = req.body;
+
+    // Vérifier que tous les champs sont fournis
+    if (!newUsername) {
+      return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+    }
+
+    try {
+      if (!await users.exist(email)) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+      if (await users.existUsername(newUsername)) {
+        return res.status(404).json({ message: "Ce nom d'utilisateur a déjà été prise!" });
+      }
+
+      // Mettre à jour le mot de passe en base de données
+      await users.updateUsername(email, newUsername);
+
+      return res.status(200).json({ message: "Nom d'utilisateur mis à jour avec succès" });
+
+    } catch (error) {
+      console.error("Erreur lors de la modification du nom d'utilisateur :", error);
+      return res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
   // Récupérer de userid dans la session
   router.get("/session", (req, res) => {
     if (req.session && req.session.userid) {

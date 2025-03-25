@@ -21,7 +21,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [compte, setCompte] = useState([]);
 
   // États pour les choix de l'utilisateur
-  const [hairType, setHairType] = useState('shortFlat');
+  const [hairType, setHairType] = useState('none');
   const [hairColor, setHairColor] = useState('2c1b18');
   const [accessories, setAccessories] = useState('none');
   const [facialHair, setFacialHair] = useState('none');
@@ -30,6 +30,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [eyebrows, setEyebrows] = useState('default');
   const [mouth, setMouth] = useState('default');
   const [skinColor, setSkinColor] = useState('edb98a');
+  const [accessoriesColor, setAccessoriesColor] = useState('65c9ff');
   const [facialHairColor, setFacialHairColor] = useState('2c1b18');
   const [clothesColor, setClothesColor] = useState('3c4f5c');
   const [svgDataUri, setSvgDataUri] = useState('');
@@ -39,6 +40,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
 
   // États pour la modification du mot de passe
   const [email, setEmail] = useState('');
+  const [newUsername, setNewUsername] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -156,6 +158,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         setSkinColor(selectedAccount.avatarSettings.skinColor || 'edb98a');
         setFacialHairColor(selectedAccount.avatarSettings.facialHairColor || '2c1b18');
         setClothesColor(selectedAccount.avatarSettings.clothesColor || '3c4f5c');
+        setAccessoriesColor(selectedAccount.avatarSettings.clothesColor || '65c9ff');
       }
   
       setCompte(selectedAccount || {});
@@ -189,6 +192,25 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       toast.error("Erreur lors de la suppression du compte.");
     }
   };
+
+  const handleUsernameSubmit = async (e) => {
+    e.preventDefault();
+    if (compte.username === newUsername) {
+      toast.error("Il faut que le nouveau nom d'utilisateur soit différent");
+      return;
+    }
+
+    try {
+      const response = await axios.patch('/api/users/username', { email, newUsername });
+      toast.success(response.data.message);
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Erreur lors de la modification du nom d'utilisateur.");
+      }
+    }
+  }
   
 
   // Fonction de soumission pour le changement de mot de passe
@@ -237,13 +259,16 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   
     const accessoriesParam = accessories === "none" ? [] : [accessories];
     const facialHairParam = facialHair === "none" ? [] : [facialHair];
+    const topParam = hairType === "none" ? [] : [hairType];
     
     const svg = createAvatar(avataaars, {
       size: 200,
       top: [hairType],
+      topProbability: topParam.length > 0 ? 100 : 0,
       hairColor: [hairColor],
       accessories: accessoriesParam,
       accessoriesProbability: accessoriesParam.length > 0 ? 100 : 0,
+      accessoriesColor : [accessoriesColor],
       facialHair: [facialHair],
       facialHairProbability: facialHairParam.length > 0 ? 100 : 0,
       clothing: [clothes],
@@ -269,7 +294,8 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           mouth,
           skinColor,
           facialHairColor,
-          clothesColor
+          clothesColor,
+          accessoriesColor
         },
         email: email
       });
@@ -290,6 +316,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         hairColor: [hairColor],     // Couleur de cheveux
         accessories: accessoriesParam, // Accessoires (lunettes, etc.)
         accessoriesProbability: accessoriesParam.length > 0 ? 100 : 0, // 100% de chance d'avoir l'accessoire
+        accessoriesColor: [accessoriesColor],
         facialHair: [facialHair],
         facialHairProbability: facialHairParam.length > 0 ? 100 : 0, // 100% de chance d'avoir une pilosité faciale
         clothing: [clothes],
@@ -310,12 +337,12 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     generateAvatar();
   }, [
     hairType, hairColor, accessories, facialHair, clothes,
-    eyes, eyebrows, mouth, skinColor, facialHairColor, clothesColor, email
+    eyes, eyebrows, mouth, skinColor, facialHairColor, clothesColor, accessoriesColor, email
   ]);
 
   useEffect(() => {
     if (compte.avatarSettings) {
-      setHairType(compte.avatarSettings.hairType || 'shortFlat');
+      setHairType(compte.avatarSettings.hairType || 'none');
       setHairColor(compte.avatarSettings.hairColor || '2c1b18');
       setAccessories(compte.avatarSettings.accessories || 'none');
       setFacialHair(compte.avatarSettings.facialHair || 'none');
@@ -324,6 +351,10 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       setEyebrows(compte.avatarSettings.eyebrows || 'default');
       setMouth(compte.avatarSettings.mouth || 'default');
       setSkinColor(compte.avatarSettings.skinColor || 'edb98a');
+      setFacialHairColor(compte.avatarSettings.hairColor || '2c1b18');
+      setClothesColor(compte.avatarSettings.clothesColor || '3c4f5c');
+      setAccessoriesColor(compte.avatarSettings.accessoriesColor || '65c9ff');
+
     }
   }, [compte]);
 
@@ -394,10 +425,9 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
                 <h3>Coiffure</h3>
                 <div className="coiffure-grid">
                   {[
-                    "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
-                    'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
-                    'sides', 'theCaesar', 'shortCurly',
-                    'turban', 'winterHat03', 'winterHat02'
+                    'none', "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
+                    'fro', 'frida', 'shavedSides','shaggyMullet',
+                    'sides', 'theCaesar', 'shortCurly'
                   ].map((style) => (
                     <button
                       key={style}
@@ -448,7 +478,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             <div className="option-category">
               <h3>Couleur du vêtement</h3>
               <div className="options-row">
-                {['3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1', 'ffffff'].map((color) => (
+                {['3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1'].map((color) => (
                 <button
                     key={color}
                     className={`color-option ${clothesColor === color ? 'selected' : ''}`}
@@ -562,24 +592,39 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
 
         case 'accessoires':
           return (
-            <div className="option-category">
-              <h3>Accessoires</h3>
-              <div className="options-grid">
-                {[
-                  'none', "eyepatch", 'kurt',
-                  'prescription01', 'prescription02', 'round',
-                  'sunglasses', 'wayfarers'
-                ].map((style) => (
-                  <button
-                    key={style}
-                    className={`style-option ${accessories === style ? 'selected' : ''}`}
-                    onClick={() => setAccessories(style)}
-                  >
-                    {style}
-                  </button>
-                ))}
+            <>
+              <div className="option-category">
+                <h3>Accessoires</h3>
+                <div className="options-grid">
+                  {[
+                    'none', "eyepatch", 'kurt',
+                    'prescription01', 'prescription02', 'round',
+                    'sunglasses', 'wayfarers'
+                  ].map((style) => (
+                    <button
+                      key={style}
+                      className={`style-option ${accessories === style ? 'selected' : ''}`}
+                      onClick={() => setAccessories(style)}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+              <div className="option-category">
+                <h3>Couleur de l'accessoire</h3>
+                <div className="options-row">
+                  {['65c9ff', '3c4f5c', '262e33', 'a7ffc4', 'ff5c5c', 'ff488e', 'ffafb9', 'ffdeb5', 'ffffb1'].map((color) => (
+                  <button
+                      key={color}
+                      className={`color-option ${accessoriesColor === color ? 'selected' : ''}`}
+                      style={{ backgroundColor: `#${color}`, border: accessoriesColor === color ? '2px solid black' : 'none' }}
+                      onClick={() => setAccessoriesColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
           );
       default:
         return null;
@@ -699,9 +744,42 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           )}
         </div>
       )
-    }
-    
-    else if (activeSection === 'password') {
+    } else if (activeSection === 'changeuser') {
+      return (
+        <div id="section-changeuser" className="mb-5" style={{
+          backgroundColor: "#fff", 
+          padding: "1rem", 
+          borderRadius: "8px",
+          border: "2px solid black",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          marginLeft: "30px"
+        }}>
+          <h3 className="mb-4">Modifier votre nom d'utilisateur</h3>
+          <form onSubmit={handleUsernameSubmit}>
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Écrivez un nouveau nom d'utilisateur</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={"text"}
+                      className="form-control custom-input"
+                      style={{ paddingRight: '2.5rem' }}
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary">
+              Enregistrer
+            </button>
+          </form>
+          {message && <p>{message}</p>}
+        </div>
+      )
+    } else if (activeSection === 'password') {
       return (
         <div id="section-password" className="mb-5" style={{
           backgroundColor: "#fff", 
@@ -1003,6 +1081,9 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             </div>
             <div className={`menu-box mb-3 ${activeSection === 'clavier' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('clavier')}>
               <strong>Personnaliser votre clavier</strong>
+            </div>
+            <div className={`menu-box mb-3 ${activeSection === 'changeuser' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('changeuser')}>
+              <strong>Modifier votre nom d'utilisateur</strong>
             </div>
             <div className={`menu-box mb-3 ${activeSection === 'password' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('password')}>
               <strong>Modifier votre mot de passe</strong>

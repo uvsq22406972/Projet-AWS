@@ -19,7 +19,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
     storedUsers = [];
   }
-  const storedUID = localStorage.getItem("myUser");
+  const storedUID = localStorage.getItem("myUserrr"); 
   const [lives, setLives] = useState(
     storedUsers.map(user => ({ id: user.id, lives: initialLives }))
   );
@@ -27,6 +27,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [users, setUsers] = useState(storedUsers);
   const [inputValue, setInputValue] = useState("");
   const [currentPlayer, setCurrentPlayer] = useState(storedUsers.length > 0 ? storedUsers[0] : null);
+  const [compte, setCompte] = useState([]);
   const [gameOver, setGameOver] = useState(false); // Game over state
   const [timer, setTimer] = useState(initialTime);
   const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
@@ -39,13 +40,18 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [blackenedLetters, setBlackenedLetters] = useState(new Set());
   const ws = useRef(null);
 
-   const currentPlayerLives = lives.find(user => user.id === currentPlayer)?.lives || 0;
- 
+  const currentPlayerLives = lives.find(user => user.id === currentPlayer)?.lives || 0;
+
  useEffect(() => {
     const savedColor = localStorage.getItem("keyboardColor");
     if (savedColor) {
       setCurrentKeyboardColor(savedColor);
     }
+  }, []);
+
+  useEffect(() => {
+    console.log(" XSKLNCOSNCXWIDJUWNC JXOKDIUBCNJSKNMXÖKMAS;WDMWLK");
+    console.log("Compte récupéré =", storedUID); // "abc"
   }, []);
 
   useEffect(() => {
@@ -56,72 +62,75 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       setGameStarted(true);
     }
   }, [countdown]);
+
   // Connecter au WebSocket backend
   useEffect(() => {
-  
+      console.log("Compte récupéré =", storedUID);
 
-    console.log("User ID disponible :", storedUID);
+      ws.current = new WebSocket("ws://localhost:4002");
+      ws.current.onopen = () => {
+        console.log("WebSocket connecté !");
+      };
+      ws.current.onerror = (error) => {
+        console.log("Erreur WebSocket :", error);
+      };
 
-    ws.current = new WebSocket("ws://localhost:4002");
-    ws.current.onopen = () => {
-      console.log("WebSocket connecté !");
-    };
-    ws.current.onerror = (error) => {
-      console.log("Erreur WebSocket :", error);
-    };
-    
-    ws.current.onclose = (event) => {
-      console.log("Connexion WebSocket fermée", event);
-    };
-    
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Message reçu du serveur :", data);
+      ws.current.onclose = (event) => {
+        console.log("Connexion WebSocket fermée", event);
+      };
 
-      if (data.type === 'game_over') {
-        //setGameOver(true);
-        setCurrentPage("final");
-        localStorage.setItem('winner',JSON.stringify(data.winner.id))
-      }
+      ws.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("Message reçu du serveur :", data);
 
-      if (data.type === 'get_sequence') {
-       setSequence(data.sequence)
-      }
+        if (data.type === 'game_over') {
+          //setGameOver(true);
+          setCurrentPage("final");
+          localStorage.setItem('winner',JSON.stringify(data.winner.id))
+        }
 
-      if (data.type === 'get_inputValue') {
-        setInputValue(data.value)
-       }
+        if (data.type === 'get_sequence') {
+         setSequence(data.sequence)
+        }
 
-      if (data.type === 'reset_timer') {
-        //setGameOver(true);
-        console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
-        setTimer(initialTime);
-        
-        localStorage.setItem('users',JSON.stringify(data.users));
-        try {
-          storedUsers = JSON.parse(localStorage.getItem('users')) || [];
-          if (!Array.isArray(storedUsers)) {
+        if (data.type === 'get_inputValue') {
+          setInputValue(data.value)
+         }
+
+         if (data.type === 'typing_update') {
+          // Si le message vient d'un autre joueur
+          if (data.user !== storedUID) {
+            // on met à jour notre champ local
+            setInputValue(data.partial);
+          }
+          console.log("currentPlayer.id =", currentPlayer?.id, " - storedUID =", storedUID)
+          return;
+        }
+
+        if (data.type === 'reset_timer') {
+          //setGameOver(true);
+          console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
+          setTimer(initialTime);
+
+          localStorage.setItem('users',JSON.stringify(data.users));
+          try {
+            storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+            if (!Array.isArray(storedUsers)) {
+              storedUsers = [];
+            }
+            setLives(
+              storedUsers.map(user => ({ id: user.id, lives: user.lives }))
+            );
+            setUsers(storedUsers)
+            setCurrentPlayer(data.newCurrentPlayer);
+            console.log("théorie : ",data.newCurrentPlayer)
+          } catch (error) {
+            console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
             storedUsers = [];
           }
-          setLives(
-            storedUsers.map(user => ({ id: user.id, lives: user.lives }))
-          );
-          setUsers(storedUsers)
-          setCurrentPlayer(data.newCurrentPlayer);
-          console.log("théorie : ",data.newCurrentPlayer)
-        } catch (error) {
-          console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
-          storedUsers = [];
+          console.log("modif : ", storedUsers, "  - ", currentPlayer);
         }
-        console.log("modif : ", storedUsers, "  - ", currentPlayer);
-        
-        
-      }
-    };
-
-    return () => {
-      
-    };
+      };
   }, []);
 
   // Fonction pour récupérer une séquence depuis l'API
@@ -183,7 +192,18 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, [timer, gameOver, initialTime,currentPlayer]);
 
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+  
+    // Seulement si c'est mon tour
+    if (currentPlayer?.id === storedUID) {
+      ws.current.send(JSON.stringify({
+        type: "typing",
+        room: localStorage.getItem("room"),
+        user: currentPlayer?.id,
+        partial: newValue
+      }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -223,6 +243,11 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       console.error("Erreur lors de la vérification du mot :", error);
     }
   };  
+
+  useEffect(() => {
+    // À chaque changement de currentPlayer, on vide l’input
+    setInputValue("");
+  }, [currentPlayer])
   
   const handleReturn = () => {
     setCurrentPage('gameroom');
@@ -312,9 +337,9 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Entrez un mot contenant la séquence..."
-            disabled={gameOver}
+            disabled={gameOver || (currentPlayer?.id !== storedUID)}
           />
-          <button onClick={handleSubmit} disabled={gameOver || !inputValue}>
+          <button onClick={handleSubmit} disabled={gameOver || !inputValue || (currentPlayer?.id !== storedUID)}>
             Valider
           </button>
           <div className="keyboard">

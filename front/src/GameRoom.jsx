@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import "./GameRoom.css"
-import { FaUsers } from "react-icons/fa";
+import { FaUsers, FaUserCircle } from "react-icons/fa";
 import "./Profile.css";
 import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
@@ -51,6 +51,8 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
           const account = response.data.find(a => a._id === userid);
           
           if (account) {
+            localStorage.setItem("myUserrr", account.username);
+            console.log("myUser in localStorage =", localStorage.getItem("myUserrr"));
             setCompte(account);
             return true; // Retourne un statut de succès
           }
@@ -90,6 +92,12 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             if (message.type === 'users_list') {
                 setUsers(Array.isArray(message.users) ? message.users : []);
                 console.log('Utilisateurs mis à jour:', message.users);
+            }
+
+            if (message.type === 'joined_room_ok') {
+              localStorage.setItem("room", message.room);
+              setRoom(message.room);
+              fetchUsersInRoom(message.room); 
             }
 
 
@@ -189,7 +197,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                       newAvatars[username] = response.data.avatar;
                   }
               } catch (error) {
-                  console.error(`Avatar non trouvé pour ${username}`);
                   newAvatars[username] = "";
               }
           }));
@@ -233,9 +240,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             user: randomUsername,
         };
         ws.current.send(JSON.stringify(message));
-        
-        fetchUsersInRoom();
-        
     };
 
     // pour rejoindre une room
@@ -253,43 +257,43 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                 user: compte.username,
             };
             ws.current.send(JSON.stringify(message));
-
-            setTimeout(() => {
-                fetchUsersInRoom();
-            }, 200);
         } else {
             console.warn("WebSocket n'est pas encore prêt, re-essai dans 500ms...");
             setTimeout(joinRoom, 500); // Réessaye après 500ms
         }
     };
 
-    // Récupérer les utilisateurs dans la room
-    const fetchUsersInRoom = () => {
-        console.log("fetching");
-        if (!isWebSocketOpen) {
-            console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
-            return;
-        }
-        
-        console.log("Stored Room avant envoi :", storedRoom);
-        if (!storedRoom) {
-            console.warn("La room est vide, impossible d'envoyer la requête.");
-            return;
-        }
-   
-        const message = { type: "get_users", room: room };
-        ws.current.send(JSON.stringify(message));
-        
-
-        
+    const fetchUsersInRoom = (theRoom) => {
+      console.log("fetching");
+      if (!isWebSocketOpen.current) {
+        console.warn("WebSocket pas encore prêt, impossible de récupérer la liste.");
+        return;
+      }
+      // Soit vous utilisez 'theRoom' s'il est fourni, sinon l'état 'room'
+      const targetRoom = theRoom || room;
+    
+      console.log("Room avant envoi :", targetRoom);
+      if (!targetRoom) {
+        console.warn("La room est vide, impossible d'envoyer la requête.");
+        return;
+      }
+      const message = { type: "get_users", room: targetRoom };
+      ws.current.send(JSON.stringify(message));
     };
+
+    useEffect(() => {
+      if (room && isWebSocketOpen.current) {
+        fetchUsersInRoom(room);
+      }
+    }, [room]);
+    
 
     const leaveRoom = () => {
         // Envoyer la requête "leave_room" au serveur
         if (ws.current?.readyState === WebSocket.OPEN) {
           ws.current.send(JSON.stringify({
             type: "leave_room",
-            room: storedRoom,
+            room,
             user: compte.username
           }));
         }
@@ -360,13 +364,14 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
                         style={{ width: '50px', height: '50px', borderRadius: '50%', marginRight: '10px', backgroundColor:'rgba(255, 255, 255, 0.9)', border:"2px solid black" }}
                       />
                     ) : (
-                      <div style={{
-                        width: '30px',
-                        height: '30px',
-                        borderRadius: '50%',
-                        background: '#ccc',
-                        marginRight: '10px'
-                      }}></div>
+                      <FaUserCircle 
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          color: 'white',
+                          marginRight: '10px',
+                        }}
+                      />
                     )}
                     <span>{username}</span>
                   </li>

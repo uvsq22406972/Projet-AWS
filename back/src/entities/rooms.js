@@ -111,10 +111,6 @@ class Rooms {
     } catch (error) {
       console.error("Erreur critique dans getAllRooms:", error);
       throw new Error("Impossible de charger les salles");
-    } finally {
-      if (client) {
-        await client.close();
-      }
     }
   }
   async getWinner(roomName) {
