@@ -129,6 +129,7 @@ app.use(express.static(path.join(__dirname, "../../front")));
 const api = apiRouter(mongoose.connection);
 app.use("/api", api);
 
+/*
 // Vérification du reCAPTCHA v2
 app.post("/verify-recaptcha", async (req, res) => {
   const { recaptchaToken } = req.body;
@@ -152,6 +153,7 @@ app.post("/verify-recaptcha", async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur serveur reCAPTCHA" });
   }
 });
+*/
 app.get("/verify-word", async (req, res) => {
   try {
       //const db = client.db("dictionnaire");
