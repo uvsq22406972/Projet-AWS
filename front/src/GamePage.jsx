@@ -32,6 +32,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [compte, setCompte] = useState([]);
   const [gameOver, setGameOver] = useState(false); // Game over state
   const [timer, setTimer] = useState(initialTime);
+  const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
   const [lostLivesCount, setLostLivesCount] = useState(0);
   const [currentKeyboardColor, setCurrentKeyboardColor] = useState(localStorage.getItem("keyboardColor") || keyboardColor);
   const [countdown, setCountdown] = useState(3);
@@ -113,9 +114,23 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
           console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
           setTimer(initialTime);
 
-          setUsers(data.users);
-          setLives(data.users.map(user => ({ id: user.id, lives: user.lives })));
-          setCurrentPlayer(data.newCurrentPlayer);
+          localStorage.setItem('users',JSON.stringify(data.users));
+          try {
+            storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+            if (!Array.isArray(storedUsers)) {
+              storedUsers = [];
+            }
+            setLives(
+              storedUsers.map(user => ({ id: user.id, lives: user.lives }))
+            );
+            setUsers(storedUsers)
+            setCurrentPlayer(data.newCurrentPlayer);
+            console.log("théorie : ",data.newCurrentPlayer)
+          } catch (error) {
+            console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
+            storedUsers = [];
+          }
+          console.log("modif : ", storedUsers, "  - ", currentPlayer);
         }
 
         if (data.type === 'users_list') {
@@ -124,13 +139,6 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
         }
       };
   }, []);
-
-  useEffect(() => {
-    const newLives = users.map(user => ({ id: user.id, lives: user.lives }));
-    if (JSON.stringify(newLives) !== JSON.stringify(lives)) {
-      setLives(newLives);
-    }
-  }, [users]);
 
   // Fonction pour récupérer une séquence depuis l'API
   const generateSequence = async () => {
@@ -174,40 +182,22 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       console.log(JSON.stringify(message));
       ws.current.send(JSON.stringify(message));
 
+      setTimer(-1); 
     }
 
     const interval = setInterval(() => {
-      setTimer((prevTimer) => {
-        if (prevTimer <= 0) {
-          // Envoyer le message de perte de vie une seule fois
-          if (prevTimer === 0) {
-            const message = {
-              type: "lose_life",
-              room: localStorage.getItem("room"),
-              user: currentPlayer?.id,
-            };
-            ws.current.send(JSON.stringify(message));
-          }
-          return 0;
-        }
-        return prevTimer - 1;
+      setTimer(prevTimer => {
+        if (prevTimer > 0) return prevTimer - 1;
+        return 0;
       });
     }, 1000);
+
+    setTimerInterval(interval);
 
     return () => {
       clearInterval(interval);
     };
   }, [timer, gameOver, initialTime,currentPlayer]);
-
-  useEffect(() => {
-    if (!currentPlayer || gameOver) return;
-    
-    const interval = setInterval(() => {
-      setTimer(prev => prev > 0 ? prev - 1 : 0);
-    }, 1000);
-  
-    return () => clearInterval(interval);
-  }, [currentPlayer?.id, gameOver]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
