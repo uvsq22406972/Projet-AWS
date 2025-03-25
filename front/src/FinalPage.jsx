@@ -4,14 +4,34 @@ const FinalPage = ({ setCurrentPage }) => {
   let winner = JSON.parse(localStorage.getItem('winner'));
   const [secondsRemaining, setSecondsRemaining] = useState(30);
 
+  const handleQuit = async () => {
+    try {
+      const room = localStorage.getItem("room");
+      const user = localStorage.getItem("myUserrr"); // ou "myUser" selon votre code
+  
+      // Si on a bien room + user, on appelle l'API pour retirer l'utilisateur
+      if (room && user) {
+        await axios.post('/api/removeUserFromRoom', { 
+          room, 
+          user 
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors du removeUserFromRoom:", error);
+    } finally {
+      // Quoi qu'il arrive, on nettoie le localStorage et on revient
+      localStorage.removeItem("room");
+      localStorage.removeItem("winner");
+      setCurrentPage("pagePrincipale");
+    }
+  };  
+
   useEffect(() => {
     const timer = setInterval(() => {
       setSecondsRemaining((prevSeconds) => {
         if (prevSeconds <= 1) {
           clearInterval(timer); //On arrete le TImer
-          setCurrentPage('pagePrincipale'); // On redirige vers la page principale
-          localStorage.removeItem("room"); 
-          localStorage.removeItem('winner'); 
+          handleQuit();
           return 0;
         }
         return prevSeconds - 1; 
@@ -46,10 +66,7 @@ const FinalPage = ({ setCurrentPage }) => {
         {/* Bouton pour quitter la partie */}
         <button
           className="custom-btn w-100"
-          onClick={() => {
-                        setCurrentPage('pagePrincipale');
-                        localStorage.removeItem("room");
-                        localStorage.removeItem('winner');}} // Redirige vers la page principale
+          onClick={handleQuit} // Redirige vers la page principale
         >
           Quitter la Partie
         </button>

@@ -19,6 +19,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
     storedUsers = [];
   }
+  const storedRoomName = localStorage.getItem("room") || "";
   const storedUID = localStorage.getItem("myUserrr"); 
   const [lives, setLives] = useState(
     storedUsers.map(user => ({ id: user.id, lives: initialLives }))
@@ -334,6 +335,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       {/* Conteneur pour le jeu */} 
       <div className="game-container">
         <h1>BombParty</h1>
+        <h2>Room : {storedRoomName}</h2>
  
           {/* Afficher le joueur actuel et ses vies */}
           <div className="current-player">
