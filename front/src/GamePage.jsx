@@ -146,13 +146,13 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   };
 
   useEffect(() => {
-  //  if(currentPlayer?.id === storedUID) {
+    if(currentPlayer?.id === storedUID) {
       console.log(currentPlayer?.id , "  === ", storedUID);
       if (ws.current?.readyState === WebSocket.OPEN) {
       generateSequence();
       }
       else {setTimeout(generateSequence,500)}
-    //}
+    }
     
   }, [currentPlayer]);
 
