@@ -367,7 +367,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
             })}
           
 
-        </div> <button onClick={handleReturn}>Retour</button>
+        </div> <button onClick={handleReturn} disabled={currentPlayer?.id === storedUID}><GiExitDoor size={20}/>Quitter la salle</button>
         
   
        

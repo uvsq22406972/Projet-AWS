@@ -1,6 +1,6 @@
 //Importation
 import React, { useState, useEffect, useRef } from 'react';
-import { FaUserCircle, FaList, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaUserCircle, FaList, FaEye, FaEyeSlash, GiExitDoor } from "react-icons/fa";
 import "./Profile.css";
 import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify';
@@ -1062,7 +1062,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             e.target.style.transform = 'translateY(-50%)';
           }}
         >
-          ← Retour à l'accueil
+          <GiExitDoor size={20}/> Retour à l'accueil
         </button>
         <div className="row">
           {/* Menu à gauche */}
