@@ -37,6 +37,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [currentKeyboardColor, setCurrentKeyboardColor] = useState(localStorage.getItem("keyboardColor") || keyboardColor);
   const [countdown, setCountdown] = useState(3);
   const [gameStarted, setGameStarted] = useState(false);
+  const [hasLostThisTurn, setHasLostThisTurn] = useState(false);
   
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const [blackenedLetters, setBlackenedLetters] = useState(new Set());
@@ -111,7 +112,8 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
 
         if (data.type === 'reset_timer') {
           //setGameOver(true);
-          console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
+          console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users));
+          setHasLostThisTurn(false);
           setTimer(initialTime);
 
           localStorage.setItem('users',JSON.stringify(data.users));
@@ -172,17 +174,17 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   useEffect(() => {
     if (gameOver) return;
 
-    if (timer === 0) {
+    if (!hasLostThisTurn && timer === 0) {
       // Réinitialiser le timer
       const message = {
         type: "lose_life",
         room: localStorage.getItem("room"),
         user: currentPlayer?.id,
       };
+      setHasLostThisTurn(true);
       console.log(JSON.stringify(message));
       ws.current.send(JSON.stringify(message));
 
-      setTimer(-1); 
     }
 
     const interval = setInterval(() => {
@@ -197,7 +199,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     return () => {
       clearInterval(interval);
     };
-  }, [timer, gameOver, initialTime,currentPlayer]);
+  }, [timer, gameOver, initialTime, hasLostThisTurn,currentPlayer]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
