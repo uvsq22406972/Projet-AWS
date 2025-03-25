@@ -377,7 +377,24 @@ wss.on("connection", async (ws) => {
         }
         });
       }
+
+      //On vérifie les options de jeu modifié
+      if (data.type === "update_options") {
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: "options_updated",
+              room: data.room,
+              lives: data.lives,
+              time: data.time,
+              threshold: data.threshold
+            }));
+          }
+        });
+      }
+      
       if (data.type === "typing") {
+
         // On vérifie room, user, partial...
         wss.clients.forEach(client => {
           if (client.readyState === WebSocket.OPEN) {

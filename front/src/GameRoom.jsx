@@ -107,6 +107,15 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             setRoom(message.room);
             fetchUsersInRoom(message.room); 
           }
+          if (message.type === 'options_updated') {
+            if (!sameRoom) {
+              console.log("Ignoring options_updated for a different room:", message.room);
+              return;
+            }
+            setLivesToPlay(message.lives);
+            setGameTime(message.time);
+            setLivesLostThreshold(message.threshold);
+          }
           if (message.type === "game_started") {
             if (!sameRoom) {
               console.log("Ignoring users_list for a different room:", message.room);
@@ -135,6 +144,48 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             }, 3000);
         };
     }, []);
+
+    // Pour gérer le changement du slider "livesToPlay"
+    const handleLivesChange = (val) => {
+      setLivesToPlay(val);
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type: "update_options",
+          room,
+          lives: val,
+          time: gameTime,
+          threshold: livesLostThreshold
+        }));
+      }
+    }   
+
+    // Pour gérer le changement du slider "gameTime"
+    const handleTimeChange = (val) => {
+      setGameTime(val);
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type: "update_options",
+          room,
+          lives: livesToPlay,
+          time: val,
+          threshold: livesLostThreshold
+        }));
+      }
+    }   
+
+    // Pour gérer le changement du slider "livesLostThreshold"
+    const handleThresholdChange = (val) => {
+      setLivesLostThreshold(val);
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type: "update_options",
+          room,
+          lives: livesToPlay,
+          time: gameTime,
+          threshold: val
+        }));
+      }
+    };
 
     const safeSend = useCallback((message, retries = 3) => {
         return new Promise((resolve, reject) => {
@@ -333,7 +384,13 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     // Démarrer le jeu
     const startGame = () => {
       console.log("Le bouton Démarrer a été cliqué ");
-      ws.current.send(JSON.stringify({ type: "start_game", room:room,lives: livesToPlay }));
+      ws.current.send(JSON.stringify({
+        type: "start_game",
+        room,
+        lives: livesToPlay,
+        time: gameTime,
+        threshold: livesLostThreshold
+      }));
       setGameStarted(true);
   };
 
@@ -402,7 +459,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             <label>Nombre de vies : {livesToPlay}</label>
             <CustomSliderWithTooltip
               value={livesToPlay}
-              onChange={setLivesToPlay}
+              onChange={handleLivesChange}
               min={1}
               max={5}
             />
@@ -411,7 +468,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             <label>Temps de jeu : {gameTime} secondes</label>
             <CustomSliderWithTooltip
               value={gameTime}
-              onChange={setGameTime}
+              onChange={handleTimeChange}
               min={5}
               max={15}
             />
@@ -420,7 +477,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             <label>Changer la séquence : {livesLostThreshold} vies perdues</label>
             <CustomSliderWithTooltip
               value={livesLostThreshold}
-              onChange={setLivesLostThreshold}
+              onChange={handleThresholdChange}
               min={1}
               max={5}
             />
