@@ -10,12 +10,7 @@ const WebSocket = require("ws");
 const Rooms = require("./entities/rooms.js");
 const mongoose = require("mongoose");
 
-// Initialisation de la BDD -> MongoDB
-/*
-const { MongoClient } = require("mongodb");
-const uri = "mongodb://127.0.0.1:27017";
-const client = new MongoClient(uri);
-*/
+// Initialisation de la BDD -> MongoDBAtlas
 axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 const app = express();
@@ -152,6 +147,8 @@ app.post("/verify-recaptcha", async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur serveur reCAPTCHA" });
   }
 });
+
+//Vérification des mots valides
 app.get("/verify-word", async (req, res) => {
   try {
       //const db = client.db("dictionnaire");
@@ -181,6 +178,7 @@ app.use((req, res, next) => {
   next();
 });
 
+//Formulaire validé via CSRF
 app.post("/form-submit", (req, res) => {
   const { csrf } = req.body;
 
@@ -191,10 +189,9 @@ app.post("/form-submit", (req, res) => {
   res.json({ success: true, message: "Formulaire validé !" });
 });
 
-/* ************* Endpoint pour générer une séquence ************* */
+//Endpoint pour générer une séquence
 app.get("/random-sequence", async (req, res) => {
   try {
-    //const db = client.db("dictionnaire");
     const db = mongoose.connection.useDb("ProjetAWS");
     const collection = db.collection("mots");
 
@@ -205,6 +202,7 @@ app.get("/random-sequence", async (req, res) => {
     }
 
     const mot = randomWord[0].mot;
+
     // Extraire une séquence de 2-3 lettres
     const start = Math.floor(Math.random() * (mot.length - 2));
     const sequence = mot.substring(start, start + 2 + Math.floor(Math.random() * 2));
@@ -216,17 +214,17 @@ app.get("/random-sequence", async (req, res) => {
   }
 });
 
-/* ************* WebSocket Server ************* */
+//Serveur Websocket
 const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 
 wss.on("connection", async (ws) => {
-  //const db = client.db("DB");
   const db = mongoose.connection.useDb("ProjetAWS");
   const collection = db.collection("Rooms");
   ws.on("message",async (message) => {
     const data = JSON.parse(message);
     console.log(`Message reçu: ${data.type}`);
 
+    //Creation room
     if (data.type === "create_room") {
       
       if (!data.user) {
@@ -244,18 +242,19 @@ wss.on("connection", async (ws) => {
         id : generatedRoomName,
         user : data.user
       });
-      //retour utilisateur
+
       ws.send(
         JSON.stringify({
           type: 'generatedRoom',
           message: `Room ${generatedRoomName} créée !`,
           room: generatedRoomName,
-          // On met directement le créateur dans un tableau
+
           users: [{ id: data.user, lives: 3 }],
         })
       );
     }
 
+    //Rejoindre room
     if (data.type === "join_room") {
       const roomName = data.room;
       console.log("données recu on join" ,data);
@@ -290,13 +289,13 @@ wss.on("connection", async (ws) => {
       
     }
 
+    //Récupérer les users
     if (data.type === "get_users") {
      const roomName = data.room;
       try {
         const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
         const roomUsers = resp.data || [];
 
-        // Adapte le champ 'id' en 'username'
         const usersToSend = roomUsers.map(u => ({
           id: u.id,
           lives: u.lives,
@@ -324,42 +323,40 @@ wss.on("connection", async (ws) => {
       }
     }
 
+    //Récupérer les rooms
     if (data.type === "get_room") {
-       try {
-        console.log(data);
-        const resp = axios.get(`api/getRoomFromUsers`,{ params: {user:data.user}});
-       
-        if(resp.status === 200) {
-          ws.send( 
-            JSON.stringify({
-              type:'dataRoom',
-              room: resp.data
-            })
-          );
-        }
-      } 
-       catch (error) {
-         ws.send(
+      try {
+       console.log(data);
+       const resp = axios.get(`api/getRoomFromUsers`,{ params: {user:data.user}});
+      
+       if(resp.status === 200) {
+         ws.send( 
            JSON.stringify({
-             type: "error",
-             message: `erreur inattendu.`,
+             type:'dataRoom',
+             room: resp.data
            })
          );
-       }
+        }
+     } catch (error) {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            message: `erreur inattendu.`,
+          })
+        );
       }
+    }
 
+    //Démarrer le jeu
     if (data.type === "start_game") {
       const roomName = data.room;
       console.log(`Le jeu commence dans la room: ${roomName}`);
       const lives = data.lives;
 
       if(lives != 3) {
-       //    console.log("Attention : lives =", lives ," et la room ", roomName)
         const resp = await axios.post(`api/modifyLives`,{
-        
          room : roomName,
          lives : lives
-        
        });
       }
       const resp = await axios.get(`api/getUsersFromRoom?room=${roomName}`);
@@ -393,9 +390,8 @@ wss.on("connection", async (ws) => {
         });
       }
       
+      //Action d'écrire
       if (data.type === "typing") {
-
-        // On vérifie room, user, partial...
         wss.clients.forEach(client => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
@@ -406,6 +402,8 @@ wss.on("connection", async (ws) => {
           }
         });
       }
+
+      //Action perdre
       if (data.type === "game_over") {  
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
@@ -417,24 +415,26 @@ wss.on("connection", async (ws) => {
               })
             );
           }
-          });
-        }
+        });
+      }
+
+      //Quitter la room
       if (data.type === "leave_room") {
         const roomName = data.room;
         const userToRemove = data.user;
       
         try {
-          // 1) Retirer l'utilisateur
+          //Retirer l'utilisateur
           await axios.post(`api/removeUserFromRoom`, {
             room: roomName,
             user: userToRemove
           });
       
-          // 2) Récupérer la room mise à jour
+          //Récupérer la room mise à jour
           const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
           const updatedUsers = resp.data; // ex: [ { id: "abc", lives: 3 }, ... ]
       
-          // 3) Vérifier si c'est vide (plus personne)
+          //Vérifier si c'est vide (plus personne)
           if (!updatedUsers || updatedUsers.length === 0) {
             console.log("Dernier utilisateur parti, on supprime la room...");
             await axios.delete(`api/rooms`, { data: { room: roomName } });
@@ -452,15 +452,14 @@ wss.on("connection", async (ws) => {
           } else {
             console.log("Il reste encore des joueurs, la room est conservée.");
           }
-          // 4) Vérifier si userToRemove était le joueur courant
-          //    => On appelle votre "getNextPlayer" pour le savoir
+          //Vérifier si userToRemove était le joueur courant
           const nextPlayerResp = await axios.get(`api/getNextPlayer`, {
             params: { room: roomName, user: userToRemove }
           });
         
-          // 5) Si on a un nextPlayer, ça signifie que userToRemove était bien le current
+          //Si on a un nextPlayer, ça signifie que userToRemove était bien le current
           if (nextPlayerResp.data.status === 200 && nextPlayerResp.data.nextPlayer) {
-            // => On diffuse un "reset_timer" avec le nouveau current
+            //On diffuse un "reset_timer" avec le nouveau current
             console.log("Le joueur sortant était le current, on passe au suivant :", nextPlayerResp.data.nextPlayer);
             wss.clients.forEach(client => {
               if (client.readyState === WebSocket.OPEN) {
@@ -472,7 +471,7 @@ wss.on("connection", async (ws) => {
               }
             });
           } else {
-            // => userToRemove n'était pas le current, on envoie juste la liste
+            //userToRemove n'était pas le current, on envoie juste la liste
             wss.clients.forEach(client => {
               if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
@@ -487,14 +486,18 @@ wss.on("connection", async (ws) => {
           console.error("Erreur lors du leave_room :", error);
         }
       }
-        
+      
+      //Perdre une vie
       if (data.type === 'lose_life'){
         handleLoseLife(data);
       }
+
+      //Valider un mot
       if(data.type === 'validate_word'){
         handleValidateWord(ws, data);
       }
 
+      //Séquence de mot
       if(data.type === 'sequence'){
         const seq = data.seq;
         wss.clients.forEach((client) => {
@@ -506,10 +509,10 @@ wss.on("connection", async (ws) => {
               })
             );
           }
-          });
-
+        });
       }
 
+      //Maj du timer
       if(data.type === 'update_timer') {
         getNextPlayerAndSend(data.room,data.user);
         //On leur envoie le dernier mot écrit par le joueur
@@ -522,9 +525,10 @@ wss.on("connection", async (ws) => {
               })
             );
           }
-          });
+        });
       }
 
+      //Modifier vie
       if(data.type === "change_lives") {
         const roomName = data.room;
         const lives = data.lives
@@ -538,6 +542,7 @@ wss.on("connection", async (ws) => {
 
   });
   
+  //Gestion de perdre une vie
   let loseLifeLock = new Map();
   async function handleLoseLife(data) {
     const key = `${data.room}-${data.user}`;
@@ -567,14 +572,12 @@ wss.on("connection", async (ws) => {
         });
       }
     } finally {
-      loseLifeLock.delete(key); // Libérer le verrou
+      loseLifeLock.delete(key);
     }
-    
-    // Envoyer a tous les clients la maj
+
   }
   
-  //Renvoie a tous les clients le currentPlayer et ils reinitialiseront 
-  //leurs timers en recevant ces données
+  //Renvoie a tous les clients le currentPlayer et ils reinitialiseront leurs timers en recevant ces données
   async function getNextPlayerAndSend(roomname, userid) {
     const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomname } });
     const updatedUsers = resp.data;
@@ -593,7 +596,6 @@ wss.on("connection", async (ws) => {
         }
       });
     } else {
-  
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
@@ -605,7 +607,6 @@ wss.on("connection", async (ws) => {
       });
     }
   }
-
 });
 
 app.listen(port, () => {
