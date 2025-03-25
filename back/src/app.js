@@ -132,7 +132,7 @@ app.use("/api", api);
 // Vérification du reCAPTCHA v2
 app.post("/verify-recaptcha", async (req, res) => {
   const { recaptchaToken } = req.body;
-  
+
   if (!recaptchaToken) {
     return res.status(400).json({ success: false, message: "reCAPTCHA requis" });
   }
@@ -352,15 +352,18 @@ wss.on("connection", async (ws) => {
       const roomName = data.room;
       console.log(`Le jeu commence dans la room: ${roomName}`);
       const lives = data.lives;
-        if(lives != 3) {
-         //    console.log("Attention : lives =", lives ," et la room ", roomName)
-          const resp = await axios.post(`api/modifyLives`,{
-          
-           room : roomName,
-           lives : lives
-          
-         });
-        }
+      
+      if(lives != 3) {
+       //    console.log("Attention : lives =", lives ," et la room ", roomName)
+        const resp = await axios.post(`api/modifyLives`,{
+        
+         room : roomName,
+         lives : lives
+        
+       });
+      }
+      const resp = await axios.get(`api/getUsersFromRoom?room=${roomName}`);
+      const users = resp.data;
         
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {

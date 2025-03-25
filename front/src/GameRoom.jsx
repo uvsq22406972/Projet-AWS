@@ -103,6 +103,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             if (message.type === "game_started") {
               // => Je reçois le signal de démarrer le jeu
               // => Je fais un “redirect” local
+              localStorage.setItem('users', JSON.stringify(data.users));
               setCurrentPage({ 
                 page: 'gamepage', 
                 initialLives: livesToPlay, 
@@ -327,12 +328,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
       console.log("Le bouton Démarrer a été cliqué ");
       ws.current.send(JSON.stringify({ type: "start_game", room:room,lives: livesToPlay }));
       setGameStarted(true);
-      // Passe livesToPlay comme prop en plus de changer de page
-      console.log("users passe : " , users)
-      localStorage.setItem("users", JSON.stringify(users));
-      setUsers([]);
-      localStorage.setItem("myUser", userid);
-      setCurrentPage({ page: 'gamepage', initialLives: livesToPlay, initialTime: gameTime, livesLostThreshold: livesLostThreshold });
   };
 
     return (
