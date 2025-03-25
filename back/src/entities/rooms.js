@@ -83,7 +83,11 @@ class Rooms {
     const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
     await col1.updateOne(
       { id: roomName },
-      { $addToSet: { users: user } }
+      { 
+        $addToSet: { 
+          users: { id: user, lives: 3 } 
+        } 
+      }
     );
     console.log("User ajouté");
   }
