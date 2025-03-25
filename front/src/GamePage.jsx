@@ -126,7 +126,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
           console.log("modif : ", storedUsers, "  - ", currentPlayer);
         }
 
-        if (message.type === 'users_list') {
+        if (data.type === 'users_list') {
           setUsers(Array.isArray(data.users) ? data.users : []);
           console.log("Mise à jour après le leave :", data.users);
         }
