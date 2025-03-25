@@ -32,7 +32,6 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [compte, setCompte] = useState([]);
   const [gameOver, setGameOver] = useState(false); // Game over state
   const [timer, setTimer] = useState(initialTime);
-  const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
   const [lostLivesCount, setLostLivesCount] = useState(0);
   const [currentKeyboardColor, setCurrentKeyboardColor] = useState(localStorage.getItem("keyboardColor") || keyboardColor);
   const [countdown, setCountdown] = useState(3);
@@ -185,18 +184,31 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     }
 
     const interval = setInterval(() => {
-      setTimer(prevTimer => {
-        if (prevTimer > 0) return prevTimer - 1;
-        return 0;
+      setTimer((prevTimer) => {
+        if (prevTimer <= 0) {
+          // Envoyer le message de perte de vie une seule fois
+          if (prevTimer === 0) {
+            const message = {
+              type: "lose_life",
+              room: localStorage.getItem("room"),
+              user: currentPlayer?.id,
+            };
+            ws.current.send(JSON.stringify(message));
+          }
+          return 0;
+        }
+        return prevTimer - 1;
       });
     }, 1000);
-
-    setTimerInterval(interval);
 
     return () => {
       clearInterval(interval);
     };
   }, [timer, gameOver, initialTime,currentPlayer]);
+
+  useEffect(() => {
+    setTimer(initialTime);
+  }, [currentPlayer?.id, initialTime]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
