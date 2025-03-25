@@ -100,6 +100,18 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
               fetchUsersInRoom(message.room); 
             }
 
+            if (message.type === "game_started") {
+              // => Je reçois le signal de démarrer le jeu
+              // => Je fais un “redirect” local
+              setCurrentPage({ 
+                page: 'gamepage', 
+                initialLives: livesToPlay, 
+                initialTime: gameTime,
+                livesLostThreshold
+              });
+              return;
+            }
+
 
             else if (message.type === "error"){console.log("oula");}
         };
@@ -313,7 +325,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     // Démarrer le jeu
     const startGame = () => {
       console.log("Le bouton Démarrer a été cliqué ");
-      ws.current.send(JSON.stringify({ type: "start_game", room:room,lives: livesToPlay, }));
+      ws.current.send(JSON.stringify({ type: "start_game", room:room,lives: livesToPlay }));
       setGameStarted(true);
       // Passe livesToPlay comme prop en plus de changer de page
       console.log("users passe : " , users)
