@@ -520,8 +520,10 @@ wss.on("connection", async (ws) => {
       }
 
   });
-  
+  let handled = false;
   async function handleLoseLife(data) {
+    if (handled) return;
+    handled = true;
     const roomname = data.room;
     const userid  = data.user;
     // Envoie a l'api du back pour gérer la perte de vie

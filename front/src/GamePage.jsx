@@ -113,23 +113,9 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
           console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
           setTimer(initialTime);
 
-          localStorage.setItem('users',JSON.stringify(data.users));
-          try {
-            storedUsers = JSON.parse(localStorage.getItem('users')) || [];
-            if (!Array.isArray(storedUsers)) {
-              storedUsers = [];
-            }
-            setLives(
-              storedUsers.map(user => ({ id: user.id, lives: user.lives }))
-            );
-            setUsers(storedUsers)
-            setCurrentPlayer(data.newCurrentPlayer);
-            console.log("théorie : ",data.newCurrentPlayer)
-          } catch (error) {
-            console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
-            storedUsers = [];
-          }
-          console.log("modif : ", storedUsers, "  - ", currentPlayer);
+          setUsers(data.users);
+          setLives(data.users.map(user => ({ id: user.id, lives: user.lives })));
+          setCurrentPlayer(data.newCurrentPlayer);
         }
 
         if (data.type === 'users_list') {
@@ -138,6 +124,13 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
         }
       };
   }, []);
+
+  useEffect(() => {
+    const newLives = users.map(user => ({ id: user.id, lives: user.lives }));
+    if (JSON.stringify(newLives) !== JSON.stringify(lives)) {
+      setLives(newLives);
+    }
+  }, [users]);
 
   // Fonction pour récupérer une séquence depuis l'API
   const generateSequence = async () => {
@@ -207,8 +200,14 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, [timer, gameOver, initialTime,currentPlayer]);
 
   useEffect(() => {
-    setTimer(initialTime);
-  }, [currentPlayer?.id, initialTime]);
+    if (!currentPlayer || gameOver) return;
+    
+    const interval = setInterval(() => {
+      setTimer(prev => prev > 0 ? prev - 1 : 0);
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [currentPlayer?.id, gameOver]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;

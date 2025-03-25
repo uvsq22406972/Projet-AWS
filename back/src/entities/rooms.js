@@ -1,34 +1,35 @@
 class Rooms {
-  // Constructeur de la classe en appelant une bdd
+  //Constructeur de la classe en appelant une bdd
   constructor(db) {
     this.db = db;
   }
 
-   // Crée un une room
+   //Crée un room
    async createRoom(roomName, user) {
     try {
-      const col1 = this.db.useDb("ProjetAWS").collection("Rooms"); //Accès au collection Compte
+      const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
       await col1.insertOne({
         id: roomName,
-        users: [{ id: user, lives: 3 }] // user est maintenant un objet avec un champ `lives`
+        users: [{ id: user, lives: 3 }]
       })
     } catch (e) {
       console.error("Erreur lors de la création du compte :", e);
-      throw e;  // Retourne l'erreur pour la traiter dans le composant React
+      throw e;
     } 
   }
 
+  //Supprimer un room
   async deleteRoom(roomName) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
 
-      // Vérifie si lla room existe
+      // Vérifie si la room existe
       const room = await col1.findOne({ id: roomName });
       if (!room) {
         console.log("room introuvable !" ,roomName );
         return false;
       }
-      console.log("testtestetstest");
+
       // Suppression de l'utilisateur
       const result = await col1.deleteOne({ id: roomName });
       if (result.deletedCount === 1) {
@@ -48,11 +49,8 @@ class Rooms {
   async getRoomName(userId) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
-  
-      // Chercher une room où l'userId est présent dans le tableau "users"
       const room = await col1.findOne({ users: userId });
-      console.log(room);
-      // Si une room est trouvée, retourne son nom
+
       return room ? room.id : null;
     } catch (err) {
       console.error("Erreur lors de la récupération du roomname :", err);
@@ -60,11 +58,12 @@ class Rooms {
     }
   }
   
+  //Recupere les utilisateurs d'un room
   async getUsersInRoom(roomname) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
-      const room = await col1.findOne({id:roomname});   
-      console.log(room);
+      const room = await col1.findOne({id:roomname});
+
       if(room == null) {
         return null;
       }  
@@ -75,10 +74,10 @@ class Rooms {
     }
   }
 
+  //Ajouter un utilisateur dans la room
   async addUserToRoom(roomName, user) {
     if (!user) {
-      console.log("User invalide, on n'ajoute pas.");
-      return; // on arrête la fonction
+      return;
     }
     const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
     await col1.updateOne(
@@ -92,43 +91,40 @@ class Rooms {
     console.log("User ajouté");
   }
 
+  //Afficher toutes les rooms sur la BDD
   async getAllRooms() {
     try {
-        // 🔥 Utilisation directe de `this.db.useDb("ProjetAWS")`
-        const db = this.db.db; 
-
-        // Vérification explicite de la collection "Rooms"
-        const collectionExists = await db.listCollections({ name: "Rooms" }).toArray();
-        
-        if (!collectionExists) {
-            console.log("❌ Aucune collection 'Rooms' trouvée");
-            return [];
+      const db = this.db.db; 
+      const collectionExists = await db.listCollections({ name: "Rooms" }).toArray();
+      
+      if (!collectionExists) {
+          console.log("Aucune collection 'Rooms' trouvée");
+          return [];
+      }
+      const rooms = await db.collection("Rooms").find({}).toArray();
+      return rooms.map(room => {
+        if (!room.id || !Array.isArray(room.users)) {
+            console.warn("Structure de room invalide:", room);
+            return { name: "Inconnue", players: 0 };
         }
-
-        const rooms = await db.collection("Rooms").find({}).toArray();
-
-        // 🔥 Validation des données pour éviter les erreurs
-        return rooms.map(room => {
-            if (!room.id || !Array.isArray(room.users)) {
-                console.warn("⚠️ Structure de room invalide:", room);
-                return { name: "Inconnue", players: 0 };
-            }
-            return {
-                name: room.id,
-                players: room.users.length
-            };
-        });
-
+        return {
+            name: room.id,
+            players: room.users.length
+        };
+      });
     } catch (error) {
       console.error("Erreur critique dans getAllRooms:", error);
       throw new Error("Impossible de charger les salles");
     }
   }
+
+  //Afficher le gagnant d'un jeu
   async getWinner(roomName) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
       const room = await col1.findOne({ id: roomName });
-      console.log("Nom de la room getwinner", roomName)
+      console.log("Nom de la room getwinner", roomName);
+
       if (!room) {
         console.log("Room non trouvée : ",room);
         return null;
@@ -143,12 +139,14 @@ class Rooms {
         console.log("Aucun gagnant trouvé dans la room");
         return null; // Aucun gagnant trouvé
       }
+
     } catch (error) {
       console.error("Erreur lors de la recherche du gagnant:", error);
-      throw error; // Propagez l'erreur pour la gérer dans la route
+      throw error;
     }
   }
 
+  //Le joueur suivant
   async nextPlayer(roomName, currentUserId) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
@@ -158,12 +156,14 @@ class Rooms {
         console.log("Room non trouvée");
         return null;
       }
+
       const users = room.users;
   
       if (!Array.isArray(users) || users.length === 0) {
         console.log("Aucun utilisateur dans la room");
         return null;
       }
+
       const currentUserIndex = users.findIndex(user => user.id === currentUserId);
   
       if (currentUserIndex === -1) {
@@ -172,7 +172,7 @@ class Rooms {
       }
       let nextUserIndex = currentUserIndex;
       let nextPlayer = null;
-      let attempts = 0; // Pour éviter une boucle infinie
+      let attempts = 0;
 
     // Chercher le prochain joueur vivant
       do {
@@ -191,10 +191,11 @@ class Rooms {
       return nextPlayer;
     } catch (error) {
       console.error("Erreur lors de la recherche du prochain joueur:", error);
-      throw error; // Propagez l'erreur pour la gérer dans la route
+      throw error;
     }
   }
 
+  //Verifier si une salle existe ou pas
   async exist(roomname) {
     const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
     const room = await col1.findOne({ id: roomname });
@@ -202,20 +203,17 @@ class Rooms {
     return room;
   }
 
-
-
+  //Supprimer un user de la room
   async removeUserFromRoom(roomName, user) {
     try {
       const col = this.db.useDb("ProjetAWS").collection("Rooms");
       
-      // Vérifier que la room existe
       const roomExists = await col.findOne({ id: roomName });
       if (!roomExists) {
         console.error("Room non trouvée :", roomName);
         return false;
       }
   
-      // Opération de mise à jour avec vérification
       const result = await col.updateOne(
         { id: roomName },
         { $pull: { users: { id: user } } }
@@ -235,14 +233,13 @@ class Rooms {
     const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
     
     try {
-      // Mettre à jour les vies de l'utilisateur dans la room
       const result = await col1.updateOne(
-        { id: roomName }, // Filtre : trouver la room et l'utilisateur
-        { $set: { "users.$[].lives": lives } } // Mettre à jour le champ `lives` de l'utilisateur
+        { id: roomName },
+        { $set: { "users.$[].lives": lives } }
       );
 
       if (result.matchedCount === 0) {
-        console.log("Room  non trouvé.");
+        console.log("Room non trouvé.");
         return false;
       }
 
@@ -264,7 +261,7 @@ class Rooms {
       if (!room) {
         throw new Error(`Room ${roomName} non trouvée.`);
       }
-      //L'user da,s la room
+      //L'user dans la room
       const user = room.users.find(user => 
         user.id === userId);
       if (!user) {
@@ -281,23 +278,25 @@ class Rooms {
   
     } catch (error) {
       console.error("Erreur survenue lors de la perte de vie :", error);
-      throw error; // Propager l'erreur pour une gestion externe
+      throw error;
     }
   }
 
+  //Verifier si c'est game over
   async checkGameOver(roomName) {
     try {
         const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
         const room = await col1.findOne({ id: roomName });
         if (!room) {
           console.log("Room non trouvée");
-          return false; // Si la room n'existe pas, on considére que la partie est terminée
+          return false;
         }
       const users = room.users;
       if (!Array.isArray(users) || users.length === 0) {
         console.log("Aucun utilisateur dans la room");
-        return false; // pareil si la room est vide, on considére que la partie est terminée
+        return false;
       }
+
       // On Compte le nombre de joueurs ayant des vies restantes
       const alivePlayers = users.filter(user => user.lives > 0);
       if (alivePlayers.length === 1) {
@@ -308,7 +307,7 @@ class Rooms {
       return true;
     } catch (error) {
       console.error("Erreur lors de la vérification de l'état de la partie :", error);
-      throw error; // Propagez l'erreur pour la gérer dans la route
+      throw error;
     }
   }
   
