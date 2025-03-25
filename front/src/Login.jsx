@@ -6,7 +6,8 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-axios.defaults.baseURL = 'http://localhost:4000';
+// Connexion avec le back
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 function Login({ onCreateAccountClick, onPagePrincipaleClick }) {

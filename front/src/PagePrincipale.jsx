@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 //Page qui permet d'être sur la page principale
@@ -30,7 +30,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const handleLogoutClick = async () => {
     try {
       //Envoie une requête à l'API pour détruire la session (le cookie)
-      await axios.post('http://localhost:4000/api/logout');
+      await axios.post('https://bombpartyy.duckdns.org/api/logout');
       
       //Met à jour l'état pour indiquer que l'utilisateur est déconnecté
       setIsConnected(false);
@@ -130,7 +130,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
 
   useEffect(() => {
     // 1) Ouvrir la connexion
-    const wsPublic = new WebSocket("ws://localhost:4002");
+    const wsPublic = new WebSocket('wss://bombpartyy.duckdns.org/ws/');
 
     wsPublic.onopen = () => {
       console.log("WS publicRooms connecté !");

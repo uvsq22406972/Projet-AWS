@@ -10,7 +10,7 @@ import { createAvatar } from '@dicebear/core';
 import { avataaars } from '@dicebear/collection';
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 //Page qui permet d'être sur la page menu utilisateur

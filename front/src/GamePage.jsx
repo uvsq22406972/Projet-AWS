@@ -50,11 +50,6 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, []);
 
   useEffect(() => {
-    console.log(" XSKLNCOSNCXWIDJUWNC JXOKDIUBCNJSKNMXÖKMAS;WDMWLK");
-    console.log("Compte récupéré =", storedUID); // "abc"
-  }, []);
-
-  useEffect(() => {
     if (countdown > 0) {
       const countdownInterval = setInterval(() => setCountdown(prev => prev - 1), 1000);
       return () => clearInterval(countdownInterval);
@@ -67,7 +62,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   useEffect(() => {
       console.log("Compte récupéré =", storedUID);
 
-      ws.current = new WebSocket("ws://localhost:4002");
+      ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
       ws.current.onopen = () => {
         console.log("WebSocket connecté !");
       };
@@ -136,7 +131,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   // Fonction pour récupérer une séquence depuis l'API
   const generateSequence = async () => {
     try {
-      const response = await fetch("http://localhost:4001/random-sequence");
+      const response = await fetch("https://bombpartyy.duckdns.org/random-sequence");
       const data = await response.json();
       setSequence(data.sequence);
       //On envoie la séquence pour les autres clients
@@ -210,7 +205,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     if (gameOver) return; // Empêcher d'envoyer une réponse si la partie est déjà finie
   
     try {
-      const response = await fetch(`http://localhost:4001/verify-word?word=${inputValue}`);
+      const response = await fetch(`https://bombpartyy.duckdns.org/verify-word?word=${inputValue}`);
       const data = await response.json();
   
       if (data.valid && inputValue.includes(sequence)) {

@@ -11,7 +11,7 @@ import FinalPage from './FinalPage.jsx';
 import axios from 'axios';
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 //Gestion des pages affichés
@@ -25,7 +25,7 @@ function Page() {
   async function checkSession() {
     try {
       //Récupérer le userid dans la session
-      const response = await axios.get('http://localhost:4000/api/session');
+      const response = await axios.get('https://bombpartyy.duckdns.org/api/session');
       let userid = response.data.userid;
 
       if(userid){

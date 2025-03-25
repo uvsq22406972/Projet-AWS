@@ -8,8 +8,7 @@ class Users {
   // Crée un compte utilisateur
   async creerCompte(username, email, mdp1, mdp2) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
       await col1.insertOne({
          username: username,
          _id: email,
@@ -40,8 +39,7 @@ class Users {
     // Vérifie si un email existe déjà dans la bdd
     async existUsername(pseudo) {
       try {
-        await this.db.connect();
-        const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+        const col1 = this.db.useDb("ProjetAWS").collection("Compte");; //Accès au collection Compte
         const query = { username: { $eq: pseudo } }; // Requête Préparées pour contrer les injections noSQL
         const res = await col1.findOne(query); //True si email existe, faux sinon
   
@@ -59,8 +57,7 @@ class Users {
   // Vérifie si un email existe déjà dans la bdd
   async exist(email) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
       const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
       const res = await col1.findOne(query); //True si email existe, faux sinon
 
@@ -79,8 +76,7 @@ class Users {
   // Vérifie si le mot de passe correspond au mot de passe stocké en bdd
   async checkPassword(login, password) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
       const user = await col1.findOne({ _id: { $eq: login } }); //True si email existe, faux sinon
       // Sécurité contre les injections NoSql en empêchant l'injection de certains opérateurs NoSqL
       
@@ -105,8 +101,7 @@ class Users {
   // Récupère un utilisateur via son pseudo (username)
   async getUser(pseudo) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const user = await col1.findOne({ username: pseudo });
       return user;
     } catch (err) {
@@ -117,8 +112,7 @@ class Users {
     // Récupère un utilisateur via son pseudo (username)
     async getEmail(email) {
       try {
-        await this.db.connect();
-        const col1 = this.db.db("DB").collection("Compte"); //Accès au collection Compte
+        const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
         const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
         const user = await col1.findOne(query); 
         return user;
@@ -130,8 +124,7 @@ class Users {
   // Récupère tous les utilisateurs
   async getAllUsers() {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const account = await col1.find({}).toArray();
       return account;
     } catch (err) {
@@ -142,8 +135,7 @@ class Users {
   // Met à jour le nom d'un utilisateur dans la bdd
   async updateUsername(email, newUsername) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
       const result = await col1.updateOne(
         { _id: email },
         { $set: { username: newUsername } }
@@ -161,8 +153,7 @@ class Users {
   // Met à jour le mot de passe d'un utilisateur dans la bdd
   async updatePassword(email, newPassword) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const result = await col1.updateOne(
         { _id: email },
         { $set: { password: newPassword } }
@@ -179,8 +170,7 @@ class Users {
     // Récupère le nombre de pièces d'un utilisateur via son email
   async getCoins(email) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const user = await col1.findOne({ _id: email });
       if (user) {
         return user.coins;
@@ -193,8 +183,7 @@ class Users {
     // Met à jour le nombre de pièces d'un utilisateur
   async updateCoins(email, newCoinCount) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const result = await col1.updateOne(
         { _id: email },
         { $set: { coins: newCoinCount } }
@@ -210,8 +199,7 @@ class Users {
     // Ajoute ou soustrait des pièces d'un utilisateur
   async modifyCoins(email, amount) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const result = await col1.updateOne(
         { _id: email },
         { $inc: { coins: amount } } // Utilisation de $inc pour incrémenter ou décrémenter
@@ -227,8 +215,7 @@ class Users {
 
   async supprimerCompte(email, password) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
 
       // Vérifie si l'utilisateur existe
       const user = await col1.findOne({ _id: { $eq: email } });
@@ -261,8 +248,7 @@ class Users {
 
   async saveAvatar(email, avatar, avatarSettings) {
     try {
-      await this.db.connect();
-      const col1 = this.db.db("DB").collection("Compte");
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
   
       // Met à jour l'avatar de l'utilisateur dans la base de données
       const result = await col1.updateOne(

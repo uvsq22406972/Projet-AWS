@@ -66,7 +66,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const connectWS = useCallback(() => {
         if (isWebSocketOpen.current) return;
         
-        ws.current = new WebSocket("ws://localhost:4002");
+        ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
 
         ws.current.onopen = () => {
             console.log("WebSocket connecté !");

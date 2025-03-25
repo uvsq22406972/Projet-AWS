@@ -1,15 +1,30 @@
-const { MongoClient } = require('mongodb');
+//const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const csv = require('csv-parser');
+const mongoose = require("mongoose");
+require("dotenv").config();
+const MONGO_URI = process.env.MONGO_URI;
 
-const uri = "mongodb://localhost:27017"; // Mets ton URI MongoDB si nécessaire
-const client = new MongoClient(uri);
+if (!MONGO_URI) {
+    console.error("ERREUR: MONGO_URI n'est pas défini dans .env !");
+    process.exit(1); // Arrête le serveur
+  }
+
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+    console.log("Connexion à MongoDB réussie !");
+    importLexique();
+    })
+.catch(err => console.error("Erreur MongoDB:", err));
 
 async function importLexique() {
     try {
-        await client.connect();
-        const db = client.db("dictionnaire");
+        const db = mongoose.connection.useDb("ProjetAWS");
         const collection = db.collection("mots");
+
 
         const words = [];
         const seen = new Set();
@@ -33,16 +48,13 @@ async function importLexique() {
                 } else {
                     console.log("⚠ Aucun mot à importer !");
                 }
-                client.close();
             })
             .on('error', (err) => {
                 console.error("Erreur de lecture du fichier CSV:", err);
-                client.close();
             });
 
     } catch (err) {
         console.error("Erreur de connexion à MongoDB:", err);
-        client.close();
     }
 }
 
