@@ -103,7 +103,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
             if (message.type === "game_started") {
               // => Je reçois le signal de démarrer le jeu
               // => Je fais un “redirect” local
-              localStorage.setItem('users', JSON.stringify(data.users));
+              localStorage.setItem('users', JSON.stringify(message.users));
               setCurrentPage({ 
                 page: 'gamepage', 
                 initialLives: livesToPlay, 
