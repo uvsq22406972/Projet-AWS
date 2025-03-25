@@ -400,40 +400,60 @@ wss.on("connection", async (ws) => {
           }
           });
         }
-        if (data.type === "leave_room") {
-          const roomName = data.room;
-          const userToRemove = data.user;
-        
-          try {
-            // 1) Retirer l'utilisateur
-            await axios.post(`api/removeUserFromRoom`, {
-              room: roomName,
-              user: userToRemove
+      if (data.type === "leave_room") {
+        const roomName = data.room;
+        const userToRemove = data.user;
+      
+        try {
+          // 1) Retirer l'utilisateur
+          await axios.post(`api/removeUserFromRoom`, {
+            room: roomName,
+            user: userToRemove
+          });
+      
+          // 2) Récupérer la room mise à jour
+          const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
+          const updatedUsers = resp.data; // ex: [ { id: "abc", lives: 3 }, ... ]
+      
+          // 3) Vérifier si c'est vide (plus personne)
+          if (!updatedUsers || updatedUsers.length === 0) {
+            console.log("Dernier utilisateur parti, on supprime la room...");
+            await axios.delete(`api/rooms`, { data: { room: roomName } });
+            wss.clients.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(
+                  JSON.stringify({
+                    type: "room_deleted",
+                    room: roomName
+                  })
+                );
+              }
             });
+            return;
+          } else {
+            console.log("Il reste encore des joueurs, la room est conservée.");
+          }
+          // 4) Vérifier si userToRemove était le joueur courant
+          //    => On appelle votre "getNextPlayer" pour le savoir
+          const nextPlayerResp = await axios.get(`api/getNextPlayer`, {
+            params: { room: roomName, user: userToRemove }
+          });
         
-            // 2) Récupérer la room mise à jour
-            const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
-            const updatedUsers = resp.data; // ex: [ { id: "abc", lives: 3 }, ... ]
-        
-            // 3) Vérifier si c'est vide (plus personne)
-            if (!updatedUsers || updatedUsers.length === 0) {
-              console.log("Dernier utilisateur parti, on supprime la room...");
-              await axios.delete(`api/rooms`, { data: { room: roomName } });
-              wss.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(
-                    JSON.stringify({
-                      type: "room_deleted",
-                      room: roomName
-                    })
-                  );
-                }
-              });
-              return;
-            } else {
-              console.log("Il reste encore des joueurs, la room est conservée.");
-            }
-
+          // 5) Si on a un nextPlayer, ça signifie que userToRemove était bien le current
+          if (nextPlayerResp.data.status === 200 && nextPlayerResp.data.nextPlayer) {
+            // => On diffuse un "reset_timer" avec le nouveau current
+            console.log("Le joueur sortant était le current, on passe au suivant :", nextPlayerResp.data.nextPlayer);
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: "reset_timer",
+                  users: updatedUsers,
+                  newCurrentPlayer: nextPlayerResp.data.nextPlayer
+                }));
+              }
+            });
+          } else {
+            // => userToRemove n'était pas le current, on envoie juste la liste
             wss.clients.forEach(client => {
               if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
@@ -443,11 +463,11 @@ wss.on("connection", async (ws) => {
                 }));
               }
             });
-        
-          } catch (error) {
-            console.error("Erreur lors du leave_room :", error);
           }
+        } catch (error) {
+          console.error("Erreur lors du leave_room :", error);
         }
+      }
         
       if (data.type === 'lose_life'){
         handleLoseLife(data);
