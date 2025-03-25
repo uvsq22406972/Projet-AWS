@@ -1,6 +1,7 @@
 //Importation
 import React, { useState, useEffect, useRef } from 'react';
-import { FaUserCircle, FaList, FaEye, FaEyeSlash, GiExitDoor } from "react-icons/fa";
+import { FaUserCircle, FaList, FaEye, FaEyeSlash } from "react-icons/fa";
+import { GiExitDoor } from "react-icons/gi";
 import "./Profile.css";
 import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify';

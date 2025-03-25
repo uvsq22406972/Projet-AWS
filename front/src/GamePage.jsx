@@ -1,6 +1,7 @@
 import React, { useState, useEffect,useRef } from 'react';
 import "./GamePage.css";
 import { ToastContainer, toast } from 'react-toastify';
+import { GiExitDoor } from "react-icons/gi";
 import 'react-toastify/dist/ReactToastify.css';
 const axios = require("axios");
 function removeAccents(str) {
