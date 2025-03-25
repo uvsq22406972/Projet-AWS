@@ -154,7 +154,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       else {setTimeout(generateSequence,500)}
     }
     
-  }, [currentPlayer]);
+  }, [currentPlayer?.id]);
 
   // Fonction pour gérer le timer
   useEffect(() => {
