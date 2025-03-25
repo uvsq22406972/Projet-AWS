@@ -79,42 +79,49 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         
         // Gérer les messages du serveur WebSocket
         ws.current.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            console.log('Message reçu:', message);
+          const message = JSON.parse(event.data);
+          console.log('Message reçu:', message);
+          const localRoom = localStorage.getItem("room");
+          const sameRoom = (message.room === localRoom);
 
-            if (message.type === 'generatedRoom') {
-                localStorage.setItem("room", message.room);
-                
-                setRoom(message.room);
-                setUsers(Array.isArray(message.users) ? message.users : []); 
-            }
-
-            if (message.type === 'users_list') {
-                setUsers(Array.isArray(message.users) ? message.users : []);
-                console.log('Utilisateurs mis à jour:', message.users);
-            }
-
-            if (message.type === 'joined_room_ok') {
+          if (message.type === 'generatedRoom') {
               localStorage.setItem("room", message.room);
+              
               setRoom(message.room);
-              fetchUsersInRoom(message.room); 
-            }
-
-            if (message.type === "game_started") {
-              // => Je reçois le signal de démarrer le jeu
-              // => Je fais un “redirect” local
-              localStorage.setItem('users', JSON.stringify(message.users));
-              setCurrentPage({ 
-                page: 'gamepage', 
-                initialLives: livesToPlay, 
-                initialTime: gameTime,
-                livesLostThreshold
-              });
+              setUsers(Array.isArray(message.users) ? message.users : []); 
+          }
+          if (message.type === 'users_list') {
+              if (!sameRoom) {
+                console.log("Ignoring users_list for a different room:", message.room);
+                return;
+              }
+              setUsers(Array.isArray(message.users) ? message.users : []);
+              console.log('Utilisateurs mis à jour:', message.users);
+          }
+          if (message.type === 'joined_room_ok') {
+            if (!sameRoom) {
+              console.log("Ignoring users_list for a different room:", message.room);
               return;
             }
-
-
-            else if (message.type === "error"){console.log("oula");}
+            localStorage.setItem("room", message.room);
+            setRoom(message.room);
+            fetchUsersInRoom(message.room); 
+          }
+          if (message.type === "game_started") {
+            if (!sameRoom) {
+              console.log("Ignoring users_list for a different room:", message.room);
+              return;
+            }
+            localStorage.setItem('users', JSON.stringify(message.users));
+            setCurrentPage({ 
+              page: 'gamepage', 
+              initialLives: livesToPlay, 
+              initialTime: gameTime,
+              livesLostThreshold
+            });
+            return;
+          }
+          else if (message.type === "error"){console.log("oula");}
         };
 
         ws.current.onclose = (e) => {

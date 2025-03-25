@@ -82,6 +82,11 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
 
         if (data.type === 'game_over') {
           //setGameOver(true);
+          const localRoom = localStorage.getItem("room");
+          if (data.room !== localRoom) {
+            console.log("Ignoring game_over for a different room:", data.room);
+            return;
+          }
           setCurrentPage("final");
           localStorage.setItem('winner',JSON.stringify(data.winner.id))
         }
