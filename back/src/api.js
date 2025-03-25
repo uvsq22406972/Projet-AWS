@@ -50,12 +50,6 @@ const validatePassword = (password) => {
   return regex.test(password);
 };
 
-  
-  /**module.exports = { isEmailValid, isPasswordValid };
-     routes.js - Fichier contenant vos routes
-     const { isEmailValid, isPasswordValid } = require('./api');
-  **/
-
   //demande création compte, envoi du code seulement
   router.put('/users', async (req, res) => {
     const { pseudo, email, mdp1, mdp2 } = req.body;
@@ -161,7 +155,7 @@ const validatePassword = (password) => {
     if (existingRoom !== null) {
       return res.status(400).json({ error: "Nom de salle déjà utilisé" });
     }
-    //const exist = await users.exist(pseudo); //True si pseudo existe, false sinon
+
     await rooms.createRoom(id,users);
   });
 
@@ -259,7 +253,7 @@ router.post('/loseLife', async (req, res) => {
     } else if (result.updated) {
       res.send({ status: 401 });
     } else {
-      res.send({ status: 400 }); // Erreur
+      res.send({ status: 400 });
     }
   } catch (error) {
     res.status(500).send({ error: "Erreur serveur" });
@@ -309,31 +303,30 @@ router.get('/getNextPlayer', async (req,res) =>{
     }
   });
 
-//Permet de récupérer les room d'une user
-router.get('/getRoomFromUsers', async (req, res) => {
-  try {
-    // Récupération de la room depuis les paramètres de la requête
-    const user = req.query.user; 
-    console.log("Récupération de la room de ",user);
+  //Permet de récupérer les room d'une user
+  router.get('/getRoomFromUsers', async (req, res) => {
+    try {
+      // Récupération de la room depuis les paramètres de la requête
+      const user = req.query.user; 
+      console.log("Récupération de la room de ",user);
 
-    if (!user) {
-      return res.status(400).json({ error: "Room non spécifiée" });
-    }
-    const room = await rooms.getRoomName(user);
-    
-    if (room === null) {
-      return res.status(400).json({ error: "Aucune room contient l'utilisateur" });
-    }
-    
-    res.json(room); 
-    console.log("room found :", room);
-    
-  } catch (error) {
-    console.error("Erreur lors de la récupération des utilisateurs :", error);
-    res.status(500).json({ error: "Erreur interne du serveur" });
-  }
-});
+      if (!user) {
+        return res.status(400).json({ error: "Room non spécifiée" });
+      }
+      const room = await rooms.getRoomName(user);
 
+      if (room === null) {
+        return res.status(400).json({ error: "Aucune room contient l'utilisateur" });
+      }
+
+      res.json(room); 
+      console.log("room found :", room);
+
+    } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs :", error);
+      res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+  });
 
   // Création d'une session
   router.post('/users', async (req, res) => {
@@ -372,26 +365,24 @@ router.get('/getRoomFromUsers', async (req, res) => {
       return;
     }
   });
+
   // pour supprimer un utilisateur
   router.post('/delete', async (req, res) => {
     try {
-        // Changer ici pour correspondre aux variables envoyées par le frontend
-        const { email, login, password } = req.body; // Récupération des données de la requête
+      const { email, login, password } = req.body;
+      const result = await users.supprimerCompte(email, password);
 
-        // Appel de la méthode supprimerCompte avec les bons paramètres
-        const result = await users.supprimerCompte(email, password);  // Suppression du compte par email et password
-        // Si la suppression a réussi
-        if (result) {
-            res.status(200).json({ message: "Compte supprimé avec succès" });
-        } else {
-            res.status(400).json({ message: "Échec de la suppression du compte" });
-        }
+      if (result) {
+          res.status(200).json({ message: "Compte supprimé avec succès" });
+      } else {
+          res.status(400).json({ message: "Échec de la suppression du compte" });
+      }
+
     } catch (e) {
         console.error("Erreur lors de la suppression du compte :", e);
         res.status(500).json({ message: "Erreur serveur" });
     }
 });
-
 
   // Chercher une information à partir de l'email fourni
   router.get('/users', async (req, res) => {
@@ -408,6 +399,7 @@ router.get('/getRoomFromUsers', async (req, res) => {
     }
   });
 
+  //Recupérer email
   router.get('/users/detail', async (req, res) => {
     try {
       const user = await users.getEmail(req.session.userid);
@@ -475,7 +467,6 @@ router.get('/getRoomFromUsers', async (req, res) => {
   router.patch('/users/username', async (req, res) => {
     const { email, newUsername } = req.body;
 
-    // Vérifier que tous les champs sont fournis
     if (!newUsername) {
       return res.status(400).json({ message: "Tous les champs sont obligatoires" });
     }
@@ -520,6 +511,7 @@ router.get('/getRoomFromUsers', async (req, res) => {
     });
   });
 
+  //Gérer la sauvegarde de l'avatar
   router.post('/save-avatar', async (req, res) => {
     const { avatar, avatarSettings, email } = req.body;
   
@@ -543,10 +535,11 @@ router.get('/getRoomFromUsers', async (req, res) => {
     }
   });
 
+  //Récupérer l'avatar depuis la BDD
   router.get('/get-avatar', async (req, res) => {
     const { email } = req.query;
   
-    if (!email || !isEmailValid(email)) { // Utilisez la fonction de validation existante
+    if (!email || !isEmailValid(email)) {
       return res.status(400).send({ message: "Email invalide ou manquant" });
     }
   
@@ -562,6 +555,7 @@ router.get('/getRoomFromUsers', async (req, res) => {
     }
   });
   
+  //Récupérer l'avatar depuis la BDD via username
   router.get('/get-avatar-by-username', async (req, res) => {
     const { username } = req.query;
   

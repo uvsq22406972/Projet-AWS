@@ -159,33 +159,44 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     }
   };
 
-  // Modifier le useEffect du timer comme suit :
   useEffect(() => {
-    if (gameOver || !currentPlayer) return;
-  
-    let timeoutId;
-  
-    const interval = setInterval(() => {
-      setTimer(prev => {
-        if (prev === 0) {
-          // Envoyer UNE SEULE FOIS via une closure
-          if (!timeoutId) {
-            timeoutId = setTimeout(() => {
-              const message = { type: "lose_life", room: localStorage.getItem("room"), user: currentPlayer?.id };
-              ws.current.send(JSON.stringify(message));
-            }, 100); // Petit délai pour éviter les doubles envois
-          }
-          return 0;
+    if(currentPlayer?.id === storedUID) {
+      console.log(currentPlayer?.id , "  === ", storedUID);
+      if (ws.current?.readyState === WebSocket.OPEN) {
+      generateSequence();
+      }
+      else {setTimeout(generateSequence,500)}
+    }
+    
+  }, [currentPlayer?.id]);
+
+// Modifier le useEffect du timer comme suit :
+useEffect(() => {
+  if (gameOver || !currentPlayer) return;
+
+  let timeoutId;
+
+  const interval = setInterval(() => {
+    setTimer(prev => {
+      if (prev === 0) {
+        // Envoyer UNE SEULE FOIS via une closure
+        if (!timeoutId) {
+          timeoutId = setTimeout(() => {
+            const message = { type: "lose_life", room: localStorage.getItem("room"), user: currentPlayer?.id };
+            ws.current.send(JSON.stringify(message));
+          }, 100); // Petit délai pour éviter les doubles envois
         }
-        return prev - 1;
-      });
-    }, 1000);
-  
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeoutId);
-    };
-  }, [currentPlayer?.id, gameOver]); // Dépendances critiques
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => {
+    clearInterval(interval);
+    clearTimeout(timeoutId);
+  };
+}, [currentPlayer?.id, gameOver]); // Dépendances critiques
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;

@@ -8,7 +8,7 @@ class Users {
   // Crée un compte utilisateur
   async creerCompte(username, email, mdp1, mdp2) {
     try {
-      const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       await col1.insertOne({
          username: username,
          _id: email,
@@ -32,16 +32,16 @@ class Users {
         });
     } catch (e) {
       console.error("Erreur lors de la création du compte :", e);
-      throw e;  // Retourne l'erreur pour la traiter dans le composant React
+      throw e;
     }
   }
 
     // Vérifie si un email existe déjà dans la bdd
     async existUsername(pseudo) {
       try {
-        const col1 = this.db.useDb("ProjetAWS").collection("Compte");; //Accès au collection Compte
+        const col1 = this.db.useDb("ProjetAWS").collection("Compte");
         const query = { username: { $eq: pseudo } }; // Requête Préparées pour contrer les injections noSQL
-        const res = await col1.findOne(query); //True si email existe, faux sinon
+        const res = await col1.findOne(query);
   
         if (res) {
           return true;
@@ -57,9 +57,9 @@ class Users {
   // Vérifie si un email existe déjà dans la bdd
   async exist(email) {
     try {
-      const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
       const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
-      const res = await col1.findOne(query); //True si email existe, faux sinon
+      const res = await col1.findOne(query);
 
       if (res) {
         return true;
@@ -76,13 +76,11 @@ class Users {
   // Vérifie si le mot de passe correspond au mot de passe stocké en bdd
   async checkPassword(login, password) {
     try {
-      const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
-      const user = await col1.findOne({ _id: { $eq: login } }); //True si email existe, faux sinon
-      // Sécurité contre les injections NoSql en empêchant l'injection de certains opérateurs NoSqL
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
+      const user = await col1.findOne({ _id: { $eq: login } });
       
       if (user) {
         const motDePasse = user.password;
-             //On vérifie que le mot de passe rentrer est identique a celui encrypté dans la bdd
         if (await encrypt.verifyPassword(password, motDePasse)) {
           console.log("OK");
           return true;
@@ -91,14 +89,14 @@ class Users {
           return false;
         }
       }
-      return false; // Si l'utilisateur n'existe pas
+      return false;
     } catch (error) {
       console.error("Erreur lors de la récupération du mot de passe :", error);
       throw error;
     }
   }
 
-  // Récupère un utilisateur via son pseudo (username)
+  //Récupère un utilisateur via son username
   async getUser(pseudo) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Compte");
@@ -109,17 +107,17 @@ class Users {
     }
   }
 
-    // Récupère un utilisateur via son pseudo (username)
-    async getEmail(email) {
-      try {
-        const col1 = this.db.useDb("ProjetAWS").collection("Compte"); //Accès au collection Compte
-        const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
-        const user = await col1.findOne(query); 
-        return user;
-      } catch (err) {
-        throw err;
-      }
+    //Récupère un utilisateur via son email
+  async getEmail(email) {
+    try {
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
+      const query = { _id: { $eq: email } }; // Requête Préparées pour contrer les injections noSQL
+      const user = await col1.findOne(query); 
+      return user;
+    } catch (err) {
+      throw err;
     }
+  }
 
   // Récupère tous les utilisateurs
   async getAllUsers() {
@@ -167,7 +165,8 @@ class Users {
       throw error;
     }
   }
-    // Récupère le nombre de pièces d'un utilisateur via son email
+  
+  // Récupère le nombre de pièces d'un utilisateur via son email
   async getCoins(email) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Compte");
@@ -175,12 +174,13 @@ class Users {
       if (user) {
         return user.coins;
       }
-      return 0; // Retourne 0 si l'utilisateur n'existe pas
+      return 0;
     } catch (err) {
       throw err;
     }
   }
-    // Met à jour le nombre de pièces d'un utilisateur
+  
+  // Met à jour le nombre de pièces d'un utilisateur
   async updateCoins(email, newCoinCount) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Compte");
@@ -196,7 +196,8 @@ class Users {
       throw error;
     }
   }
-    // Ajoute ou soustrait des pièces d'un utilisateur
+  
+  // Ajoute ou soustrait des pièces d'un utilisateur
   async modifyCoins(email, amount) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Compte");
@@ -213,6 +214,7 @@ class Users {
     }
   }
 
+  // Supprime un utilisateur
   async supprimerCompte(email, password) {
     try {
       const col1 = this.db.useDb("ProjetAWS").collection("Compte");
