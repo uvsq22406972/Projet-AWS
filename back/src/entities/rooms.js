@@ -252,34 +252,28 @@ class Rooms {
 
    //Perds une vie a l'utilisateur donnée
    async loseLife(roomName, userId) {
-    try {
-     
-      const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
+    const col = this.db.useDb("ProjetAWS").collection("Rooms");
+    
+    // Opération atomique
+    const result = await col.findOneAndUpdate(
+      { 
+        id: roomName,
+        "users.id": userId,
+        "users.lives": { $gt: 0 } // Bloque si déjà à 0
+      },
+      { $inc: { "users.$.lives": -1 } }, // Décrémentation atomique
+      { returnDocument: 'after' }
+    );
   
-      //la room
-      const room = await col1.findOne({ id: roomName });
-      if (!room) {
-        throw new Error(`Room ${roomName} non trouvée.`);
-      }
-      //L'user dans la room
-      const user = room.users.find(user => 
-        user.id === userId);
-      if (!user) {
-        throw new Error(`Utilisateur ${userId} non trouvé dans la room ${roomName}.`);
-      }
-        const result = await col1.updateOne(
-          { id: roomName, "users.id": userId }, // Filtre : trouver la room et l'utilisateur
-          { $set: { "users.$.lives": user.lives - 1 } } // Réduire les vies de 1 pour cet utilisateur
-        );
-  
-        console.log(`Vies de l'utilisateur ${userId} mises à jour à ${user.lives - 1} dans la room ${roomName}`);
-        return (user.lives-1) >= 1;
-  
-  
-    } catch (error) {
-      console.error("Erreur survenue lors de la perte de vie :", error);
-      throw error;
+    if (!result.value) {
+      return { updated: false, gameOver: false };
     }
+    
+    const alivePlayers = result.value.users.filter(u => u.lives > 0);
+    return {
+      updated: true,
+      gameOver: alivePlayers.length <= 1
+    };
   }
 
   //Verifier si c'est game over

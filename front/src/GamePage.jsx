@@ -159,47 +159,33 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     }
   };
 
+  // Modifier le useEffect du timer comme suit :
   useEffect(() => {
-    if(currentPlayer?.id === storedUID) {
-      console.log(currentPlayer?.id , "  === ", storedUID);
-      if (ws.current?.readyState === WebSocket.OPEN) {
-      generateSequence();
-      }
-      else {setTimeout(generateSequence,500)}
-    }
-    
-  }, [currentPlayer?.id]);
-
-  // Fonction pour gérer le timer
-  useEffect(() => {
-    if (gameOver) return;
-
-    if (!hasLostThisTurn && timer === 0) {
-      // Réinitialiser le timer
-      const message = {
-        type: "lose_life",
-        room: localStorage.getItem("room"),
-        user: currentPlayer?.id,
-      };
-      setHasLostThisTurn(true);
-      console.log(JSON.stringify(message));
-      ws.current.send(JSON.stringify(message));
-
-    }
-
+    if (gameOver || !currentPlayer) return;
+  
+    let timeoutId;
+  
     const interval = setInterval(() => {
-      setTimer(prevTimer => {
-        if (prevTimer > 0) return prevTimer - 1;
-        return 0;
+      setTimer(prev => {
+        if (prev === 0) {
+          // Envoyer UNE SEULE FOIS via une closure
+          if (!timeoutId) {
+            timeoutId = setTimeout(() => {
+              const message = { type: "lose_life", room: localStorage.getItem("room"), user: currentPlayer?.id };
+              ws.current.send(JSON.stringify(message));
+            }, 100); // Petit délai pour éviter les doubles envois
+          }
+          return 0;
+        }
+        return prev - 1;
       });
     }, 1000);
-
-    setTimerInterval(interval);
-
+  
     return () => {
       clearInterval(interval);
+      clearTimeout(timeoutId);
     };
-  }, [timer, gameOver, initialTime, hasLostThisTurn,currentPlayer]);
+  }, [currentPlayer?.id, gameOver]); // Dépendances critiques
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
