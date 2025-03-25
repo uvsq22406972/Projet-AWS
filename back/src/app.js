@@ -394,7 +394,9 @@ wss.on("connection", async (ws) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(
               JSON.stringify({
-                type: "game_over"
+                type: "game_over",
+                room: data.room,
+                winner: data.winner
               })
             );
           }
@@ -539,6 +541,7 @@ wss.on("connection", async (ws) => {
           client.send(
             JSON.stringify({
               type: "game_over",
+              room: roomname,
               winner : respWinner.data.winner
             })
           );
