@@ -11,13 +11,13 @@ import FinalPage from './FinalPage.jsx';
 import axios from 'axios';
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 //Gestion des pages affichés
 function Page() {
   //Initialisation des états
-  const [currentPage, setCurrentPage] = useState('login');
+  const [currentPage, setCurrentPage] = useState('loading');
   // eslint-disable-next-line
   const [isConnected, setIsConnected] = useState(false);
 
@@ -25,13 +25,18 @@ function Page() {
   async function checkSession() {
     try {
       //Récupérer le userid dans la session
-      const response = await axios.get('http://localhost:4000/api/session');
+      const response = await axios.get('https://bombpartyy.duckdns.org/api/session');
       let userid = response.data.userid;
 
       if(userid){
         console.log(userid)
         setIsConnected(true);
-        setCurrentPage('pagePrincipale');
+        if (currentPage === 'profile'){
+          setCurrentPage('profile');
+        }
+        else {
+          setCurrentPage('pagePrincipale');
+        }
       }else{
         setIsConnected(false);
         setCurrentPage('login');
@@ -66,7 +71,7 @@ function Page() {
   }
 
   const handleGamePageClick = () => {
-    setCurrentPage('game');
+    setCurrentPage('gamepage');
   }
 
   const handleCreateAccountClick = () => {

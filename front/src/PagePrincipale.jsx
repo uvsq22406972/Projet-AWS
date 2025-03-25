@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 
 //Connexion avec le back
-axios.defaults.baseURL = 'http://localhost:4000';
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 
 //Page qui permet d'être sur la page principale
@@ -19,6 +19,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const [roomCode, setRoomCode] = useState("");   
   const [publicRooms, setPublicRooms] = useState([]);
 
+  const [userCoins, setUserCoins] = useState(0); 
 
   //Pour avoir un couleur unique
   const gradientStyle = {
@@ -29,7 +30,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
   const handleLogoutClick = async () => {
     try {
       //Envoie une requête à l'API pour détruire la session (le cookie)
-      await axios.post('http://localhost:4000/api/logout');
+      await axios.post('https://bombpartyy.duckdns.org/api/logout');
       
       //Met à jour l'état pour indiquer que l'utilisateur est déconnecté
       setIsConnected(false);
@@ -78,13 +79,15 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
         _id: account._id,
         username: account.username,
         password: account.password,
-        avatar: account.avatar
+        avatar: account.avatar,
+        coins: account.coins
       }));
 
       // Si des comptes existent dans la BDD
       if (Account.length > 0) {
         const selectedAccount = Account.find((account) => account._id === userid);
         setCompte(selectedAccount);
+        setUserCoins(selectedAccount.coins);
       }
 
     } catch (error) {
@@ -103,13 +106,17 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
 
   // Exécution des fonctions asynchrones
   useEffect(() => {
-    const interval = setInterval(fetchPublicRooms, 3000);
+  
     checkSession();
     fetchAccount();
     fetchPublicRooms();
+
     localStorage.removeItem('room');
     localStorage.removeItem('users');
     localStorage.removeItem('winner');
+
+    const interval = setInterval(fetchPublicRooms, 3000);
+
     return () => clearInterval(interval);
     // eslint-disable-next-line
   }, []);
@@ -121,37 +128,44 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
     }
   }, []);
 
-  //  on gère les inputs utilisateurs et on passe a la game Room 
-  const handleJoinRoom = (roomName) => {
-    console.log("🛠 Tentative de connexion à la salle :", roomName);
-  
-    localStorage.setItem("room", roomName); // 🔥 On enregistre AVANT de changer de page
-    console.log("✅ localStorage mis à jour :", localStorage.getItem("room"));
-  
-    const socket = new WebSocket('ws://localhost:4002');
-    
-    socket.onopen = () => {
-      console.log('✅ Connexion WebSocket établie');
-      socket.send(JSON.stringify({
-        type: 'join_room',
-        room: roomName,
-        user: compte.username,
-      }));
+  useEffect(() => {
+    // 1) Ouvrir la connexion
+    const wsPublic = new WebSocket('wss://bombpartyy.duckdns.org/ws/');
+
+    wsPublic.onopen = () => {
+      console.log("WS publicRooms connecté !");
     };
   
-    socket.onmessage = (event) => {
+    // 2) Gérer les messages
+    wsPublic.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📥 Réponse du serveur :", data);
-  
-      if (data.type === 'no_room') {
-        console.log("❌ Aucune salle trouvée !");
-        toast.error("Aucune salle de jeu ne porte ce nom");
-      } else {
-        console.log("✅ Salle trouvée, changement de page !");
-        setCurrentPage('gameroom', roomName);
-        socket.close();
+      if (data.type === "room_deleted") {
+        // Retirer la room supprimée de la liste actuelle
+        setPublicRooms((prevRooms) => 
+          prevRooms.filter(r => r.name !== data.room)
+        );
       }
     };
+
+    wsPublic.onclose = () => {
+      console.warn("WS publicRooms fermé");
+    };
+    // 3) Cleanup
+    return () => {
+      wsPublic.close();
+    };
+  }, []);
+
+  //  on gère les inputs utilisateurs et on passe a la game Room 
+  const handleJoinRoom = async (roomName) => {
+    try {
+      if (!roomName) return toast.error("Veuillez entrer un code de salle");
+      // Si la salle existe, on va sur GameRoom
+      localStorage.setItem("room", roomName);
+      setCurrentPage("gameroom");
+    } catch (error) {
+      toast.error("Aucune salle de jeu ne porte ce nom");
+    }
   };
   
   //CSS par ChatGPT, pour un bootstrap plus effectif
@@ -167,6 +181,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           </div>
           {/* Hover menu choix utilisateur */}
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
+            <span className="text-white me-4">{userCoins} Pièces</span>
             {compte.avatar ? (
               <img 
                 src={compte.avatar} 
@@ -177,7 +192,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
                   height: '40px',
                   borderRadius: '50%',
                   border: '2px solid black',
-                  backgroundColor: "grey"
+                  backgroundColor:'rgba(255, 255, 255, 0.9)'
                 }}
               />
             ) : (
@@ -222,7 +237,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           <div className="col-md-6">
             <div className="game-card">
               <img src="/images/bombparty.jpg" alt="Bomb Party" height="150"/>
-              <button className="btn mb-3" onClick={() => {setRoomCode(null);setCurrentPage("gameroom",{roomCode:null})}}>Créer une salle</button>
+              <button className="btn mb-3" onClick={() => setCurrentPage("gameroom",{roomCode:null})}>Créer une salle</button>
               <p className="fw-bold">Ou</p>
               <h5 className="fw-bold mb-2">Rejoindre une salle existante</h5>
               <div className="input-group mb-3 w-75 mx-auto">

@@ -27,7 +27,7 @@ function init(db){
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'ryangermain.2004@gmail.com', 
+      user: 'bellearnaude@gmail.com', 
       pass: 'fwhv yqui iqjp sppb' 
     }
   });
@@ -123,7 +123,7 @@ function init(db){
 
       try {
         await transporter.sendMail({
-          from: 'ryangermain.2004@gmail.com',
+          from: 'bellearnaude@gmail.com',
           to: email,
           subject: 'Code de vérification',
           text: `Votre code de vérification est : ${code}`
@@ -153,7 +153,7 @@ function init(db){
 
       try {
         await transporter.sendMail({
-          from: 'ryangermain.2004@gmail.com',
+          from: 'bellearnaude@gmail.com',
           to: email,
           subject: 'Code de vérification',
           text: `Votre code de vérification est : ${code}`

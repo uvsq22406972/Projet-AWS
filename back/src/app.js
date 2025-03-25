@@ -8,50 +8,71 @@ const helmet = require("helmet");
 const crypto = require("crypto");
 const WebSocket = require("ws");
 const Rooms = require("./entities/rooms.js");
+const mongoose = require("mongoose");
 
 // Initialisation de la BDD -> MongoDB
+/*
 const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
-// Remplacer la connexion actuelle par :
-const client = new MongoClient(uri, {
-  maxPoolSize: 15,
-  minPoolSize: 5,
-  serverSelectionTimeoutMS: 5000,
-});
-
-// Ajouter au début de app.js
-let db;
-async function initMongoDB() {
-  await client.connect();
-  db = client.db("DB");
-  console.log("🗄️ Connexion MongoDB établie !");
-}
-initMongoDB();
-
-axios.defaults.baseURL = 'http://localhost:4000';
+const client = new MongoClient(uri);
+*/
+axios.defaults.baseURL = 'https://bombpartyy.duckdns.org';
 axios.defaults.withCredentials = true;
 const app = express();
 const port = 4001; // Port Express
 const wsPort = 4002; // Port WebSocket
 
+//Chargement des variables de .env
+require("dotenv").config();
+const MONGO_URI = process.env.MONGO_URI;
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(64).toString("hex");
+const SESSION_MAX_AGE = process.env.SESSION_MAX_AGE ? parseInt(process.env.SESSION_MAX_AGE) : 1000 * 60 * 30;
 const allowedOrigins = [
   "http://localhost:3000", // Dev local
+  "https://naufal-11mars.dqpjmme35ppsz.amplifyapp.com", //URL Amplify
+  "https://bombpartyy.duckdns.org"  // Backend EC2
 ];
+
+if (!MONGO_URI) {
+  console.error("ERREUR: MONGO_URI n'est pas défini dans .env !");
+  process.exit(1); // Arrête le serveur
+}
+
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("Connexion à MongoDB réussie !"))
+.catch(err => console.error("Erreur MongoDB:", err));
+
+app.set('trust proxy', 1);
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 // Middleware pour parser le JSON
 app.use(express.json());
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
-
-// Route de test pour vérifier que le serveur répond
-app.get("/", (req, res) => {
-  res.send("Le backend fonctionne !");
-});
-
 // Gestion des sessions
+/*
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false, //On sauvegarde pas si la session change pas
+    saveUninitialized: false, //Eviter la creation des sessions vides
+    cookie: {
+      secure: false,
+      sameSite: "none",
+      httpOnly: true,
+      maxAge: SESSION_MAX_AGE
+    },
+  })
+);
+*/
 app.use(
   session({
     secret: "projetAWS cool",
@@ -59,22 +80,56 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 10, // 10 minutes
-      secure: false,
+      secure: true,
+      sameSite: "none",
       httpOnly: true,
     },
   })
 );
 
+//Prolonge la session si l'utilisateur reste actif
+/*
+app.use((req, res, next) => {
+  if (req.session) {
+    req.session.touch(); 
+  }
+  next();
+});
+*/
+
+//Si l'utilisateur est inactif pendant 30 minutes, il est déconnecté
+/*
+app.use((req, res, next) => {
+  const now = Date.now();
+  if (req.session.lastActivity && now - req.session.lastActivity > SESSION_MAX_AGE) {
+    req.session.destroy((err) => {
+      if (err) console.error("Erreur lors de la destruction de session:", err);
+      res.clearCookie("connect.sid"); //Supprime le cookie de session pour forcer la déconnexion
+      return res.status(401).json({ message: "Session expirée, veuillez vous reconnecter." });
+    });
+  } else {
+    req.session.lastActivity = now; // Mise à jour de l'activité
+    next();
+  }
+});
+*/
+
 // Middleware de sécurité
 app.use(helmet());
+
+// Route de test pour vérifier que le serveur répond
+app.get("/", (req, res) => {
+  res.send("Le backend fonctionne !");
+});
 
 // Middleware pour servir le frontend
 app.use(express.static(path.join(__dirname, "../../front")));
 
 // Initialisation de l'API MongoDB
-const api = apiRouter(client);
+const api = apiRouter(mongoose.connection);
 app.use("/api", api);
 
+/*
 // Vérification du reCAPTCHA v2
 app.post("/verify-recaptcha", async (req, res) => {
   const { recaptchaToken } = req.body;
@@ -98,10 +153,11 @@ app.post("/verify-recaptcha", async (req, res) => {
     res.status(500).json({ success: false, message: "Erreur serveur reCAPTCHA" });
   }
 });
+*/
 app.get("/verify-word", async (req, res) => {
   try {
-      await client.connect();
-      const db = client.db("dictionnaire");
+      //const db = client.db("dictionnaire");
+      const db = mongoose.connection.useDb("ProjetAWS");
       const collection = db.collection("mots");
       
       const { word } = req.query;
@@ -114,8 +170,6 @@ app.get("/verify-word", async (req, res) => {
   } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Erreur serveur" });
-  } finally {
-      await client.close();
   }
 });
 
@@ -142,8 +196,8 @@ app.post("/form-submit", (req, res) => {
 /* ************* Endpoint pour générer une séquence ************* */
 app.get("/random-sequence", async (req, res) => {
   try {
-    await client.connect();
-    const db = client.db("dictionnaire");
+    //const db = client.db("dictionnaire");
+    const db = mongoose.connection.useDb("ProjetAWS");
     const collection = db.collection("mots");
 
     // Sélectionner un mot aléatoire
@@ -168,14 +222,15 @@ app.get("/random-sequence", async (req, res) => {
 const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
 const replayers = {};
 wss.on("connection", async (ws) => {
-  await client.connect();
-  const db = client.db("DB");
+  //const db = client.db("DB");
+  const db = mongoose.connection.useDb("ProjetAWS");
   const collection = db.collection("Rooms");
   ws.on("message",async (message) => {
     const data = JSON.parse(message);
     console.log(`Message reçu: ${data.type}`);
 
     if (data.type === "create_room") {
+      
       if (!data.user) {
         ws.send(JSON.stringify({ 
           type: "error", 
@@ -186,19 +241,19 @@ wss.on("connection", async (ws) => {
       
       const generatedRoomName = 'room-' + Math.random().toString(36).substring(2, 8);
       console.log("Room générée:", generatedRoomName);
-      const creator = data.user;
 
       const reponse = axios.put(`api/rooms`,{
         id : generatedRoomName,
-        user : creator
+        user : data.user
       });
       //retour utilisateur
       ws.send(
         JSON.stringify({
-          type:'generatedRoom',
+          type: 'generatedRoom',
           message: `Room ${generatedRoomName} créée !`,
           room: generatedRoomName,
-          users: data.user,
+          // On met directement le créateur dans un tableau
+          users: [{ id: data.user, lives: 3 }],
         })
       );
     }
@@ -215,9 +270,10 @@ wss.on("connection", async (ws) => {
           console.log("Envoi du message WebSocket :");
           ws.send(
             JSON.stringify({
-              type: "ok",
-              room:roomName,
-              message: `Room rejointe`,
+              type: "joined_room_ok", 
+              room: roomName,
+              message: "Room rejointe",
+              user: data.user
             })
           );
         } else { 
@@ -240,6 +296,13 @@ wss.on("connection", async (ws) => {
      const roomName = data.room;
       try {
         const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
+        const roomUsers = resp.data || [];
+
+        // Adapte le champ 'id' en 'username'
+        const usersToSend = roomUsers.map(u => ({
+          id: u.id,
+          lives: u.lives,
+        }));
         if (resp) {
           wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
@@ -247,7 +310,7 @@ wss.on("connection", async (ws) => {
                 JSON.stringify({
                   type: "users_list",
                   room: roomName,
-                  users: resp.data, 
+                  users: usersToSend
                 })
               );
             }
@@ -312,6 +375,18 @@ wss.on("connection", async (ws) => {
         }
         });
       }
+      if (data.type === "typing") {
+        // On vérifie room, user, partial...
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: "typing_update",
+              user: data.user,
+              partial: data.partial
+            }));
+          }
+        });
+      }
       if (data.type === "game_over") {  
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
@@ -323,37 +398,44 @@ wss.on("connection", async (ws) => {
           }
           });
         }
-      if (data.type === "leave_room") {
-        const roomName = data.room;
-        const user = data.user;
-        console.log("data envoyé : ",roomName )
-       try {
-          const resp = await axios.get(`api/getUsersFromRoom`,{
-          params : {
-            room : roomName
-          }
-          }) ;
-          const usersFound = resp.data;
-          console.log("message recu ",usersFound);
-          console.log("Type de usersFound :", typeof usersFound, usersFound);
-
-          if(usersFound?.length === 1 && usersFound[0].toString() === user.toString()) {
-              console.log("Suppression de la room...");
-              await axios.delete(`api/rooms`, { 
-                data: { room: roomName } 
-              });
-            } 
-          else {
-              console.log("Suppression de l'utilisateur...");
-              await axios.post(`api/removeUserFromRoom`, { 
-                room: roomName,
-                user: data.user 
-              });
-              }
-          await new Promise(resolve => setTimeout(resolve, 500));
-       }catch(error) {console.error("Erreur lors de la destruction de salle ", error)}
+        if (data.type === "leave_room") {
+          const roomName = data.room;
+          const userToRemove = data.user;
         
-      }
+          try {
+            // 1) Retirer l'utilisateur
+            await axios.post(`api/removeUserFromRoom`, {
+              room: roomName,
+              user: userToRemove
+            });
+        
+            // 2) Récupérer la room mise à jour
+            const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomName } });
+            const updatedUsers = resp.data; // ex: [ { id: "abc", lives: 3 }, ... ]
+        
+            // 3) Vérifier si c'est vide (plus personne)
+            if (!updatedUsers || updatedUsers.length === 0) {
+              console.log("Dernier utilisateur parti, on supprime la room...");
+              await axios.delete(`api/rooms`, { data: { room: roomName } });
+              wss.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(
+                    JSON.stringify({
+                      type: "room_deleted",
+                      room: roomName
+                    })
+                  );
+                }
+              });
+            } else {
+              console.log("Il reste encore des joueurs, la room est conservée.");
+            }
+        
+          } catch (error) {
+            console.error("Erreur lors du leave_room :", error);
+          }
+        }
+        
       if (data.type === 'lose_life'){
         handleLoseLife(data);
       }
@@ -506,7 +588,7 @@ wss.on("connection", async (ws) => {
 });
 
 app.listen(port, () => {
-  console.log(`Serveur Express démarré sur http://localhost:${port}`);
+  console.log(`Serveur Express démarré sur le port ${port}`);
 });
 
 console.log(`Serveur WebSocket à l'écoute sur le port ${wsPort}`);

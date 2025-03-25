@@ -19,7 +19,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
     storedUsers = [];
   }
-  const storedUID = localStorage.getItem("myUser");
+  const storedUID = localStorage.getItem("myUserrr"); 
   const [lives, setLives] = useState(
     storedUsers.map(user => ({ id: user.id, lives: initialLives }))
   );
@@ -27,6 +27,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [users, setUsers] = useState(storedUsers);
   const [inputValue, setInputValue] = useState("");
   const [currentPlayer, setCurrentPlayer] = useState(storedUsers.length > 0 ? storedUsers[0] : null);
+  const [compte, setCompte] = useState([]);
   const [gameOver, setGameOver] = useState(false); // Game over state
   const [timer, setTimer] = useState(initialTime);
   const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
@@ -39,8 +40,8 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [blackenedLetters, setBlackenedLetters] = useState(new Set());
   const ws = useRef(null);
 
-   const currentPlayerLives = lives.find(user => user.id === currentPlayer)?.lives || 0;
- 
+  const currentPlayerLives = lives.find(user => user.id === currentPlayer)?.lives || 0;
+
  useEffect(() => {
     const savedColor = localStorage.getItem("keyboardColor");
     if (savedColor) {
@@ -69,9 +70,15 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
 
   // Connecter au WebSocket backend
   useEffect(() => {
-  
+      console.log("Compte récupéré =", storedUID);
 
-    console.log("User ID disponible :", storedUID);
+      ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
+      ws.current.onopen = () => {
+        console.log("WebSocket connecté !");
+      };
+      ws.current.onerror = (error) => {
+        console.log("Erreur WebSocket :", error);
+      };
 
     ws.current = new WebSocket("ws://localhost:4002");
     ws.current.onopen = () => {
@@ -89,22 +96,18 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     };
     
     ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Message reçu du serveur :", data);
+        const data = JSON.parse(event.data);
+        console.log("Message reçu du serveur :", data);
 
-      if (data.type === 'game_over') {
-        //setGameOver(true);
-        setCurrentPage("final");
-        localStorage.setItem('winner',JSON.stringify(data.winner.id))
-      }
+        if (data.type === 'game_over') {
+          //setGameOver(true);
+          setCurrentPage("final");
+          localStorage.setItem('winner',JSON.stringify(data.winner.id))
+        }
 
-      if (data.type === 'get_sequence') {
-       setSequence(data.sequence)
-      }
-
-      if (data.type === 'get_inputValue') {
-        setInputValue(data.value)
-       }
+        if (data.type === 'get_sequence') {
+         setSequence(data.sequence)
+        }
 
        if(data.type === "refreshGamePage") {
         console.log(data)
@@ -124,11 +127,25 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
         } 
        }
 
+     if (data.type === 'get_inputValue') {
+          setInputValue(data.value)
+         }
+
+    if (data.type === 'typing_update') {
+      // Si le message vient d'un autre joueur
+      if (data.user !== storedUID) {
+        // on met à jour notre champ local
+        setInputValue(data.partial);
+      }
+        console.log("currentPlayer.id =", currentPlayer?.id, " - storedUID =", storedUID)
+        return;
+    }
+
       if (data.type === 'reset_timer') {
         //setGameOver(true);
         console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
         setTimer(initialTime);
-        
+
         localStorage.setItem('users',JSON.stringify(data.users));
         try {
           storedUsers = JSON.parse(localStorage.getItem('users')) || [];
@@ -146,20 +163,14 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
           storedUsers = [];
         }
         console.log("modif : ", storedUsers, "  - ", currentPlayer);
-        
-        
       }
-    };
-
-    return () => {
-      
-    };
+      };
   }, []);
 
   // Fonction pour récupérer une séquence depuis l'API
   const generateSequence = async () => {
     try {
-      const response = await fetch("http://localhost:4001/random-sequence");
+      const response = await fetch("https://bombpartyy.duckdns.org/random-sequence");
       const data = await response.json();
       setSequence(data.sequence);
       //On envoie la séquence pour les autres clients
@@ -215,14 +226,25 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, [timer, gameOver, initialTime,currentPlayer]);
 
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+  
+    // Seulement si c'est mon tour
+    if (currentPlayer?.id === storedUID) {
+      ws.current.send(JSON.stringify({
+        type: "typing",
+        room: localStorage.getItem("room"),
+        user: currentPlayer?.id,
+        partial: newValue
+      }));
+    }
   };
 
   const handleSubmit = async () => {
     if (gameOver) return; // Empêcher d'envoyer une réponse si la partie est déjà finie
   
     try {
-      const response = await fetch(`http://localhost:4001/verify-word?word=${inputValue}`);
+      const response = await fetch(`https://bombpartyy.duckdns.org/verify-word?word=${inputValue}`);
       const data = await response.json();
   
       if (data.valid && inputValue.includes(sequence)) {
@@ -255,6 +277,11 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       console.error("Erreur lors de la vérification du mot :", error);
     }
   };  
+
+  useEffect(() => {
+    // À chaque changement de currentPlayer, on vide l’input
+    setInputValue("");
+  }, [currentPlayer])
   
   const handleReturn = () => {
     setCurrentPage('gameroom');
@@ -344,9 +371,9 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Entrez un mot contenant la séquence..."
-            disabled={gameOver}
+            disabled={gameOver || (currentPlayer?.id !== storedUID)}
           />
-          <button onClick={handleSubmit} disabled={gameOver || !inputValue}>
+          <button onClick={handleSubmit} disabled={gameOver || !inputValue || (currentPlayer?.id !== storedUID)}>
             Valider
           </button>
           <div className="keyboard">
