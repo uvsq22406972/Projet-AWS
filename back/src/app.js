@@ -371,7 +371,7 @@ wss.on("connection", async (ws) => {
             JSON.stringify({
               type: "game_started",
               room: roomName,
-              users: roomUsers
+              users: users
             })
           );
         }
