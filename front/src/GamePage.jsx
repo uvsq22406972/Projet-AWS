@@ -3,7 +3,7 @@ import "./GamePage.css";
 import { ToastContainer, toast } from 'react-toastify';
 import { GiExitDoor } from "react-icons/gi";
 import 'react-toastify/dist/ReactToastify.css';
-const axios = require("axios");
+import axios from 'axios'
 function removeAccents(str) {
   // Normalise la chaîne et enlève les diacritiques
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
