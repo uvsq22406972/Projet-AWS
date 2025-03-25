@@ -552,14 +552,14 @@ wss.on("connection", async (ws) => {
         await getNextPlayerAndSend(data.room, data.user);
       } else {
         const respWinner = await axios.get(`api/getWinner`, {
-         params : { room: roomname}
+         params : { room: data.room}
         })
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(
               JSON.stringify({
                 type: "game_over",
-                room: roomname,
+                room: data.room,
                 winner : respWinner.data.winner
               })
             );
