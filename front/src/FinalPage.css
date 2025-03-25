@@ -54,11 +54,11 @@
     color: white;
 }
 
-.password-toggle-icon {
-    color: white;
-    transition: color 0.3s;
-  }
-  
-  .password-toggle-icon:hover {
-    color: rgba(242, 235, 235, 0.844);
-  }
+.game-room-salle{
+    background: '#fff';
+    padding: '8px 12px';
+    border-radius: '4px';
+    display: 'inline-block';
+    word-break: 'break-all';
+    user-select: 'text';  
+}

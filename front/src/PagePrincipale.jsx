@@ -79,7 +79,8 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
         _id: account._id,
         username: account.username,
         password: account.password,
-        avatar: account.avatar
+        avatar: account.avatar,
+        coins: account.coins
       }));
 
       // Si des comptes existent dans la BDD
@@ -105,10 +106,17 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
 
   // Exécution des fonctions asynchrones
   useEffect(() => {
-    const interval = setInterval(fetchPublicRooms, 3000);
+  
     checkSession();
     fetchAccount();
     fetchPublicRooms();
+
+    localStorage.removeItem('room');
+    localStorage.removeItem('users');
+    localStorage.removeItem('winner');
+
+    const interval = setInterval(fetchPublicRooms, 3000);
+
     return () => clearInterval(interval);
     // eslint-disable-next-line
   }, []);
@@ -120,37 +128,44 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
     }
   }, []);
 
-  //  on gère les inputs utilisateurs et on passe a la game Room 
-  const handleJoinRoom = (roomName) => {
-    console.log("🛠 Tentative de connexion à la salle :", roomName);
-  
-    localStorage.setItem("room", roomName); // 🔥 On enregistre AVANT de changer de page
-    console.log("✅ localStorage mis à jour :", localStorage.getItem("room"));
-  
-    const socket = new WebSocket('wss://bombpartyy.duckdns.org/ws/');
-    
-    socket.onopen = () => {
-      console.log('✅ Connexion WebSocket établie');
-      socket.send(JSON.stringify({
-        type: 'join_room',
-        room: roomName,
-        user: compte.username,
-      }));
+  useEffect(() => {
+    // 1) Ouvrir la connexion
+    const wsPublic = new WebSocket('wss://bombpartyy.duckdns.org/ws/');
+
+    wsPublic.onopen = () => {
+      console.log("WS publicRooms connecté !");
     };
   
-    socket.onmessage = (event) => {
+    // 2) Gérer les messages
+    wsPublic.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📥 Réponse du serveur :", data);
-  
-      if (data.type === 'no_room') {
-        console.log("❌ Aucune salle trouvée !");
-        toast.error("Aucune salle de jeu ne porte ce nom");
-      } else {
-        console.log("✅ Salle trouvée, changement de page !");
-        setCurrentPage('gameroom', roomName);
-        socket.close();
+      if (data.type === "room_deleted") {
+        // Retirer la room supprimée de la liste actuelle
+        setPublicRooms((prevRooms) => 
+          prevRooms.filter(r => r.name !== data.room)
+        );
       }
     };
+
+    wsPublic.onclose = () => {
+      console.warn("WS publicRooms fermé");
+    };
+    // 3) Cleanup
+    return () => {
+      wsPublic.close();
+    };
+  }, []);
+
+  //  on gère les inputs utilisateurs et on passe a la game Room 
+  const handleJoinRoom = async (roomName) => {
+    try {
+      if (!roomName) return toast.error("Veuillez entrer un code de salle");
+      // Si la salle existe, on va sur GameRoom
+      localStorage.setItem("room", roomName);
+      setCurrentPage("gameroom");
+    } catch (error) {
+      toast.error("Aucune salle de jeu ne porte ce nom");
+    }
   };
   
   //CSS par ChatGPT, pour un bootstrap plus effectif
@@ -177,7 +192,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
                   height: '40px',
                   borderRadius: '50%',
                   border: '2px solid black',
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)'
+                  backgroundColor:'rgba(255, 255, 255, 0.9)'
                 }}
               />
             ) : (

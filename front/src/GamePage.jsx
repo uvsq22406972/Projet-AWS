@@ -1,47 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import "./GamePage.css";
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+const axios = require("axios");
 function removeAccents(str) {
-  return str.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  // Normalise la chaîne et enlève les diacritiques
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshold, keyboardColor }) => {
+const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold,keyboardColor }) => {
+  let storedUsers;
+  try {
+    storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+    if (!Array.isArray(storedUsers)) {
+      storedUsers = [];
+    }
+  } catch (error) {
+    console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
+    storedUsers = [];
+  }
+  const storedUID = localStorage.getItem("myUserrr"); 
+  const [lives, setLives] = useState(
+    storedUsers.map(user => ({ id: user.id, lives: initialLives }))
+  );
   const [sequence, setSequence] = useState("");
+  const [users, setUsers] = useState(storedUsers);
   const [inputValue, setInputValue] = useState("");
-  const [lives, setLives] = useState(initialLives);
-  const [socket, setSocket] = useState(null);// WebSocket state
-  const [gameOver, setGameOver] = useState(false);// Game over state
+  const [currentPlayer, setCurrentPlayer] = useState(storedUsers.length > 0 ? storedUsers[0] : null);
+  const [compte, setCompte] = useState([]);
+  const [gameOver, setGameOver] = useState(false); // Game over state
   const [timer, setTimer] = useState(initialTime);
   const [timerInterval, setTimerInterval] = useState(null); // Intervalle pour le timer
   const [lostLivesCount, setLostLivesCount] = useState(0);
   const [currentKeyboardColor, setCurrentKeyboardColor] = useState(localStorage.getItem("keyboardColor") || keyboardColor);
   const [countdown, setCountdown] = useState(3);
   const [gameStarted, setGameStarted] = useState(false);
-
+  
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const [blackenedLetters, setBlackenedLetters] = useState(new Set());
+  const ws = useRef(null);
 
-  useEffect(() => {
+  const currentPlayerLives = lives.find(user => user.id === currentPlayer)?.lives || 0;
+
+ useEffect(() => {
     const savedColor = localStorage.getItem("keyboardColor");
     if (savedColor) {
       setCurrentKeyboardColor(savedColor);
     }
-  }, []);
-  
-    // Connecter au WebSocket backend
-  useEffect(() => {
-    const ws = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
-    setSocket(ws);
-
-    ws.onopen = () => console.log("WebSocket connecté !");
-    ws.onerror = (error) => console.log("Erreur WebSocket :", error);
-    ws.onclose = (event) => console.log("Connexion WebSocket fermée", event);
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'game_over') setGameOver(true);
-      if (data.type === 'update_lives') setLives(data.lives);
-    };
-    return () => ws.close();
   }, []);
 
   useEffect(() => {
@@ -53,58 +58,118 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
     }
   }, [countdown]);
 
-  function loseLife() {
-    // Réduire le nombre de vies
-    setLives(prevLives => {
-      const newLives = prevLives - 1;
+  // Connecter au WebSocket backend
+  useEffect(() => {
+      console.log("Compte récupéré =", storedUID);
 
-       // Gérer la fin de partie
-      if (newLives <= 0) {
-        setGameOver(true);
-        socket.send(JSON.stringify({ type: 'game_over' }));
-      } else {
-        // Mettre à jour le serveur
-        socket.send(JSON.stringify({ type: 'update_lives', lives: newLives }));
-      }
-      return newLives;
-    });
-    // Incrémenter le compteur de vies perdues
-    setLostLivesCount((prevCount) => {
-      const updatedCount = prevCount + 1;
-  
-      // Vérifier si on atteint le seuil
-      if (updatedCount === livesLostThreshold) {
-        generateSequence();     // Changer la séquence
-        return 0;              // Réinitialiser le compteur si vous voulez recommencer à 0
-        // return updatedCount; // ou laissez-le si vous ne voulez le faire qu'une seule fois
-      }
-  
-      return updatedCount;
-    });
-  }
-   // Fonction pour récupérer une séquence depuis l'API
+      ws.current = new WebSocket("wss://bombpartyy.duckdns.org/ws/");
+      ws.current.onopen = () => {
+        console.log("WebSocket connecté !");
+      };
+      ws.current.onerror = (error) => {
+        console.log("Erreur WebSocket :", error);
+      };
+
+      ws.current.onclose = (event) => {
+        console.log("Connexion WebSocket fermée", event);
+      };
+
+      ws.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("Message reçu du serveur :", data);
+
+        if (data.type === 'game_over') {
+          //setGameOver(true);
+          setCurrentPage("final");
+          localStorage.setItem('winner',JSON.stringify(data.winner.id))
+        }
+
+        if (data.type === 'get_sequence') {
+         setSequence(data.sequence)
+        }
+
+        if (data.type === 'get_inputValue') {
+          setInputValue(data.value)
+         }
+
+         if (data.type === 'typing_update') {
+          // Si le message vient d'un autre joueur
+          if (data.user !== storedUID) {
+            // on met à jour notre champ local
+            setInputValue(data.partial);
+          }
+          console.log("currentPlayer.id =", currentPlayer?.id, " - storedUID =", storedUID)
+          return;
+        }
+
+        if (data.type === 'reset_timer') {
+          //setGameOver(true);
+          console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
+          setTimer(initialTime);
+
+          localStorage.setItem('users',JSON.stringify(data.users));
+          try {
+            storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+            if (!Array.isArray(storedUsers)) {
+              storedUsers = [];
+            }
+            setLives(
+              storedUsers.map(user => ({ id: user.id, lives: user.lives }))
+            );
+            setUsers(storedUsers)
+            setCurrentPlayer(data.newCurrentPlayer);
+            console.log("théorie : ",data.newCurrentPlayer)
+          } catch (error) {
+            console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
+            storedUsers = [];
+          }
+          console.log("modif : ", storedUsers, "  - ", currentPlayer);
+        }
+      };
+  }, []);
+
+  // Fonction pour récupérer une séquence depuis l'API
   const generateSequence = async () => {
     try {
       const response = await fetch("https://bombpartyy.duckdns.org/random-sequence");
       const data = await response.json();
       setSequence(data.sequence);
+      //On envoie la séquence pour les autres clients
+      const message = {
+        type: "sequence",
+        seq: data.sequence,
+      };
+      ws.current.send(JSON.stringify(message));
     } catch (error) {
       console.error("Erreur lors de la récupération de la séquence :", error);
     }
   };
 
   useEffect(() => {
-    generateSequence();
-  }, []);
+  //  if(currentPlayer?.id === storedUID) {
+      console.log(currentPlayer?.id , "  === ", storedUID);
+      if (ws.current?.readyState === WebSocket.OPEN) {
+      generateSequence();
+      }
+      else {setTimeout(generateSequence,500)}
+    //}
+    
+  }, [currentPlayer]);
 
   // Fonction pour gérer le timer
   useEffect(() => {
     if (gameOver) return;
 
     if (timer === 0) {
-      loseLife();
       // Réinitialiser le timer
-      setTimer(initialTime);
+      const message = {
+        type: "lose_life",
+        room: localStorage.getItem("room"),
+        user: currentPlayer?.id,
+      };
+      console.log(JSON.stringify(message));
+      ws.current.send(JSON.stringify(message));
+
     }
 
     const interval = setInterval(() => {
@@ -119,10 +184,21 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
     return () => {
       clearInterval(interval);
     };
-  }, [timer, gameOver, initialTime]);
+  }, [timer, gameOver, initialTime,currentPlayer]);
 
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+  
+    // Seulement si c'est mon tour
+    if (currentPlayer?.id === storedUID) {
+      ws.current.send(JSON.stringify({
+        type: "typing",
+        room: localStorage.getItem("room"),
+        user: currentPlayer?.id,
+        partial: newValue
+      }));
+    }
   };
 
   const handleSubmit = async () => {
@@ -132,34 +208,41 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
       const response = await fetch(`https://bombpartyy.duckdns.org/verify-word?word=${inputValue}`);
       const data = await response.json();
   
-      let newLives = lives;
-  
       if (data.valid && inputValue.includes(sequence)) {
         // Mot valide => on réinitialise le timer, on génère une nouvelle séquence, etc.
-        generateSequence();
-        setTimer(initialTime);
+        const message = {
+          type: "update_timer",
+          room: localStorage.getItem("room"),
+          user: currentPlayer?.id,
+          iv: inputValue
+        };
+        ws.current.send(JSON.stringify(message));
+
         blackenLetters(inputValue);
       } else {
         console.log("Mot invalide. Réessayez !");
       }
-  
-      setLives(newLives);
 
-      // Vérifier si on a perdu X vies au total (d’affilée ou non)
+      /**  Vérifier si on a perdu X vies au total (d’affilée ou non)
       if ((lostLivesCount + 1) % livesLostThreshold === 0) {
         // On change le bout de mot
         console.log(`On a perdu ${livesLostThreshold} vies, on change la séquence !`);
         generateSequence();
 
-        // On remet le compteur à 0 (ou on le laisse continuer, selon votre logique)
+        // On remet le compteur à 0 (ou on le laisse continuer)
         setLostLivesCount(0);
-      }
+      }**/
   
       setInputValue("");
     } catch (error) {
       console.error("Erreur lors de la vérification du mot :", error);
     }
   };  
+
+  useEffect(() => {
+    // À chaque changement de currentPlayer, on vide l’input
+    setInputValue("");
+  }, [currentPlayer])
   
   const handleReturn = () => {
     setCurrentPage('gameroom');
@@ -189,47 +272,100 @@ const GamePage = ({ setCurrentPage, initialLives, initialTime, livesLostThreshol
   }
 
   return (
-    <div className="game-container">
-      {countdown > 0 ? (
-        <div className="countdown">Début dans {countdown}...</div>
-      ) : (
-        <>
-          <h1>BombParty</h1>
-          <div className="lives">{Array(lives).fill("❤️").join(" ")}</div>
-          <div className="sequence">{sequence}</div>
-          <input type="text" value={inputValue} onChange={handleInputChange} placeholder="Entrez un mot contenant la séquence..." disabled={gameOver} />
-          <button onClick={handleSubmit} disabled={gameOver || !inputValue}>Valider</button>
-          <div className="bomb-container">
-            <img src="/images/bomb-icon.png" alt="Bombe" className="bomb-icon" />
-            <div className="timer">{timer}</div>
-          </div>
-          <div className="keyboard">
-            {letters.map((letter, index) => (
-              <div
-                key={index}
-                className={`key ${blackenedLetters.has(letter) ? 'blackened' : ''}`}
+    <div className="game-and-users-container">
+      {/* Conteneur pour les utilisateurs */}
+      <div className="users-container">
+        <h4 className="text-black">Utilisateurs dans la room :</h4>
+        <ul className="list-group">
+        {Array.isArray(users) && users.length > 0 ? (
+          users.map((element, index) => {
+            const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#FFCC5C", "#D65076", "#45B8AC"];
+            const userColor = colors[index % colors.length];
+
+            // Déterminer si l'utilisateur est mort
+            const isDead = element.lives <= 0;
+
+            return (
+              <li
+                key={element.id}
+                className="list-group-item"
                 style={{
-                  backgroundColor: blackenedLetters.has(letter) ? "gray" : currentKeyboardColor,
-                  color: blackenedLetters.has(letter) ? "white" : "black",
-                  padding: '10px',
-                  borderRadius: '5px',
-                  margin: '5px',
-                  display: 'inline-block',
-                  width: '40px',
-                  textAlign: 'center',
-                  cursor: blackenedLetters.has(letter) ? "not-allowed" : "pointer"
+                  backgroundColor: isDead ? "black" : userColor, // Fond noir si l'utilisateur est mort
+                  color: "white",
+                  border: "none",
                 }}
               >
-                {letter}
-              </div>              
-            ))}
+                {/* Nom d'utilisateur */}
+                <div style={{ fontWeight: "bold" }}>
+                  {element.id} {element.id === currentPlayer?.id && "⭐"}
+                </div>
+
+                {/* Affichage des vies ou du crâne de mort */}
+                {isDead ? (
+                  <div style={{ fontSize: "1.2em" }}>💀</div> // Crâne de mort si l'utilisateur est mort
+                ) : (
+                  <div>Vies : {element.lives}</div> // Afficher les vies si l'utilisateur est vivant
+                )}
+              </li>
+            );
+          })
+        ) : (
+          <li className="list-group-item text-muted">Aucun utilisateur pour l'instant</li>
+        )}
+        </ul>
+      </div>
+  
+      {/* Conteneur pour le jeu */} 
+      <div className="game-container">
+        <h1>BombParty</h1>
+ 
+          {/* Afficher le joueur actuel et ses vies */}
+          <div className="current-player">
+
+            {currentPlayer?.id} : {Array(currentPlayer?.lives).fill("❤️").join(" ")}
+
           </div>
-          <button onClick={handleReturn}>Retour</button>
-          {gameOver && <div>Jeu terminé !</div>}
-        </>
-      )}
-    </div>
-    
+
+          <div className="sequence">{sequence}</div>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            placeholder="Entrez un mot contenant la séquence..."
+            disabled={gameOver || (currentPlayer?.id !== storedUID)}
+          />
+          <button onClick={handleSubmit} disabled={gameOver || !inputValue || (currentPlayer?.id !== storedUID)}>
+            Valider
+          </button>
+          <div className="keyboard">
+            {letters.map((letter, index) => {
+              const isBlackened = blackenedLetters.has(letter);
+              return (
+                <div
+                  key={index}
+                  className={`key ${isBlackened ? 'blackened' : ''}`}
+                >
+                  {letter}
+                </div>
+              );
+            })}
+          
+
+        </div> <button onClick={handleReturn}>Retour</button>
+        
+  
+       
+        {gameOver && <div>Jeu terminé !</div>}
+  
+        {/* Afficher la bombe avec le timer */}
+        <div className="bomb-container">
+          <img src="/images/bomb-icon.png" alt="Bombe" className="bomb-icon" />
+          <div className="timer">{timer}</div>
+        </div>
+        </div>
+        <ToastContainer />
+      </div>
+
   );
 };
 

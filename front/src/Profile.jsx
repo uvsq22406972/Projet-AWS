@@ -1,6 +1,6 @@
 //Importation
-import React, { useState, useEffect } from 'react';
-import { FaUserCircle } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from 'react';
+import { FaUserCircle, FaList, FaEye, FaEyeSlash } from "react-icons/fa";
 import "./Profile.css";
 import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify';
@@ -21,7 +21,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [compte, setCompte] = useState([]);
 
   // États pour les choix de l'utilisateur
-  const [hairType, setHairType] = useState('shortFlat');
+  const [hairType, setHairType] = useState('none');
   const [hairColor, setHairColor] = useState('2c1b18');
   const [accessories, setAccessories] = useState('none');
   const [facialHair, setFacialHair] = useState('none');
@@ -30,6 +30,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [eyebrows, setEyebrows] = useState('default');
   const [mouth, setMouth] = useState('default');
   const [skinColor, setSkinColor] = useState('edb98a');
+  const [accessoriesColor, setAccessoriesColor] = useState('65c9ff');
   const [facialHairColor, setFacialHairColor] = useState('2c1b18');
   const [clothesColor, setClothesColor] = useState('3c4f5c');
   const [svgDataUri, setSvgDataUri] = useState('');
@@ -39,14 +40,29 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
 
   // États pour la modification du mot de passe
   const [email, setEmail] = useState('');
+  const [newUsername, setNewUsername] = useState('');
   const [oldPassword, setOldPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [message, setMessage] = useState('');
+
+  //Etats pour la suppression d'un compte
+  const [deleteEmail, setDeleteEmail] = useState('');
+  const [deleteUsername, setDeleteUsername] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   //Couleur du clavier
   const [keyboardColor, setKeyboardColor] = useState("#FFFFFF");
   const [showColors, setShowColors] = useState(false);
+
+  //Menu pour smartphone
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const sidebarRef = useRef(null);
 
   const colors = [
     { name: "Rouge", hex: "#FF0000" },
@@ -64,6 +80,22 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   //Pour avoir une couleur unique
   const gradientStyle = {
     background: "linear-gradient(to top, #3B7088, #4FE9DE)",
+  };
+
+  const handleShowOldPasswordChange = () => {
+    setShowOldPassword(!showOldPassword);
+  };
+
+  const handleShowNewPasswordChange = () => {
+    setShowNewPassword(!showNewPassword);
+  };
+
+  const handleShowConfirmNewPasswordChange = () => {
+    setShowConfirmNewPassword(!showConfirmNewPassword);
+  };
+
+  const handleShowDeletePasswordChange = () => {
+    setShowDeletePassword(!showDeletePassword);
   };
 
   // Action lorsqu'on clique sur "Se déconnecter"
@@ -126,6 +158,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         setSkinColor(selectedAccount.avatarSettings.skinColor || 'edb98a');
         setFacialHairColor(selectedAccount.avatarSettings.facialHairColor || '2c1b18');
         setClothesColor(selectedAccount.avatarSettings.clothesColor || '3c4f5c');
+        setAccessoriesColor(selectedAccount.avatarSettings.clothesColor || '65c9ff');
       }
   
       setCompte(selectedAccount || {});
@@ -135,59 +168,49 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   }
 
   //Action lorsque'on clique sur "supprimer votre compte"
-  const handleDeleteAccount = (e) => {
+  const handleDeleteAccount = async (e) => {
     e.preventDefault(); // Empêcher le rechargement de la page
-    console.log("test");
-    // Initialisation des variables
-    const emailInput = document.getElementById("delete-email");
-    const loginInput = document.getElementById("delete_username");
-    const passwordInput = document.getElementById("delete_password"); // 🛠 Correction ici !
-    const confirmDeleteInput = document.getElementById("confirmDelete");
+    if (!deleteEmail || !deleteUsername || !deletePassword || !confirmDelete) {
+      toast.error("Veuillez remplir tous les champs et confirmer la suppression.");
+      return;
+    }
   
-    
-    // Vérifier si les éléments existent
-    if (!emailInput || !loginInput || !passwordInput || !confirmDeleteInput) {
-      console.log("test1 - Un ou plusieurs champs sont introuvables !");
-      toast.error("Erreur : Un ou plusieurs champs sont introuvables.");
-      return;
-  }
+    try {
+      const response = await axios.post('/api/delete', {
+        email: deleteEmail,
+        login: deleteUsername,
+        password: deletePassword
+      });
+      
+      toast.success(response.data.message);
+      setDeleteEmail('');
+      setDeleteUsername('');
+      setDeletePassword('');
+      setConfirmDelete(false);
+      setTimeout(handleLogoutClick, 1000);
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du compte.");
+    }
+  };
 
-    // Récupérer les valeurs
-    const email = emailInput.value.trim();
-    const login = loginInput.value.trim();
-    const password = passwordInput.value.trim();
-    const confirmDelete = confirmDeleteInput.checked;
-
-    // Vérifier si les éléments existent
-    if (!email || !login || !password || !confirmDelete) {
-      console.log("test1 - Un ou plusieurs champs sont introuvables !");
-      toast.error("Erreur : Un ou plusieurs champs sont introuvables.");
-      return;
-  }
-
-
-    if (!confirmDelete) {
-      console.log("test3");
-      toast.error("Vous devez confirmer la suppression.");
+  const handleUsernameSubmit = async (e) => {
+    e.preventDefault();
+    if (compte.username === newUsername) {
+      toast.error("Il faut que le nouveau nom d'utilisateur soit différent");
       return;
     }
 
-    console.log("Email:", email);
-    console.log("Password:", password);
-    console.log(login);
-  
-    // Appel à l'API pour supprimer l'utilisateur
-    axios.post('https://bombpartyy.duckdns.org/api/delete', { email, login, password })
-    .then(response => {
-      console.log("Réponse de l'API :", response.data.message);
-      toast.success(response.data.message); // Afficher un message de succès si tout se passe bien
-      setTimeout(() => {handleLogoutClick();}, 1000);
-    })
-    .catch(error => {
-      console.error("Erreur lors de la requête:", error);
-      toast.error("Oups ! Il semble y avoir une erreur dans les informations que vous avez saisies. Pourriez-vous vérifier et essayer à nouveau");
-    });
-  };
+    try {
+      const response = await axios.patch('/api/users/username', { email, newUsername });
+      toast.success(response.data.message);
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Erreur lors de la modification du nom d'utilisateur.");
+      }
+    }
+  }
   
 
   // Fonction de soumission pour le changement de mot de passe
@@ -195,18 +218,22 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     e.preventDefault();
     // Vérifier que le nouveau mot de passe et sa confirmation correspondent
     if (newPassword !== confirmNewPassword) {
-      setMessage('Les nouveaux mots de passe ne correspondent pas.');
+      toast.error('Les nouveaux mots de passe ne correspondent pas.');
       return;
+    }
+
+    if(oldPassword === newPassword){
+      toast.error("Il faut que le nouveau mot de passe soit différent");
     }
 
     try {
       const response = await axios.patch('/api/users/password', { email, oldPassword, newPassword });
-      setMessage(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       if (error.response && error.response.data && error.response.data.message) {
-        setMessage(error.response.data.message);
+        toast.error(error.response.data.message);
       } else {
-        setMessage('Erreur lors de la modification du mot de passe.');
+        toast.error('Erreur lors de la modification du mot de passe.');
       }
     }
   };
@@ -232,13 +259,16 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   
     const accessoriesParam = accessories === "none" ? [] : [accessories];
     const facialHairParam = facialHair === "none" ? [] : [facialHair];
+    const topParam = hairType === "none" ? [] : [hairType];
     
     const svg = createAvatar(avataaars, {
       size: 200,
       top: [hairType],
+      topProbability: topParam.length > 0 ? 100 : 0,
       hairColor: [hairColor],
       accessories: accessoriesParam,
       accessoriesProbability: accessoriesParam.length > 0 ? 100 : 0,
+      accessoriesColor : [accessoriesColor],
       facialHair: [facialHair],
       facialHairProbability: facialHairParam.length > 0 ? 100 : 0,
       clothing: [clothes],
@@ -264,7 +294,8 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           mouth,
           skinColor,
           facialHairColor,
-          clothesColor
+          clothesColor,
+          accessoriesColor
         },
         email: email
       });
@@ -285,6 +316,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         hairColor: [hairColor],     // Couleur de cheveux
         accessories: accessoriesParam, // Accessoires (lunettes, etc.)
         accessoriesProbability: accessoriesParam.length > 0 ? 100 : 0, // 100% de chance d'avoir l'accessoire
+        accessoriesColor: [accessoriesColor],
         facialHair: [facialHair],
         facialHairProbability: facialHairParam.length > 0 ? 100 : 0, // 100% de chance d'avoir une pilosité faciale
         clothing: [clothes],
@@ -305,12 +337,12 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     generateAvatar();
   }, [
     hairType, hairColor, accessories, facialHair, clothes,
-    eyes, eyebrows, mouth, skinColor, facialHairColor, clothesColor, email
+    eyes, eyebrows, mouth, skinColor, facialHairColor, clothesColor, accessoriesColor, email
   ]);
 
   useEffect(() => {
     if (compte.avatarSettings) {
-      setHairType(compte.avatarSettings.hairType || 'shortFlat');
+      setHairType(compte.avatarSettings.hairType || 'none');
       setHairColor(compte.avatarSettings.hairColor || '2c1b18');
       setAccessories(compte.avatarSettings.accessories || 'none');
       setFacialHair(compte.avatarSettings.facialHair || 'none');
@@ -319,6 +351,10 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       setEyebrows(compte.avatarSettings.eyebrows || 'default');
       setMouth(compte.avatarSettings.mouth || 'default');
       setSkinColor(compte.avatarSettings.skinColor || 'edb98a');
+      setFacialHairColor(compte.avatarSettings.hairColor || '2c1b18');
+      setClothesColor(compte.avatarSettings.clothesColor || '3c4f5c');
+      setAccessoriesColor(compte.avatarSettings.accessoriesColor || '65c9ff');
+
     }
   }, [compte]);
 
@@ -335,6 +371,20 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         });
     }
   }, [email]); // Déclencher uniquement quand `email` change
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // Si le menu est ouvert ET que le clic n'est pas dans la sidebarRef...
+      if (isMenuOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setIsMenuOpen(false); // on ferme le menu
+      }
+    }
+  
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const getCategoryLabel = (cat) => {
     const labels = {
@@ -371,14 +421,13 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       case 'coiffure':
         return (
           <>
-            <div className="option-category">
+              <div className="option-category">
                 <h3>Coiffure</h3>
                 <div className="coiffure-grid">
                   {[
-                    "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
-                    'fro', 'frida', 'shavedSides', 'hat', 'hijab', 'shaggyMullet',
-                    'sides', 'theCaesar', 'shortCurly',
-                    'turban', 'winterHat03', 'winterHat02'
+                    'none', "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
+                    'fro', 'frida', 'shavedSides','shaggyMullet',
+                    'sides', 'theCaesar', 'shortCurly'
                   ].map((style) => (
                     <button
                       key={style}
@@ -390,7 +439,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
                   ))}
                 </div>
               </div>
-              <div className="option-category">
+            <div className="option-category">
               <h3>Couleur des cheveux</h3>
               <div className="options-row">
                 {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
@@ -429,7 +478,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             <div className="option-category">
               <h3>Couleur du vêtement</h3>
               <div className="options-row">
-                {['3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1', 'ffffff'].map((color) => (
+                {['3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1'].map((color) => (
                 <button
                     key={color}
                     className={`color-option ${clothesColor === color ? 'selected' : ''}`}
@@ -543,24 +592,39 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
 
         case 'accessoires':
           return (
-            <div className="option-category">
-              <h3>Accessoires</h3>
-              <div className="options-grid">
-                {[
-                  'none', "eyepatch", 'kurt',
-                  'prescription01', 'prescription02', 'round',
-                  'sunglasses', 'wayfarers'
-                ].map((style) => (
-                  <button
-                    key={style}
-                    className={`style-option ${accessories === style ? 'selected' : ''}`}
-                    onClick={() => setAccessories(style)}
-                  >
-                    {style}
-                  </button>
-                ))}
+            <>
+              <div className="option-category">
+                <h3>Accessoires</h3>
+                <div className="options-grid">
+                  {[
+                    'none', "eyepatch", 'kurt',
+                    'prescription01', 'prescription02', 'round',
+                    'sunglasses', 'wayfarers'
+                  ].map((style) => (
+                    <button
+                      key={style}
+                      className={`style-option ${accessories === style ? 'selected' : ''}`}
+                      onClick={() => setAccessories(style)}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+              <div className="option-category">
+                <h3>Couleur de l'accessoire</h3>
+                <div className="options-row">
+                  {['65c9ff', '3c4f5c', '262e33', 'a7ffc4', 'ff5c5c', 'ff488e', 'ffafb9', 'ffdeb5', 'ffffb1'].map((color) => (
+                  <button
+                      key={color}
+                      className={`color-option ${accessoriesColor === color ? 'selected' : ''}`}
+                      style={{ backgroundColor: `#${color}`, border: accessoriesColor === color ? '2px solid black' : 'none' }}
+                      onClick={() => setAccessoriesColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
           );
       default:
         return null;
@@ -573,17 +637,32 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     if (activeSection === 'info') {
       return (
         
-        <div id="section-info" className="mb-5">
+        <div id="section-info" className="mb-5" style={{ 
+          backgroundColor: "#fff", 
+          padding: "1rem", 
+          borderRadius: "8px",
+          border: "2px solid black",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          marginLeft: "30px"
+        }}>
           <h3 className="mb-4">Information du compte</h3>
           <form>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Nom d'utilisateur</label>
-              <p className="form-control custom-input">{compte.username}</p>
+          <div className="row">
+            <div className="col-md-6">
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Nom d'utilisateur</label>
+                <p className="form-control custom-input">{compte.username}</p>
+              </div>
             </div>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Adresse e-mail</label>
-              <p className="form-control custom-input">{compte._id}</p>
+          </div>
+          <div className="row">
+            <div className="col-md-6">
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Adresse e-mail</label>
+                <p className="form-control custom-input">{compte._id}</p>
+              </div>
             </div>
+          </div>
           </form>
         </div>
       );
@@ -592,7 +671,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       return (
         <div id="section-avatar" className="mb-5">
           <div className="avatar-section" >
-            <h2 className="section-title">Personnaliser ton Avatar</h2>
+            <h3 className="form-label text-center">Personnaliser votre Avatar</h3>
             <div className="avatar-preview">
               {/* Affiche l'avatar si svgDataUri n'est pas vide */}
               {svgDataUri ? (
@@ -621,14 +700,23 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             <div className="category-content">
               {renderCategoryContent()}
             </div>
-            <button onClick={handleSaveAvatar}>Ok</button>
+            <div className="text-center">
+              <button onClick={handleSaveAvatar}>Sauvegarder</button>
+            </div>
           </div>
         </div>
       );
     } else if (activeSection === 'clavier') {
       return (
-        <div id="section-clavier" className="mb-5">
-          <label className="form-label fw-semibold">Customisation clavier</label>
+        <div id="section-clavier" className="mb-5" style={{ 
+          backgroundColor: "#fff", 
+          padding: "1rem", 
+          borderRadius: "8px",
+          border: "2px solid black",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          marginLeft: "30px"
+        }}>
+          <h3 className="form-label">Customisation clavier</h3>
           <div className="mb-2"></div>
           <button type="button" className="btn btn-secondary" onClick={() => setShowColors(!showColors)}>Choisir une couleur</button>
           {showColors && (
@@ -656,42 +744,136 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           )}
         </div>
       )
-    }
-    
-    else if (activeSection === 'password') {
+    } else if (activeSection === 'changeuser') {
       return (
-        <div id="section-password" className="mb-5">
+        <div id="section-changeuser" className="mb-5" style={{
+          backgroundColor: "#fff", 
+          padding: "1rem", 
+          borderRadius: "8px",
+          border: "2px solid black",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          marginLeft: "30px"
+        }}>
+          <h3 className="mb-4">Modifier votre nom d'utilisateur</h3>
+          <form onSubmit={handleUsernameSubmit}>
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Écrivez un nouveau nom d'utilisateur</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={"text"}
+                      className="form-control custom-input"
+                      style={{ paddingRight: '2.5rem' }}
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary">
+              Enregistrer
+            </button>
+          </form>
+          {message && <p>{message}</p>}
+        </div>
+      )
+    } else if (activeSection === 'password') {
+      return (
+        <div id="section-password" className="mb-5" style={{
+          backgroundColor: "#fff", 
+          padding: "1rem", 
+          borderRadius: "8px",
+          border: "2px solid black",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          marginLeft: "30px"
+        }}>
           <h3 className="mb-4">Modifier votre mot de passe</h3>
           <form onSubmit={handlePasswordSubmit}>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Mot de passe actuelle</label>
-              <input 
-                type="password" 
-                className="form-control custom-input" 
-                value={oldPassword} 
-                onChange={(e) => setOldPassword(e.target.value)}
-                required 
-              />
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Mot de passe actuel</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showOldPassword ? "text" : "password"}
+                      className="form-control custom-input"
+                      style={{ paddingRight: '2.5rem' }}
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                    />
+                    <span
+                      onClick={handleShowOldPasswordChange}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: '10px',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {showOldPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Nouveau mot de passe</label>
-              <input 
-                type="password" 
-                className="form-control custom-input" 
-                value={newPassword} 
-                onChange={(e) => setNewPassword(e.target.value)}
-                required 
-              />
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Nouveau mot de passe</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      className="form-control custom-input"
+                      style={{ paddingRight: '2.5rem' }}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <span
+                      onClick={handleShowNewPasswordChange}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: '10px',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="mb-4">
-              <label className="form-label fw-semibold">Resaisir votre nouveau mot de passe</label>
-              <input 
-                type="password" 
-                className="form-control custom-input" 
-                value={confirmNewPassword} 
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                required 
-              />
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Resaisir votre nouveau mot de passe</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showConfirmNewPassword ? "text" : "password"}
+                      className="form-control custom-input"
+                      style={{ paddingRight: '2.5rem' }}
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    />
+                    <span
+                      onClick={handleShowConfirmNewPasswordChange}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: '10px',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {showConfirmNewPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
             <button type="submit" className="btn btn-primary">
               Enregistrer
@@ -703,30 +885,83 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
     // Affichage menu supprimer le compte
     } else if (activeSection === 'delete') {
       return (
-        <div id="section-delete" className="mb-5">
+        <div id="section-delete" className="mb-5" style={{ 
+          backgroundColor: "#fff", 
+          padding: "1rem", 
+          borderRadius: "8px",
+          border: "2px solid black",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          marginLeft: "30px"
+        }}>
+
           <h3 className="mb-4">Supprimer votre compte</h3>
           <form>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">
-                Saisissez votre nom d'utilisateur
-              </label>
-              <input type="text" id = "delete_username" className="form-control custom-input" />
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">
+                    Saisissez votre nom d'utilisateur
+                  </label>
+                  <input 
+                    type="text" 
+                    className="form-control custom-input" 
+                    value={deleteUsername}
+                    onChange={(e) => setDeleteUsername(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
-
-            <div className="mb-3">
-              <label className="form-label fw-semibold">
-                Saisissez votre email
-              </label>
-              <input type="text" id = "delete-email" className="form-control custom-input" />
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">
+                    Saisissez votre email
+                  </label>
+                  <input 
+                    type="text" 
+                    className="form-control custom-input" 
+                    value={deleteEmail}
+                    onChange={(e) => setDeleteEmail(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
-
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Saisissez votre mot de passe</label>
-              <input type="password" id="delete_password" className="form-control custom-input" />
+            <div className="row">
+              <div className="col-md-6">
+                <div className="mb-3">
+                  <label className="form-label fw-semibold">Saisissez votre mot de passe</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showDeletePassword ? "text" : "password"}
+                      className="form-control custom-input"
+                      style={{ paddingRight: '2.5rem' }}
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                    />
+                    <span
+                      onClick={handleShowDeletePasswordChange}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: '10px',
+                        transform: 'translateY(-50%)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {showDeletePassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="form-check mb-4">
-              <input className="form-check-input" type="checkbox" id="confirmDelete" />
-              <label className="form-check-label" htmlFor="confirmDelete">
+              <input 
+                className="form-check-input" 
+                type="checkbox" 
+                checked={confirmDelete}
+                onChange={(e) => setConfirmDelete(e.target.checked)}
+              />
+              <label className="form-check-label">
                 Je confirme de vouloir supprimer mon compte
               </label>
             </div>
@@ -768,7 +1003,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
                 }}
               />
             ) : (
-            <FaUserCircle size={40} className="me-3 text-white"/>
+              <FaUserCircle size={40} className="me-3 text-white"/>
             )}
             <span className="text-white">{compte.username}</span>
             {/* Affichage menu choix utilisateur */}
@@ -801,9 +1036,43 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       )}
       {/* L'élément principal */}
       <div className="container flex-grow-1 my-5">
+        <button 
+          onClick={onBackToPagePrincipaleClick}
+          style={{
+            position: 'absolute',
+            right: '20px',
+            top: '120px',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255, 255, 255, 0.2)',
+            border: '2px solid black',
+            borderRadius: '25px',
+            padding: '8px 25px',
+            color: 'black',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            zIndex: 1000
+          }}
+          onMouseOver={(e) => {
+            e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+            e.target.style.transform = 'translateY(-50%) scale(1.05)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+            e.target.style.transform = 'translateY(-50%)';
+          }}
+        >
+          ← Retour à l'accueil
+        </button>
         <div className="row">
           {/* Menu à gauche */}
-          <div className="col-md-3">
+          <button 
+            className="menu-toggle btn"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <FaList size={20} />
+          </button>
+          <div ref={sidebarRef} className={`sidebar-panel ${isMenuOpen ? 'open' : ''} col-md-3`}>
             <div className={`menu-box mb-3 ${activeSection === 'info' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('info')}>
               <strong>Information du compte</strong>
             </div>
@@ -812,6 +1081,9 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             </div>
             <div className={`menu-box mb-3 ${activeSection === 'clavier' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('clavier')}>
               <strong>Personnaliser votre clavier</strong>
+            </div>
+            <div className={`menu-box mb-3 ${activeSection === 'changeuser' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('changeuser')}>
+              <strong>Modifier votre nom d'utilisateur</strong>
             </div>
             <div className={`menu-box mb-3 ${activeSection === 'password' ? 'menu-box-active' : ''}`} onClick={() => handleMenuClick('password')}>
               <strong>Modifier votre mot de passe</strong>

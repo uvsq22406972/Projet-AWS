@@ -1,9 +1,131 @@
 .register-box {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(15px);
-    width: 400px;
     border-radius: 20px;
     box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Conteneur principal */
+.game-room-container {
+    max-width: 900px;      /* Limite la largeur, ajustez selon votre design */
+    margin: 2rem auto;     /* Centre horizontalement, espace vertical */
+    background: #fff;      /* Fond blanc ou clair */
+    border-radius: 12px;
+    min-width: 500px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    border: 2px solid black;
+    /* Vous pouvez ajouter un background: linear-gradient(...) si vous voulez un dégradé */
+  }
+  
+  /* HEADER */
+  .game-room-header {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .game-room-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  .room-name {
+    color: #666;
+    margin-top: 0.25rem;
+  }
+  
+  /* BODY */
+  .game-room-body {
+    display: flex;
+    flex-direction: column; /* Mobile : une seule colonne */
+    gap: 1rem;             /* Espace entre les blocs */
+  }
+  
+  /* Sur desktop (≥768px), deux colonnes */
+  @media (min-width: 768px) {
+    .game-room-body {
+      flex-direction: row; 
+      align-items: flex-start;
+      gap: 2rem;
+    }
+    .game-room-left,
+    .game-room-right {
+      flex: 1;           /* Chaque colonne prend la place dispo */
+    }
+  }
+  
+  /* LISTE DES UTILISATEURS */
+  .game-room-left ul {
+    list-style: none;
+    padding-top: 0;
+    margin: 0;
+    align-items: center;
+  }
+  .game-room-left li {
+    background: #4FE9DE; /* ou autre couleur */
+    color: #fff;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    padding: 0.5rem;
+  }
+  
+  /* SLIDERS */
+  .slider-block {
+    width: 300px;
+    margin: 0 auto;
+  }
+  .slider-block label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+  }
+  
+  /* FOOTER (boutons) */
+  .game-room-footer {
+    display: flex;
+    flex-direction: column; /* Sur mobile, empilé */
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  /* Sur desktop, on peut mettre les boutons en row si on veut */
+  @media (min-width: 768px) {
+    .game-room-footer {
+      flex-direction: row;
+      justify-content: center;
+    }
+    .game-room-footer button {
+      flex: none; /* ou flex: 1 pour les étirer */
+      width: auto;
+    }
+  }
+  
+  /* Boutons */
+  .game-room-footer button {
+    background: #F48516;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s;
+  }
+  .game-room-footer button:hover {
+    background: #F48516D2;
+  }
+  
+
+@media (min-width: 768px) {
+    .game-room-container {
+      flex-direction: row;
+    }
+  
+    .game-room-left,
+    .game-room-right {
+      width: 48%;
+    }
 }
 
 .custom-btn {
