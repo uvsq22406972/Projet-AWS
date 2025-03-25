@@ -56,6 +56,17 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       setGameStarted(true);
     }
   }, [countdown]);
+
+
+  const sendWhenReady = (message) => {
+    const interval = setInterval(() => {
+      if (ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify(message));
+        clearInterval(interval);
+      }
+    }, 100);
+  };
+
   // Connecter au WebSocket backend
   useEffect(() => {
   
@@ -64,7 +75,10 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
 
     ws.current = new WebSocket("ws://localhost:4002");
     ws.current.onopen = () => {
-      console.log("WebSocket connecté !");
+      sendWhenReady({
+      type: "change_lives", 
+      room: localStorage.getItem("room")
+    });
     };
     ws.current.onerror = (error) => {
       console.log("Erreur WebSocket :", error);
@@ -90,6 +104,24 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
 
       if (data.type === 'get_inputValue') {
         setInputValue(data.value)
+       }
+
+       if(data.type === "refreshGamePage") {
+        console.log(data)
+        localStorage.setItem('users',JSON.stringify(data.users));
+        try {
+          storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+          if (!Array.isArray(storedUsers)) {
+            storedUsers = [];
+          }
+          setLives(
+            storedUsers.map(user => ({ id: user.id, lives: user.lives }))
+          );
+          setUsers(storedUsers)
+        } catch (error) {
+          console.error("Erreur lors de la lecture des utilisateurs depuis localStorage:", error);
+          storedUsers = [];
+        } 
        }
 
       if (data.type === 'reset_timer') {

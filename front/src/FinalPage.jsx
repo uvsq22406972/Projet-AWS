@@ -3,6 +3,11 @@ import React, { useState, useEffect } from 'react';
 const FinalPage = ({ setCurrentPage }) => {
   let winner = JSON.parse(localStorage.getItem('winner'));
   const [secondsRemaining, setSecondsRemaining] = useState(30);
+  const [hasClickedReplay, setHasClickedReplay] = useState(false);
+  const [readyPlayers, setReadyPlayers] = useState(0);
+  const [totalPlayers, setTotalPlayers] = useState(0);
+  const room = (localStorage.getItem('room'));
+  const user = (localStorage.getItem('user'));
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -19,6 +24,44 @@ const FinalPage = ({ setCurrentPage }) => {
     }, 1000); 
     return () => clearInterval(timer);
   }, [setCurrentPage]);
+
+  useEffect(() => {
+    // Écouter les messages WebSocket
+    const ws = new WebSocket('ws://localhost:4002');
+    
+     ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === "player_ready" && data.room === room) {
+        setReadyPlayers(data.readyCount);
+        setTotalPlayers(data.totalPlayers);
+      }
+      
+      if (data.type === "restart_game" && data.room === room) {
+        setCurrentPage('gamePage');
+        localStorage.removeItem('winner');
+      }
+    };
+  }, []);
+
+  const replay = async () => {
+    if (hasClickedReplay) return;
+    
+    try {
+      const ws = new WebSocket('ws://localhost:4002');
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: "replay_request",
+          room: room,
+          user: user
+        }));
+        setHasClickedReplay(true);
+      };
+    } catch (error) {
+      console.error("Erreur WebSocket:", error);
+    }
+  };
+
 
 
   return (
@@ -42,6 +85,25 @@ const FinalPage = ({ setCurrentPage }) => {
             {secondsRemaining} secondes
           </div>
         </div>
+
+         {/* Affichage des joueurs prêts */}
+         {hasClickedReplay && (
+          <div className="text-center mb-3">
+            <p className="text-white">
+              En attente des autres joueurs... ({readyPlayers}/{totalPlayers} prêts)
+            </p>
+          </div>
+        )}
+
+        {/* Bouton pour rejouer la partie */}
+        <button
+          className="custom-btn w-100"
+          onClick={() => {
+                        replay();
+                        }} // Redirige vers la page principale
+        >
+          Rejouer
+        </button>
 
         {/* Bouton pour quitter la partie */}
         <button

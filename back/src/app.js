@@ -166,7 +166,7 @@ app.get("/random-sequence", async (req, res) => {
 
 /* ************* WebSocket Server ************* */
 const wss = new WebSocket.Server({ port: wsPort, host: '0.0.0.0' });
-
+const replayers = {};
 wss.on("connection", async (ws) => {
   await client.connect();
   const db = client.db("DB");
@@ -360,7 +360,6 @@ wss.on("connection", async (ws) => {
       if(data.type === 'validate_word'){
         handleValidateWord(ws, data);
       }
-
       if(data.type === 'sequence'){
         const seq = data.seq;
         wss.clients.forEach((client) => {
@@ -393,13 +392,50 @@ wss.on("connection", async (ws) => {
 
       if(data.type === "change_lives") {
         const roomName = data.room;
-        const lives = data.lives
-        const resp = await axios.post(`api/modifyLives`,{
-          params : {
-           room : roomName,
-           lives : lives
+
+        await refreshGamePage(roomName)
+      }
+
+      if (data.type === "replay_request") {
+        const { room, user } = data;
+        if (!replayers[room]) {
+          replayers[room] = new Set();
+        }
+        
+        replayers[room].add(user);
+        try {
+          const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: room } });
+          const usersInRoom = resp.data;
+          
+          //si tous les joueurs ont cliqué sur replay
+          if (usersInRoom.length === replayers[room].size) {
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: "restart_game",
+                  room: room
+                }));
+              }
+            });
+            // Réinitialiser le statut pour cette room
+            delete replayers[room];
+          } else {
+            // Notifier que ce joueur est prêt
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: "player_ready",
+                  room: room,
+                  user: user,
+                  readyCount: replayers[room].size,
+                  totalPlayers: usersInRoom.length
+                }));
+              }
+            });
           }
-         });
+        } catch (error) {
+          console.error("Erreur lors de la vérification des joueurs:", error);
+        }
       }
 
   });
@@ -447,6 +483,20 @@ wss.on("connection", async (ws) => {
               type: "reset_timer",
               users : resp.data,
               newCurrentPlayer : nextPlayer.data.nextPlayer
+            })
+          );
+        }
+        });
+  }
+
+  async function refreshGamePage(roomname) {
+    const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: roomname } });
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(
+            JSON.stringify({
+              type: "refreshGamePage",
+              users : resp.data,
             })
           );
         }
