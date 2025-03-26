@@ -58,10 +58,10 @@ const FinalPage = ({ setCurrentPage }) => {
         <div className="text-center mb-4">
           <h4 className="text-white">Le gagnant est :</h4>
           <div className="winner-name text-white" style={{ fontSize: "24px", fontWeight: "bold", marginTop: "20px" }}>
-              {winner ||"Aucun gagnant"} {/* Affiche "Aucun gagnant" si winner n'est pas défini */}
+            {winner ||"Aucun gagnant"} {/* Affiche "Aucun gagnant" si winner n'est pas défini */}
           </div>
           <div className="winner-name text-white" style={{ fontSize: "20px", fontWeight: "bold", marginTop: "20px" }}>
-              Tu as gagné 15 pièces!
+            {winner ||"Aucun gagnant"} gagné 15 pièces!
           </div>
         </div>
 
