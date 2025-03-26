@@ -102,6 +102,9 @@ const FinalPage = ({ setCurrentPage }) => {
           <div className="winner-name text-white" style={{ fontSize: "24px", fontWeight: "bold", marginTop: "20px" }}>
               {winner ||"Aucun gagnant"} {/* Affiche "Aucun gagnant" si winner n'est pas défini */}
           </div>
+          <div className="winner-name text-white" style={{ fontSize: "20px", marginTop: "20px" }}>
+              Tu as gagné 15 pièces!
+          </div>
         </div>
 
         {/* affichage our le compteur */}
