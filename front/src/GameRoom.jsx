@@ -463,15 +463,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
               max={15}
             />
           </div>
-          <div className="slider-block">
-            <label>Changer la séquence : {livesLostThreshold} vies perdues</label>
-            <CustomSliderWithTooltip
-              value={livesLostThreshold}
-              onChange={handleThresholdChange}
-              min={1}
-              max={5}
-            />
-          </div>
         </div>
       </div>
     
