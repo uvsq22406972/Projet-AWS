@@ -1,6 +1,5 @@
 // RulesModal.jsx
 import React, { useState } from 'react';
-import './RulesModal.css';
 
 const RulesModal = ({ onClose }) => {
   const slides = [
