@@ -295,10 +295,10 @@ class Rooms {
       const alivePlayers = users.filter(user => user.lives > 0);
       if (alivePlayers.length === 1) {
         console.log("La partie est terminée :1 joueurs a des vies restantes");
-        return false;
+        return true;
       }
       console.log("La partie continue : au moins 2 joueurs ont des vies restantes");
-      return true;
+      return false;
     } catch (error) {
       console.error("Erreur lors de la vérification de l'état de la partie :", error);
       throw error;

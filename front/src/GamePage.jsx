@@ -199,7 +199,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     return () => {
       clearInterval(interval);
     };
-  }, [gameOver,hasLostThisTurn,currentPlayer]);
+  }, [gameOver,hasLostThisTurn,currentPlayer?.id]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
