@@ -79,6 +79,10 @@ function CreateAccount({ onLoginClick }) {
     }
   };  
 
+  const handlePaste = (e) => {
+    e.preventDefault(); // Empêche l'action de coller
+  };
+
   const handleVerifyClick = async () => {
     try {
       const response = await axios.post('/api/verify-code', { code: verificationCode });
@@ -114,6 +118,7 @@ function CreateAccount({ onLoginClick }) {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={handlePasswordChange}
+                  onPaste={handlePaste}
                   onFocus={() => setIsPasswordFocused(true)}
                   onBlur={() => setIsPasswordFocused(false)}
                 />
@@ -168,6 +173,7 @@ function CreateAccount({ onLoginClick }) {
                 <input
                   type={showRePassword ? "text" : "password"}
                   value={repassword}
+                  onPaste={handlePaste}
                   onChange={handleRePasswordChange}
                 />
                 <label>Confirmer le mot de passe</label>

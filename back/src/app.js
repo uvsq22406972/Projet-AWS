@@ -519,6 +519,48 @@ wss.on("connection", async (ws) => {
          });
       }
 
+      if (data.type === "replay_request") {
+        const { room, user } = data;
+        if (!replayers[room]) {
+          replayers[room] = new Set();
+        }
+        
+        replayers[room].add(user);
+        try {
+          const resp = await axios.get(`api/getUsersFromRoom`, { params: { room: room } });
+          const usersInRoom = resp.data;
+          
+          //si tous les joueurs ont cliqué sur replay
+          if (usersInRoom.length === replayers[room].size) {
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: "restart_game",
+                  room: room
+                }));
+              }
+            });
+            // Réinitialiser le statut pour cette room
+            delete replayers[room];
+          } else {
+            // Notifier que ce joueur est prêt
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: "player_ready",
+                  room: room,
+                  user: user,
+                  readyCount: replayers[room].size,
+                  totalPlayers: usersInRoom.length
+                }));
+              }
+            });
+          }
+        } catch (error) {
+          console.error("Erreur lors de la vérification des joueurs:", error);
+        }
+      }
+
   });
   
   async function handleLoseLife(data) {
