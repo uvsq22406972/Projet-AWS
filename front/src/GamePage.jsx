@@ -182,8 +182,6 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       console.log(JSON.stringify(message));
       ws.current.send(JSON.stringify(message));
 
-      setTimer(-1); 
-
     }
 
     const interval = setInterval(() => {
