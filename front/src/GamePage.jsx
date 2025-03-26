@@ -171,35 +171,33 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, [currentPlayer?.id]);
 
   // Fonction pour gérer le timer
-  useEffect(() => {
-    if (gameOver) return;
+  // Modifier le useEffect du timer comme suit :
+useEffect(() => {
+  if (gameOver || !currentPlayer) return;
 
-    if (!hasLostThisTurn && timer === 0) {
-      // Réinitialiser le timer
-      const message = {
-        type: "lose_life",
-        room: localStorage.getItem("room"),
-        user: currentPlayer?.id,
-      };
-      setHasLostThisTurn(true);
-      console.log(JSON.stringify(message));
-      ws.current.send(JSON.stringify(message));
+  let timeoutId;
 
-    }
-
-    const interval = setInterval(() => {
-      setTimer(prevTimer => {
-        if (prevTimer > 0) return prevTimer - 1;
+  const interval = setInterval(() => {
+    setTimer(prev => {
+      if (prev === 0) {
+        // Envoyer UNE SEULE FOIS via une closure
+        if (!timeoutId) {
+          timeoutId = setTimeout(() => {
+            const message = { type: "lose_life", room: localStorage.getItem("room"), user: currentPlayer?.id };
+            ws.current.send(JSON.stringify(message));
+          }, 100); // Petit délai pour éviter les doubles envois
+        }
         return 0;
-      });
-    }, 1000);
+      }
+      return prev - 1;
+    });
+  }, 1000);
 
-    setTimerInterval(interval);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [timer, gameOver, initialTime, hasLostThisTurn,currentPlayer]);
+  return () => {
+    clearInterval(interval);
+    clearTimeout(timeoutId);
+  };
+}, [currentPlayer?.id, gameOver]); // Dépendances critiques
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
