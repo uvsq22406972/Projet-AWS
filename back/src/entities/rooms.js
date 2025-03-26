@@ -120,12 +120,30 @@ class Rooms {
 
   //Afficher le gagnant d'un jeu
   async getWinner(roomName) {
-    const room = await this.collection.findOne({ id: roomName });
-    if (!room) return null;
+    try {
+      const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
+      const room = await col1.findOne({ id: roomName });
+      console.log("Nom de la room getwinner", roomName);
+
+      if (!room) {
+        console.log("Room non trouvée : ",room);
+        return null;
+      }
   
-    const alivePlayers = room.users.filter(u => u.lives > 0);
-    // Uniquement 1 gagnant s'il reste exactement 1 joueur
-    return alivePlayers.length === 1 ? alivePlayers[0] : null;
+      const winner = room.users.find(user => user.lives > 0);
+  
+      if (winner) {
+        console.log("Gagnant trouvé:", winner);
+        return winner; // Retourne le gagnant
+      } else {
+        console.log("Aucun gagnant trouvé dans la room");
+        return null; // Aucun gagnant trouvé
+      }
+
+    } catch (error) {
+      console.error("Erreur lors de la recherche du gagnant:", error);
+      throw error;
+    }
   }
 
   //Le joueur suivant
@@ -234,40 +252,61 @@ class Rooms {
 
    //Perds une vie a l'utilisateur donnée
    async loseLife(roomName, userId) {
-    const col = this.db.useDb("ProjetAWS").collection("Rooms");
-    const result = await col.findOneAndUpdate(
-      { 
-        id: roomName,
-        "users.id": userId,
-        "users.lives": { $gt: 0 } 
-      },
-      { $inc: { "users.$.lives": -1 } },
-      { returnDocument: 'after' }
-    );
-  
-    if (!result.value) return { updated: false, gameOver: false };
-  
-    const alivePlayers = result.value.users.filter(u => u.lives > 0);
-    return {
-      updated: true,
-      gameOver: alivePlayers.length <= 1,
-      winner: alivePlayers.length === 1 ? alivePlayers[0] : null
-    };
-  }
-
-  async checkGameOver(roomName) {
     try {
+     
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
-      const room = await col1.findOne({ id: roomName });
-      
-      if (!room) return false;
   
-      const alivePlayers = room.users.filter(u => u.lives > 0);
-      // Game over si <= 1 joueur vivant
-      return alivePlayers.length <= 1;
+      //la room
+      const room = await col1.findOne({ id: roomName });
+      if (!room) {
+        throw new Error(`Room ${roomName} non trouvée.`);
+      }
+      //L'user dans la room
+      const user = room.users.find(user => 
+        user.id === userId);
+      if (!user) {
+        throw new Error(`Utilisateur ${userId} non trouvé dans la room ${roomName}.`);
+      }
+        const result = await col1.updateOne(
+          { id: roomName, "users.id": userId }, // Filtre : trouver la room et l'utilisateur
+          { $set: { "users.$.lives": user.lives - 1 } } // Réduire les vies de 1 pour cet utilisateur
+        );
+  
+        console.log(`Vies de l'utilisateur ${userId} mises à jour à ${user.lives - 1} dans la room ${roomName}`);
+        return (user.lives-1) >= 1;
+  
   
     } catch (error) {
-      console.error("Erreur vérification game over:", error);
+      console.error("Erreur survenue lors de la perte de vie :", error);
+      throw error;
+    }
+  }
+
+  //Verifier si c'est game over
+  async checkGameOver(roomName) {
+    try {
+        const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
+        const room = await col1.findOne({ id: roomName });
+        if (!room) {
+          console.log("Room non trouvée");
+          return false;
+        }
+      const users = room.users;
+      if (!Array.isArray(users) || users.length === 0) {
+        console.log("Aucun utilisateur dans la room");
+        return false;
+      }
+
+      // On Compte le nombre de joueurs ayant des vies restantes
+      const alivePlayers = users.filter(user => user.lives > 0);
+      if (alivePlayers.length === 1) {
+        console.log("La partie est terminée :1 joueurs a des vies restantes");
+        return false;
+      }
+      console.log("La partie continue : au moins 2 joueurs ont des vies restantes");
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la vérification de l'état de la partie :", error);
       throw error;
     }
   }

@@ -244,18 +244,19 @@ router.post('/modifyLives', async (req,res) =>{
   await rooms.changeLives(req.body.room,req.body.lives);
 })
 
-//permet le changement de vie au démarage de la partie
 router.post('/loseLife', async (req, res) => {
   try {
     const result = await rooms.loseLife(req.body.room, req.body.user);
     
-    res.json({ 
-      status: result.gameOver ? 200 : 401,
-      winner: result.winner
-    });
-    
+    if (result.gameOver) {
+      res.send({ status: 200 });
+    } else if (result.updated) {
+      res.send({ status: 401 });
+    } else {
+      res.send({ status: 400 });
+    }
   } catch (error) {
-    res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).send({ error: "Erreur serveur" });
   }
 });
 

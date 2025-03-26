@@ -542,39 +542,33 @@ wss.on("connection", async (ws) => {
 
   });
   
-  //Gestion de perdre une vie
-  let loseLifeLock = new Map();
   async function handleLoseLife(data) {
-    const key = `${data.room}-${data.user}`;
-    // Bloquer les appels simultanés
-    if (loseLifeLock.has(key)) return;
-    loseLifeLock.set(key, true);
-
-    try {
-      const response = await axios.post(`api/loseLife`, { room: data.room, user: data.user });
-      
-      if (response.data.status === 200) {
-        await getNextPlayerAndSend(data.room, data.user);
-      } else {
-        const respWinner = await axios.get(`api/getWinner`, {
-         params : { room: data.room}
-        })
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(
-              JSON.stringify({
-                type: "game_over",
-                room: data.room,
-                winner : respWinner.data.winner
-              })
-            );
-          }
-        });
-      }
-    } finally {
-      loseLifeLock.delete(key);
+    const roomname = data.room;
+    const userid  = data.user;
+    // Envoie a l'api du back pour gérer la perte de vie
+    const response = await axios.post(`api/loseLife`, {
+      room : roomname,
+      user : userid
+    })
+    if(response.data.status === 200) {
+      await getNextPlayerAndSend(roomname,userid);
     }
-
+    else {
+      const respWinner = await axios.get(`api/getWinner`, {
+       params : { room: roomname}
+      })
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(
+            JSON.stringify({
+              type: "game_over",
+              room: roomname,
+              winner : respWinner.data.winner
+            })
+          );
+        }
+        });
+    }
   }
   
   //Renvoie a tous les clients le currentPlayer et ils reinitialiseront leurs timers en recevant ces données

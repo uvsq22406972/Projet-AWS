@@ -37,7 +37,6 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [currentKeyboardColor, setCurrentKeyboardColor] = useState(localStorage.getItem("keyboardColor") || keyboardColor);
   const [countdown, setCountdown] = useState(3);
   const [gameStarted, setGameStarted] = useState(false);
-  const [hasLostThisTurn, setHasLostThisTurn] = useState(false);
   
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const [blackenedLetters, setBlackenedLetters] = useState(new Set());
@@ -112,8 +111,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
 
         if (data.type === 'reset_timer') {
           //setGameOver(true);
-          console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users));
-          setHasLostThisTurn(false);
+          console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
           setTimer(initialTime);
 
           localStorage.setItem('users',JSON.stringify(data.users));
@@ -171,28 +169,36 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, [currentPlayer?.id]);
 
   // Fonction pour gérer le timer
-useEffect(() => {
-  if (gameOver || !currentPlayer || hasLostThisTurn) return;
+  useEffect(() => {
+    if (gameOver) return;
 
-  const interval = setInterval(() => {
-    setTimer(prev => {
-      if (prev === 0) {
-        if (!hasLostThisTurn) {
-          ws.current.send(JSON.stringify({
-            type: "lose_life",
-            room: localStorage.getItem("room"),
-            user: currentPlayer?.id
-          }));
-          setHasLostThisTurn(true); // Bloquer les doubles envois
-        }
+    if (timer === 0) {
+      // Réinitialiser le timer
+      const message = {
+        type: "lose_life",
+        room: localStorage.getItem("room"),
+        user: currentPlayer?.id,
+      };
+      console.log(JSON.stringify(message));
+      ws.current.send(JSON.stringify(message));
+
+      setTimer(-1); 
+
+    }
+
+    const interval = setInterval(() => {
+      setTimer(prevTimer => {
+        if (prevTimer > 0) return prevTimer - 1;
         return 0;
-      }
-      return prev - 1;
-    });
-  }, 1000);
+      });
+    }, 1000);
 
-  return () => clearInterval(interval);
-}, [currentPlayer?.id, gameOver, hasLostThisTurn]); // Retirer 'timer' des dépendances
+    setTimerInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [timer, gameOver, initialTime,currentPlayer]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
