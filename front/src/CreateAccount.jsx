@@ -77,7 +77,11 @@ function CreateAccount({ onLoginClick }) {
     } catch (error) {
       toast.error("Erreur lors de la création du compte.");
     }
-  };  
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault(); // Empêche l'action de coller
+  };
 
   const handleVerifyClick = async () => {
     try {
@@ -114,6 +118,7 @@ function CreateAccount({ onLoginClick }) {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={handlePasswordChange}
+                  onPaste={handlePaste}
                   onFocus={() => setIsPasswordFocused(true)}
                   onBlur={() => setIsPasswordFocused(false)}
                 />
@@ -169,6 +174,7 @@ function CreateAccount({ onLoginClick }) {
                   type={showRePassword ? "text" : "password"}
                   value={repassword}
                   onChange={handleRePasswordChange}
+                  onPaste={handlePaste}
                 />
                 <label>Confirmer le mot de passe</label>
                 <span 
