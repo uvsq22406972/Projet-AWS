@@ -171,35 +171,28 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   }, [currentPlayer?.id]);
 
   // Fonction pour gérer le timer
-  useEffect(() => {
-    if (gameOver) return;
+useEffect(() => {
+  if (gameOver || !currentPlayer || hasLostThisTurn) return;
 
-    if (!hasLostThisTurn && timer === 0) {
-      // Réinitialiser le timer
-      const message = {
-        type: "lose_life",
-        room: localStorage.getItem("room"),
-        user: currentPlayer?.id,
-      };
-      setHasLostThisTurn(true);
-      console.log(JSON.stringify(message));
-      ws.current.send(JSON.stringify(message));
-
-    }
-
-    const interval = setInterval(() => {
-      setTimer(prevTimer => {
-        if (prevTimer > 0) return prevTimer - 1;
+  const interval = setInterval(() => {
+    setTimer(prev => {
+      if (prev === 0) {
+        if (!hasLostThisTurn) {
+          ws.current.send(JSON.stringify({
+            type: "lose_life",
+            room: localStorage.getItem("room"),
+            user: currentPlayer?.id
+          }));
+          setHasLostThisTurn(true); // Bloquer les doubles envois
+        }
         return 0;
-      });
-    }, 1000);
+      }
+      return prev - 1;
+    });
+  }, 1000);
 
-    setTimerInterval(interval);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [gameOver,hasLostThisTurn,currentPlayer?.id]);
+  return () => clearInterval(interval);
+}, [currentPlayer?.id, gameOver, hasLostThisTurn]); // Retirer 'timer' des dépendances
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
