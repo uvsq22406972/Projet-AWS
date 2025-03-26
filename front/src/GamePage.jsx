@@ -114,6 +114,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
           //setGameOver(true);
           console.log("recu :",data.users, " Encodé ", JSON.stringify(data.users))
           setTimer(initialTime);
+          loseLifeSentRef.current = false;
 
           localStorage.setItem('users',JSON.stringify(data.users));
           try {
