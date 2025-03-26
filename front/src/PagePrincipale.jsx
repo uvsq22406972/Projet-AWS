@@ -252,23 +252,10 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
               <div className="input-group mb-3 w-75 mx-auto">
                 <input type="text"  
                 onChange={(e) => setRoomCode(e.target.value)} value={roomCode}
-                className="form-control" placeholder="Code de la salle"/>
+                className="form-control" style={height="80%"} placeholder="Code de la salle"/>
 
                 <button className="btn"  onClick={() => handleJoinRoom(roomCode)}
                 >Rejoindre</button>
-              </div>
-            </div>
-          </div>
-          {/* Jeu2 */}
-          <div className="col-md-6">
-            <div className="game-card">
-              <img src="/images/Jeu2.jpg" alt="Jeu 2" height="150"/>
-              <button className="btn mb-3">Créer une salle</button>
-              <p className="fw-bold">Ou</p>
-              <h5 className="fw-bold mb-2">Rejoindre une salle existante</h5>
-              <div className="input-group mb-3 w-75 mx-auto">
-                <input type="text" className="form-control" placeholder="Code de la salle"/>
-                <button className="btn">Rejoindre</button>
               </div>
             </div>
           </div>
