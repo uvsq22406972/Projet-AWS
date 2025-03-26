@@ -362,19 +362,25 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
             Valider
           </button>
           <div className="keyboard">
-            {letters.map((letter, index) => {
-              const isBlackened = blackenedLetters.has(letter);
-              return (
-                <div
-                  key={index}
-                  className={`key ${isBlackened ? 'blackened' : ''}`}
-                >
-                  {letter}
-                </div>
-              );
-            })}
-          
-
+          {letters.map((letter, index) => (
+              <div
+                key={index}
+                className={`key ${blackenedLetters.has(letter) ? 'blackened' : ''}`}
+                style={{
+                  backgroundColor: blackenedLetters.has(letter) ? "gray" : currentKeyboardColor,
+                  color: blackenedLetters.has(letter) ? "white" : "black",
+                  padding: '10px',
+                  borderRadius: '5px',
+                  margin: '5px',
+                  display: 'inline-block',
+                  width: '40px',
+                  textAlign: 'center',
+                  cursor: blackenedLetters.has(letter) ? "not-allowed" : "pointer"
+                }}
+              >
+                {letter}
+              </div>              
+            ))}
         </div> <button onClick={handleReturn} disabled={currentPlayer?.id === storedUID}><GiExitDoor size={20}/>Quitter la salle</button>
         
   

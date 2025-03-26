@@ -260,14 +260,39 @@ router.post('/loseLife', async (req,res) =>{
 })
 
 //Récupere le winner dans une room
-router.get('/getWinner', async (req,res) =>{
-  console.log("je passe a getWinner ",req.query.room);
-  const temp = await rooms.getWinner(req.query.room);
-  if(temp) {
-    res.send({status : 200,winner : temp})
+//Récupere le winner dans une room
+router.get('/getWinner', async (req, res) => {
+  console.log("je passe a getWinner ", req.query.room);
+
+  const temp = await rooms.getWinner(req.query.room); 
+  // temp ressemble à { id: 'PseudoGagnant', lives: 2 }
+
+  if (temp) {
+    try {
+      // 1) Récupérer l'utilisateur dans la collection "Compte"
+      const winnerUsername = temp.id; // ex: "argh"
+      const winnerAccount = await users.getUser(winnerUsername);
+      // winnerAccount ressemble à { _id: 'email@example.com', username: 'argh', coins: 0, ... }
+
+      // 2) S'il existe, on incrémente ses pièces
+      if (winnerAccount) {
+        await users.modifyCoins(winnerAccount._id, 15); 
+        console.log(`15 pièces ajoutées au gagnant : ${winnerUsername} (email : ${winnerAccount._id})`);
+      } else {
+        console.log("Impossible de trouver le compte du gagnant :", winnerUsername);
+      }
+
+      // 3) Renvoyer la réponse au front
+      res.send({ status: 200, winner: temp });
+    } catch (error) {
+      console.error("Erreur lors de l'attribution des pièces :", error);
+      res.status(500).send({ status: 500, error: "Erreur interne du serveur" });
+    }
+  } else {
+    res.send({ status: 401 });
   }
-  else res.send({status : 401})
-})
+});
+
 
 router.get('/getNextPlayer', async (req,res) =>{
   console.log("arguemts : ",req.query.room , " ' ", req.query.user);
