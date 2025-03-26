@@ -1063,7 +1063,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             e.target.style.transform = 'translateY(-50%)';
           }}
         >
-          <GiExitDoor size={20}/> Retour à l'accueil
+          ---Retour à l'accueil---
         </button>
         <div className="row">
           {/* Menu à gauche */}

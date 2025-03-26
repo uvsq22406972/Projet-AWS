@@ -8,24 +8,31 @@ const FinalPage = ({ setCurrentPage }) => {
   const handleQuit = async () => {
     try {
       const room = localStorage.getItem("room");
-      const user = localStorage.getItem("myUserrr"); // ou "myUser" selon votre code
+      const user = localStorage.getItem("myUserrr"); // ou "myUser" selon ton code
   
-      // Si on a bien room + user, on appelle l'API pour retirer l'utilisateur
       if (room && user) {
-        await axios.post('/api/removeUserFromRoom', { 
-          room, 
-          user 
-        });
+        // 1) Retirer l'utilisateur de la room
+        await axios.post('/api/removeUserFromRoom', { room, user });
+        
+        // 2) Vérifier s'il reste des utilisateurs dans la room
+        const response = await axios.get('/api/getUsersFromRoom', { params: { room } });
+        const usersInRoom = response.data;
+        
+        if (!usersInRoom || usersInRoom.length === 0) {
+          // Si la salle est vide, on la supprime
+          await axios.delete('/api/rooms', { data: { room } });
+        }
       }
     } catch (error) {
       console.error("Erreur lors du removeUserFromRoom:", error);
     } finally {
-      // Quoi qu'il arrive, on nettoie le localStorage et on revient
+      // Nettoyage du localStorage et redirection
       localStorage.removeItem("room");
       localStorage.removeItem("winner");
       setCurrentPage("pagePrincipale");
     }
-  };  
+  };
+  
 
   useEffect(() => {
     const timer = setInterval(() => {

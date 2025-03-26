@@ -4,6 +4,7 @@ import { FaUsers, FaUserCircle } from "react-icons/fa";
 import "./Profile.css";
 import CustomSliderWithTooltip from './CustomSliderWithTooltip.jsx';
 import axios from 'axios';
+import RulesModal from './RulesModal';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 
@@ -21,6 +22,7 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     const [livesToPlay, setLivesToPlay] = useState(3); // Valeur par défaut modifiable
     const [gameTime, setGameTime] = useState(10);
     const [livesLostThreshold, setLivesLostThreshold] = useState(2);
+    const [showRulesModal, setShowRulesModal] = useState(false);
 
     const ws = useRef(null);
     const reconnectTimer = useRef(null);
@@ -296,22 +298,6 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
         }
     }, [compte.username, safeSend, isCreatingRoom]);
 
-// pour ajouter un joueur au jeu
-    const addPlayer = () => {
-        if (!isWebSocketOpen) {
-            console.warn("WebSocket pas encore prêt, impossible de démarrer le jeu.");
-            return;
-        }
-        const randomUsername = 'Player-' + Math.random().toString(36).substring(2, 8);
-        console.log("Ajout du joueur:", randomUsername);
-
-        const message = {
-            type: "join_room",
-            room,
-            user: randomUsername,
-        };
-        ws.current.send(JSON.stringify(message));
-    };
 
     // pour rejoindre une room
     const joinRoom = () => {
@@ -383,6 +369,10 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
 
     // Démarrer le jeu
     const startGame = () => {
+      if (users.length < 2) {
+        alert("Il faut au moins deux joueurs pour démarrer le jeu !");
+        return;
+      }
       console.log("Le bouton Démarrer a été cliqué ");
       ws.current.send(JSON.stringify({
         type: "start_game",
@@ -487,9 +477,10 @@ const GameRoom = ({ setCurrentPage}) => {  // <-- Ajout de setCurrentPage
     
       {/* FOOTER (boutons) */}
       <footer className="game-room-footer">
-        <button onClick={startGame}>Démarrer le jeu</button>
+        <button onClick={startGame} disabled={users.length < 2}>Démarrer le jeu</button>
         <button onClick={leaveRoom}>Quitter la salle</button>
-        <button onClick={addPlayer}>Ajouter un joueur</button>
+        <button onClick={() => setShowRulesModal(true)}>Règles du jeu</button>
+        {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
       </footer>
     </div>    
 
