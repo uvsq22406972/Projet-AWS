@@ -61,7 +61,7 @@ const RulesModal = ({ onClose }) => {
           onClick={onClose} 
           style={{
             position: 'absolute', top: '10px', right: '10px', border: 'none',
-            background: 'transparent', fontSize: '18px', cursor: 'pointer'
+            background: 'transparent', fontSize: '18px', cursor: 'pointer' ,color: 'black'
           }}>
           X
         </button>
