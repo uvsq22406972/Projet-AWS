@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const FinalPage = ({ setCurrentPage }) => {
   let winner = JSON.parse(localStorage.getItem('winner'));
