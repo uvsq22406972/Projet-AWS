@@ -252,7 +252,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
               <div className="input-group mb-3 w-75 mx-auto">
                 <input type="text"  
                 onChange={(e) => setRoomCode(e.target.value)} value={roomCode}
-                className="form-control" style={height="80%"} placeholder="Code de la salle"/>
+                className="form-control" style={{height:"80%"}} placeholder="Code de la salle"/>
 
                 <button className="btn"  onClick={() => handleJoinRoom(roomCode)}
                 >Rejoindre</button>
