@@ -174,12 +174,14 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   useEffect(() => {
     if (gameOver) return;
 
+    const currentPlayerId = currentPlayer?.id;
+
     if (timer === 0 && !loseLifeSentRef.current) {
       loseLifeSentRef.current = true;
       const message = {
         type: "lose_life",
         room: localStorage.getItem("room"),
-        user: currentPlayer?.id,
+        user: currentPlayerId,
       };
       console.log(JSON.stringify(message));
       ws.current.send(JSON.stringify(message));
@@ -193,7 +195,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
     }, 1000);
   
     return () => clearInterval(interval);
-  }, [timer, gameOver, currentPlayer]);
+  }, [timer, gameOver]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
