@@ -14,9 +14,7 @@ const FinalPage = ({ setCurrentPage }) => {
       setSecondsRemaining((prevSeconds) => {
         if (prevSeconds <= 1) {
           clearInterval(timer); //On arrete le TImer
-          setCurrentPage('pagePrincipale'); // On redirige vers la page principale
-          localStorage.removeItem("room"); 
-          localStorage.removeItem('winner'); 
+          handleQuit();
           return 0;
         }
         return prevSeconds - 1; 
@@ -43,6 +41,34 @@ const FinalPage = ({ setCurrentPage }) => {
       }
     };
   }, []);
+
+  const handleQuit = async () => {
+    try {
+      const room = localStorage.getItem("room");
+      const user = localStorage.getItem("myUserrr"); // ou "myUser" selon ton code
+  
+      if (room && user) {
+        // 1) Retirer l'utilisateur de la room
+        await axios.post('/api/removeUserFromRoom', { room, user });
+        
+        // 2) Vérifier s'il reste des utilisateurs dans la room
+        const response = await axios.get('/api/getUsersFromRoom', { params: { room } });
+        const usersInRoom = response.data;
+        
+        if (!usersInRoom || usersInRoom.length === 1) {
+          // Si la salle est vide, on la supprime
+          await axios.delete('/api/rooms', { data: { room } });
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors du removeUserFromRoom:", error);
+    } finally {
+      // Nettoyage du localStorage et redirection
+      localStorage.removeItem("room");
+      localStorage.removeItem("winner");
+      setCurrentPage("pagePrincipale");
+    }
+  };
 
   const replay = async () => {
     if (hasClickedReplay) return;
@@ -108,10 +134,7 @@ const FinalPage = ({ setCurrentPage }) => {
         {/* Bouton pour quitter la partie */}
         <button
           className="custom-btn w-100"
-          onClick={() => {
-                        setCurrentPage('pagePrincipale');
-                        localStorage.removeItem("room");
-                        localStorage.removeItem('winner');}} // Redirige vers la page principale
+          onClick={handleQuit()} // Redirige vers la page principale
         >
           Quitter la Partie
         </button>
