@@ -612,6 +612,54 @@ router.get('/getRoomFromUsers', async (req, res) => {
       res.status(500).send({ message: "Erreur serveur" });
     }
   });
+
+  router.post('/unlock-item-50', async (req, res) => {
+    try {
+      // On récupère l'email du user dans la session
+      const userEmail = req.session.userid;
+      if (!userEmail) {
+        return res.status(401).json({ error: "Utilisateur non connecté" });
+      }
+  
+      // On récupère la catégorie et l'item du corps de la requête
+      const { category, item } = req.body;
+      // Définir un coût fixe (ou variable) : par exemple 10 pièces
+      const itemCost = 50;
+  
+      // Appel à la méthode unlockItem
+      await users.unlockItem(userEmail, category, item, itemCost);
+  
+      return res.status(200).json({ message: "Item débloqué avec succès" });
+    } catch (error) {
+      console.error("Erreur dans /unlock-item :", error.message);
+      // On renvoie le message d'erreur (par ex. "Pas assez de pièces")
+      return res.status(400).json({ error: error.message });
+    }
+  });
+
+  router.post('/unlock-item-100', async (req, res) => {
+    try {
+      // On récupère l'email du user dans la session
+      const userEmail = req.session.userid;
+      if (!userEmail) {
+        return res.status(401).json({ error: "Utilisateur non connecté" });
+      }
+  
+      // On récupère la catégorie et l'item du corps de la requête
+      const { category, item } = req.body;
+      // Définir un coût fixe (ou variable) : par exemple 10 pièces
+      const itemCost = 100;
+  
+      // Appel à la méthode unlockItem
+      await users.unlockItem(userEmail, category, item, itemCost);
+  
+      return res.status(200).json({ message: "Item débloqué avec succès" });
+    } catch (error) {
+      console.error("Erreur dans /unlock-item :", error.message);
+      // On renvoie le message d'erreur (par ex. "Pas assez de pièces")
+      return res.status(400).json({ error: error.message });
+    }
+  });
   
   return router;
 }

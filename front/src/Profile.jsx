@@ -212,6 +212,40 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       }
     }
   }
+
+  const isUnlocked50 = (category, value) => {
+    return compte?.unlockedItems?.[category]?.includes(value);
+  };
+
+  const isUnlocked100 = (category, value) => {
+    return compte?.unlockedItems?.[category]?.includes(value);
+  };
+
+  const unlockItem50 = async (category, value) => {
+    try {
+      const response = await axios.post('/api/unlock-item-50', {
+        category,
+        item : value
+      });
+      toast.success("Élément débloqué !");
+      fetchAccount(); // Met à jour les données
+    } catch (err) {
+      toast.error("Erreur lors du déblocage.");
+    }
+  };
+
+  const unlockItem100 = async (category, value) => {
+    try {
+      const response = await axios.post('/api/unlock-item-100', {
+        category,
+        item : value
+      });
+      toast.success("Élément débloqué !");
+      fetchAccount(); // Met à jour les données
+    } catch (err) {
+      toast.error("Erreur lors du déblocage.");
+    }
+  };
   
 
   // Fonction de soumission pour le changement de mot de passe
@@ -406,51 +440,112 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       case 'teint':
         return (
           <div className="option-category">
-            <h3>Teint</h3>
-            <div className="options-row">
-              {['614335', 'ae5d29', 'd08b5b', 'edb98a', 'f8d25c', 'fd9841', 'ffdbb4'].map((color) => (
-              <button
-                  key={color}
-                  className={`color-option ${skinColor === color ? 'selected' : ''}`}
-                  style={{ backgroundColor: `#${color}`, border: skinColor === color ? '2px solid black' : 'none' }}
-                  onClick={() => setSkinColor(color)}
-                />
-              ))}
-            </div>
-          </div>     
+              <h3>Teint</h3>
+              <div className="color-grid">
+                {['edb98a','614335', 'ae5d29', 'd08b5b', 'f8d25c', 'fd9841', 'ffdbb4'].map((clr) => {
+                  const unlocked = isUnlocked100('skinColor', clr);
+                  return (
+                    <div className="color-card" key={clr}>
+                      {/* Bouton principal : sélection de la couleur */}
+                      <button
+                        className={`color-button ${unlocked ? 'unlocked' : 'locked'} ${
+                          skinColor === clr ? 'selected' : ''
+                        }`}
+                        disabled={!unlocked}
+                        onClick={() => unlocked && setSkinColor(clr)}
+                        style={{ backgroundColor: `#${clr}` }}
+                      >
+                        {/* On affiche éventuellement le code hex si c'est débloqué */}
+                        {unlocked ? clr : ''} 
+                        {!unlocked && <span className="lock-icon"> 🔒</span>}
+                      </button>
+                        
+                      {/* Bouton de déblocage si verrouillé */}
+                      {!unlocked && (
+                        <button
+                          className="unlock-button"
+                          onClick={() => unlockItem100('skinColor', clr)}
+                        >
+                          Débloquer pour 100&nbsp;🪙
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>  
         );
       case 'coiffure':
         return (
           <>
-              <div className="option-category">
-                <h3>Coiffure</h3>
-                <div className="coiffure-grid">
-                  {[
-                    'none', "bigHair", 'shortFlat', 'bob', 'bun', 'curly', 'curvy',
-                    'fro', 'frida', 'shavedSides','shaggyMullet',
-                    'sides', 'theCaesar', 'shortCurly'
-                  ].map((style) => (
+            <div className="option-category">
+              <h3>Coiffure</h3>
+              {/* Grille d'items */}
+              <div className="items-grid">
+                {[
+                  "bigHair", "shortFlat", "bob", "bun", "curly", "curvy",
+                  "fro", "frida", "shavedSides", "hat", "hijab", "shaggyMullet",
+                  "sides", "theCaesar", "shortCurly", "turban",
+                  "winterHat03", "winterHat02"
+                ].map((style) => {
+                const unlocked = isUnlocked100('hairType', style);
+                return (
+                  <div className="item-card" key={style}>
                     <button
-                      key={style}
-                      className={`style-option ${hairType === style ? 'selected' : ''}`}
-                      onClick={() => setHairType(style)}
+                      className={`item-button ${unlocked ? 'unlocked' : 'locked'} ${hairType === style ? 'selected' : ''}`}
+                      disabled={!unlocked}
+                      onClick={() => unlocked && setHairType(style)}
                     >
                       {style}
+                      {!unlocked && <span className="lock-icon"> 🔒</span>}
                     </button>
-                  ))}
-                </div>
+                    {!unlocked && (
+                      <button className="unlock-button" onClick={() => unlockItem100('hairType', style)}>
+                        Débloquer pour 100&nbsp;🪙
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
               </div>
+            </div>   
             <div className="option-category">
               <h3>Couleur des cheveux</h3>
-              <div className="options-row">
-                {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
-                <button
-                    key={color}
-                    className={`color-option ${hairColor === color ? 'selected' : ''}`}
-                    style={{ backgroundColor: `#${color}`, border: hairColor === color ? '2px solid black' : 'none' }}
-                    onClick={() => setHairColor(color)}
-                  />
-                ))}
+              <div className="color-grid">
+                {[
+                  '2c1b18', '4a312c', '724133', 'a55728', 'b58143',
+                  'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'
+                ].map((clr) => {
+                const unlocked = isUnlocked50('hairColor', clr);
+                
+                return (
+                  <div className="color-card" key={clr}>
+                    {/* Bouton principal : sélection de la couleur */}
+                    <button
+                      className={`color-button ${unlocked ? 'unlocked' : 'locked'} ${
+                        hairColor === clr ? 'selected' : ''
+                      }`}
+                      disabled={!unlocked}
+                      onClick={() => unlocked && setHairColor(clr)}
+                      style={{ backgroundColor: `#${clr}` }}
+                    >
+                      {/* On affiche éventuellement le code hex si c'est débloqué */}
+                      {unlocked ? clr : ''} 
+                      {!unlocked && <span className="lock-icon"> 🔒</span>}
+                    </button>
+                      
+                    {/* Bouton de déblocage si verrouillé */}
+                    {!unlocked && (
+                      <button
+                        className="unlock-button"
+                        onClick={() => unlockItem50('hairColor', clr)}
+                      >
+                        Débloquer pour 50&nbsp;🪙
+                      </button>
+                    )}
+                  </div>
+                );
+                })}
               </div>
             </div>
           </>
@@ -460,33 +555,70 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           <>
             <div className="option-category">
               <h3>Vêtements</h3>
-              <div className="options-grid">
+              {/* Grille d'items */}
+              <div className="items-grid">
                 {[
-                  "blazerAndShirt", 'blazerAndSweater', 'collarAndSweater',
+                 'shirtCrewNeck', 'blazerAndSweater', 'collarAndSweater',
                   'graphicShirt', 'shirtVNeck', 'hoodie',
-                  'shirtCrewNeck', 'shirtScoopNeck', 'overall',
-                ].map((style) => (
-                  <button
-                    key={style}
-                    className={`style-option ${clothes === style ? 'selected' : ''}`}
-                    onClick={() => setClothes(style)}
-                  >
-                    {style}
-                  </button>
-                ))}
+                  'blazerAndShirt','shirtScoopNeck', 'overall',
+                ].map((style) => {
+                const unlocked = isUnlocked100('clothes', style);
+                return (
+                  <div className="item-card" key={style}>
+                    <button
+                      className={`item-button ${unlocked ? 'unlocked' : 'locked'} ${clothes === style ? 'selected' : ''}`}
+                      disabled={!unlocked}
+                      onClick={() => unlocked && setClothes(style)}
+                    >
+                      {style}
+                      {!unlocked && <span className="lock-icon"> 🔒</span>}
+                    </button>
+                    {!unlocked && (
+                      <button className="unlock-button" onClick={() => unlockItem100('clothes', style)}>
+                        Débloquer pour 100&nbsp;🪙
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
               </div>
             </div>
             <div className="option-category">
-              <h3>Couleur du vêtement</h3>
-              <div className="options-row">
-                {['3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1'].map((color) => (
-                <button
-                    key={color}
-                    className={`color-option ${clothesColor === color ? 'selected' : ''}`}
-                    style={{ backgroundColor: `#${color}`, border: clothesColor === color ? '2px solid black' : 'none' }}
-                    onClick={() => setClothesColor(color)}
-                  />
-                ))}
+              <h3>Couleur des vêtements</h3>
+              <div className="color-grid">
+                {[
+                 '3c4f5c', '65c9ff', '262e33', 'a7ffc4', '929598', 'ff5c5c', 'ff488e', 'ffffb1', 'ffffff'
+                ].map((clr) => {
+                const unlocked = isUnlocked50('clothesColor', clr);
+                
+                return (
+                  <div className="color-card" key={clr}>
+                    {/* Bouton principal : sélection de la couleur */}
+                    <button
+                      className={`color-button ${unlocked ? 'unlocked' : 'locked'} ${
+                        clothesColor === clr ? 'selected' : ''
+                      }`}
+                      disabled={!unlocked}
+                      onClick={() => unlocked && setClothesColor(clr)}
+                      style={{ backgroundColor: `#${clr}` }}
+                    >
+                      {/* On affiche éventuellement le code hex si c'est débloqué */}
+                      {unlocked ? clr : ''} 
+                      {!unlocked && <span className="lock-icon"> 🔒</span>}
+                    </button>
+                      
+                    {/* Bouton de déblocage si verrouillé */}
+                    {!unlocked && (
+                      <button
+                        className="unlock-button"
+                        onClick={() => unlockItem50('clothesColor', clr)}
+                      >
+                        Débloquer pour 50&nbsp;🪙
+                      </button>
+                    )}
+                  </div>
+                );
+                })}
               </div>
             </div>
           </>
@@ -494,42 +626,66 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       case 'yeux':
         return (
           <div className="option-category">
-            <h3>Yeux</h3>
-            <div className="options-grid">
-              {[
-                'default', "cry", 'closed',
-                'eyeRoll', 'happy', 'hearts', 'side',
-                'squint', 'surprised', 'wink', 'xDizzy'
-              ].map((style) => (
+          <h3>Yeux</h3>
+          {/* Grille d'items */}
+          <div className="items-grid">
+            {[
+              'default', "cry", 'closed',
+              'eyeRoll', 'happy', 'hearts', 'side',
+              'squint', 'surprised', 'wink', 'xDizzy'
+            ].map((style) => {
+            const unlocked = isUnlocked50('eyes', style);
+            return (
+              <div className="item-card" key={style}>
                 <button
-                  key={style}
-                  className={`style-option ${eyes === style ? 'selected' : ''}`}
-                  onClick={() => setEyes(style)}
+                  className={`item-button ${unlocked ? 'unlocked' : 'locked'} ${eyes === style ? 'selected' : ''}`}
+                  disabled={!unlocked}
+                  onClick={() => unlocked && setEyes(style)}
                 >
                   {style}
+                  {!unlocked && <span className="lock-icon"> 🔒</span>}
                 </button>
-              ))}
-            </div>
+                {!unlocked && (
+                  <button className="unlock-button" onClick={() => unlockItem50('eyes', style)}>
+                    Débloquer pour 50&nbsp;🪙
+                  </button>
+                )}
+              </div>
+            );
+          })}
           </div>
+        </div>
         );
       case 'sourcils':
         return (
           <div className="option-category">
             <h3>Sourcils</h3>
-            <div className="options-grid">
+            {/* Grille d'items */}
+            <div className="items-grid">
               {[
                 'default', "angry", 'frownNatural',
                 'raisedExcited', 'upDown',
                 'sadConcerned', 'unibrowNatural',
-              ].map((style) => (
-                <button
-                  key={style}
-                  className={`style-option ${eyebrows === style ? 'selected' : ''}`}
-                  onClick={() => setEyebrows(style)}
-                >
-                  {style}
-                </button>
-              ))}
+              ].map((style) => {
+              const unlocked = isUnlocked50('eyes', style);
+              return (
+                <div className="item-card" key={style}>
+                  <button
+                    className={`item-button ${unlocked ? 'unlocked' : 'locked'} ${eyebrows === style ? 'selected' : ''}`}
+                    disabled={!unlocked}
+                    onClick={() => unlocked && setEyebrows(style)}
+                  >
+                    {style}
+                    {!unlocked && <span className="lock-icon"> 🔒</span>}
+                  </button>
+                  {!unlocked && (
+                    <button className="unlock-button" onClick={() => unlockItem50('eyes', style)}>
+                      Débloquer pour 50&nbsp;🪙
+                    </button>
+                  )}
+                </div>
+              );
+            })}
             </div>
           </div>
         );
@@ -537,20 +693,32 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
         return (
           <div className="option-category">
             <h3>Bouche</h3>
-            <div className="options-grid">
+            {/* Grille d'items */}
+            <div className="items-grid">
               {[
                 'default', "concerned", 'disbelief',
                 'eating', 'sad',
                 'serious', 'smile', 'tongue',
-              ].map((style) => (
-                <button
-                  key={style}
-                  className={`style-option ${mouth === style ? 'selected' : ''}`}
-                  onClick={() => setMouth(style)}
-                >
-                  {style}
-                </button>
-              ))}
+              ].map((style) => {
+              const unlocked = isUnlocked50('mouth', style);
+              return (
+                <div className="item-card" key={style}>
+                  <button
+                    className={`item-button ${unlocked ? 'unlocked' : 'locked'} ${mouth === style ? 'selected' : ''}`}
+                    disabled={!unlocked}
+                    onClick={() => unlocked && setMouth(style)}
+                  >
+                    {style}
+                    {!unlocked && <span className="lock-icon"> 🔒</span>}
+                  </button>
+                  {!unlocked && (
+                    <button className="unlock-button" onClick={() => unlockItem50('mouth', style)}>
+                      Débloquer pour 50&nbsp;🪙
+                    </button>
+                  )}
+                </div>
+              );
+            })}
             </div>
           </div>
         );
@@ -559,33 +727,70 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
           <>
             <div className="option-category">
               <h3>Pilosité faciale</h3>
-              <div className="options-grid">
+              {/* Grille d'items */}
+              <div className="items-grid">
                 {[
                   'none', 'beardMedium',
                   'beardLight', 'beardMajestic',
                   'moustacheFancy', 'moustacheMagnum',
-                ].map((style) => (
-                  <button
-                    key={style}
-                    className={`style-option ${facialHair === style ? 'selected' : ''}`}
-                    onClick={() => setFacialHair(style)}
-                  >
-                    {style}
-                  </button>
-                ))}
+                ].map((style) => {
+                const unlocked = isUnlocked100('facialHair', style);
+                return (
+                  <div className="item-card" key={style}>
+                    <button
+                      className={`item-button ${unlocked ? 'unlocked' : 'locked'} ${facialHair === style ? 'selected' : ''}`}
+                      disabled={!unlocked}
+                      onClick={() => unlocked && setFacialHair(style)}
+                    >
+                      {style}
+                      {!unlocked && <span className="lock-icon"> 🔒</span>}
+                    </button>
+                    {!unlocked && (
+                      <button className="unlock-button" onClick={() => unlockItem100('facialHair', style)}>
+                        Débloquer pour 100&nbsp;🪙
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
               </div>
             </div>
             <div className="option-category">
               <h3>Couleur de la pilosité faciale</h3>
-              <div className="options-row">
-                {['2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'].map((color) => (
-                <button
-                    key={color}
-                    className={`color-option ${facialHairColor === color ? 'selected' : ''}`}
-                    style={{ backgroundColor: `#${color}`, border: facialHairColor === color ? '2px solid black' : 'none' }}
-                    onClick={() => setFacialHairColor(color)}
-                  />
-                ))}
+              <div className="color-grid">
+                {[
+                 '2c1b18', '4a312c', '724133', 'a55728', 'b58143', 'c93305', 'd6b370', 'e8e1e1', 'ecdcbf', 'f59797'
+                ].map((clr) => {
+                const unlocked = isUnlocked50('facialHairColor', clr);
+                
+                return (
+                  <div className="color-card" key={clr}>
+                    {/* Bouton principal : sélection de la couleur */}
+                    <button
+                      className={`color-button ${unlocked ? 'unlocked' : 'locked'} ${
+                        facialHair === clr ? 'selected' : ''
+                      }`}
+                      disabled={!unlocked}
+                      onClick={() => unlocked && setFacialHairColor(clr)}
+                      style={{ backgroundColor: `#${clr}` }}
+                    >
+                      {/* On affiche éventuellement le code hex si c'est débloqué */}
+                      {unlocked ? clr : ''} 
+                      {!unlocked && <span className="lock-icon"> 🔒</span>}
+                    </button>
+                      
+                    {/* Bouton de déblocage si verrouillé */}
+                    {!unlocked && (
+                      <button
+                        className="unlock-button"
+                        onClick={() => unlockItem50('facialHairColor', clr)}
+                      >
+                        Débloquer pour 50&nbsp;🪙
+                      </button>
+                    )}
+                  </div>
+                );
+                })}
               </div>
             </div>
           </>
@@ -596,33 +801,70 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             <>
               <div className="option-category">
                 <h3>Accessoires</h3>
-                <div className="options-grid">
+                {/* Grille d'items */}
+                <div className="items-grid">
                   {[
                     'none', "eyepatch", 'kurt',
-                    'prescription01', 'prescription02', 'round',
-                    'sunglasses', 'wayfarers'
-                  ].map((style) => (
-                    <button
-                      key={style}
-                      className={`style-option ${accessories === style ? 'selected' : ''}`}
-                      onClick={() => setAccessories(style)}
-                    >
-                      {style}
-                    </button>
-                  ))}
+                      'prescription01', 'prescription02', 'round',
+                      'sunglasses', 'wayfarers'
+                  ].map((style) => {
+                  const unlocked = isUnlocked100('accessories', style);
+                  return (
+                    <div className="item-card" key={style}>
+                      <button
+                        className={`item-button ${unlocked ? 'unlocked' : 'locked'} ${accessories === style ? 'selected' : ''}`}
+                        disabled={!unlocked}
+                        onClick={() => unlocked && setAccessories(style)}
+                      >
+                        {style}
+                        {!unlocked && <span className="lock-icon"> 🔒</span>}
+                      </button>
+                      {!unlocked && (
+                        <button className="unlock-button" onClick={() => unlockItem100('accessories', style)}>
+                          Débloquer pour 100&nbsp;🪙
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
                 </div>
               </div>
               <div className="option-category">
                 <h3>Couleur de l'accessoire</h3>
-                <div className="options-row">
-                  {['65c9ff', '3c4f5c', '262e33', 'a7ffc4', 'ff5c5c', 'ff488e', 'ffafb9', 'ffdeb5', 'ffffb1'].map((color) => (
-                  <button
-                      key={color}
-                      className={`color-option ${accessoriesColor === color ? 'selected' : ''}`}
-                      style={{ backgroundColor: `#${color}`, border: accessoriesColor === color ? '2px solid black' : 'none' }}
-                      onClick={() => setAccessoriesColor(color)}
-                    />
-                  ))}
+                <div className="color-grid">
+                  {[
+                   '65c9ff', '3c4f5c', '262e33', 'a7ffc4', 'ff5c5c', 'ff488e', 'ffafb9', 'ffdeb5', 'ffffb1'
+                  ].map((clr) => {
+                  const unlocked = isUnlocked50('accessoriesColor', clr);
+                  
+                  return (
+                    <div className="color-card" key={clr}>
+                      {/* Bouton principal : sélection de la couleur */}
+                      <button
+                        className={`color-button ${unlocked ? 'unlocked' : 'locked'} ${
+                          accessoriesColor === clr ? 'selected' : ''
+                        }`}
+                        disabled={!unlocked}
+                        onClick={() => unlocked && setAccessoriesColor(clr)}
+                        style={{ backgroundColor: `#${clr}` }}
+                      >
+                        {/* On affiche éventuellement le code hex si c'est débloqué */}
+                        {unlocked ? clr : ''} 
+                        {!unlocked && <span className="lock-icon"> 🔒</span>}
+                      </button>
+                        
+                      {/* Bouton de déblocage si verrouillé */}
+                      {!unlocked && (
+                        <button
+                          className="unlock-button"
+                          onClick={() => unlockItem50('accessoriesColor', clr)}
+                        >
+                          Débloquer pour 50&nbsp;🪙
+                        </button>
+                      )}
+                    </div>
+                  );
+                  })}
                 </div>
               </div>
             </>
@@ -1063,7 +1305,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             e.target.style.transform = 'translateY(-50%)';
           }}
         >
-          ---Retour à l'accueil---
+          ← Retour à l'accueil
         </button>
         <div className="row">
           {/* Menu à gauche */}

@@ -28,6 +28,20 @@ class Users {
           clothesColor : "3c4f5c",
           accessoriesColor : "65c9ff"
          },
+         unlockedItems: {
+          hairType : ["none"],
+          hairColor : ["2c1b18"],
+          accessories : ["none"],
+          facialHair : ["none"],
+          clothes : ["shirtCrewNeck"],
+          eyes : ["default"],
+          eyebrows : ["default"],
+          mouth : ["default"],
+          skinColor : ["edb98a"],
+          facialHairColor : ["2c1b18"],
+          clothesColor : ["3c4f5c"],
+          accessoriesColor : ["65c9ff"]
+         },
          coins: 0
         });
     } catch (e) {
@@ -263,6 +277,45 @@ class Users {
       }
     } catch (error) {
       console.error("Erreur lors de la mise à jour de l'avatar :", error);
+      throw error;
+    }
+  }
+
+  async unlockItem(email, category, item, cost) {
+    try {
+      // Connexion à la collection
+      const col1 = this.db.useDb("ProjetAWS").collection("Compte");
+  
+      // Récupérer l'utilisateur
+      const user = await col1.findOne({ _id: email });
+      if (!user) {
+        throw new Error("Utilisateur introuvable");
+      }
+  
+      // Vérifier le nombre de pièces
+      if (user.coins < cost) {
+        throw new Error("Pas assez de pièces pour débloquer cet item");
+      }
+  
+      // Vérifier si l'item est déjà débloqué
+      const alreadyUnlocked = user.unlockedItems?.[category]?.includes(item);
+      if (alreadyUnlocked) {
+        throw new Error("Cet item est déjà débloqué");
+      }
+  
+      // Mettre à jour : on retire les pièces et on ajoute l'item dans unlockedItems[category]
+      await col1.updateOne(
+        { _id: email },
+        {
+          $inc: { coins: -cost },
+          // $addToSet ajoute item seulement s'il n'y est pas déjà
+          $addToSet: { [`unlockedItems.${category}`]: item },
+        }
+      );
+  
+      return true;
+    } catch (error) {
+      console.error("Erreur lors du déblocage d'item :", error);
       throw error;
     }
   }

@@ -392,3 +392,156 @@ body {
     transform: translateX(0);
   }
 }
+
+.items-grid {
+  /* Grille à 3 colonnes */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 16px;
+  
+  /* Limiter la hauteur et activer le scroll vertical */
+  max-height: 300px; 
+  overflow-y: auto; 
+  margin-top: 1rem;
+  padding-right: 8px; /* Pour laisser la place au scrollbar */
+}
+
+/* Carte contenant le bouton et le bouton de déblocage */
+.item-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8f8f8;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+/* Bouton principal */
+.item-button {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: background-color 0.3s;
+}
+
+/* États débloqué/verrouillé */
+.item-button.unlocked {
+  background-color: #2a4e68; /* bleu nuit */
+  color: #fff;
+}
+.item-button.unlocked:hover {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.699);
+}
+.item-button.locked {
+  background-color: #bdc3c7; /* gris clair */
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* État sélectionné (coiffure active) */
+.item-button.selected {
+  background: #4FE9DE;
+  color: black;
+}
+
+/* Icône cadenas */
+.lock-icon {
+  margin-left: 4px;
+}
+
+/* Bouton pour débloquer */
+.unlock-button {
+  background-color: #e67e22; /* orange */
+  color: #fff;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+  width: 100%;
+}
+.unlock-button:hover {
+  background-color: #d35400;
+}
+
+/* Grille à 3 colonnes, avec un scroll vertical si la liste est trop longue */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-height: 240px; /* Ajuste la hauteur maximale selon tes préférences */
+  overflow-y: auto;  
+  margin-top: 1rem;
+  padding-right: 8px; /* Laisse un peu d'espace pour le scrollbar */
+}
+
+/* Chaque case contient le bouton principal + éventuellement le bouton de déblocage */
+.color-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Bouton principal qui affiche la couleur */
+.color-button {
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  position: relative;
+  transition: opacity 0.3s, box-shadow 0.3s;
+  font-weight: bold;
+  color: #fff; /* On force un texte blanc pour la lisibilité */
+  text-transform: uppercase;
+}
+
+/* Si la couleur est débloquée */
+.color-button.unlocked:hover {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.699);
+}
+
+/* Si la couleur est verrouillée */
+.color-button.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Couleur sélectionnée (hairColor === clr) */
+.color-button.selected {
+  outline: 3px solid #ff6600; /* Contour orange */
+}
+
+/* Icône cadenas */
+.lock-icon {
+  margin-left: 4px;
+}
+
+/* Bouton de déblocage */
+.unlock-button {
+  background-color: #e67e22; /* Orange */
+  color: #fff;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+  width: 100%;
+  text-align: center;
+}
+.unlock-button:hover {
+  background-color: #d35400;
+}
+
+
