@@ -211,17 +211,29 @@ const validatePassword = (password) => {
     try {
       const { room, user } = req.body;
       console.log("Requête reçue - Room:", room, "User:", user);
-
+  
+      // 1) Retirer l'utilisateur
       const result = await rooms.removeUserFromRoom(room, user);
-
+  
       if (result) {
         console.log("Suppression réussie !");
+        // 2) Récupérer la room mise à jour
+        const updatedUsers = await rooms.getUsersInRoom(room);
+  
+        // 3) Vérifier si c'est vide (plus personne)
+        if (!updatedUsers || updatedUsers.length === 0) {
+          console.log("Dernier utilisateur parti, on supprime la room...");
+          await rooms.deleteRoom(room);
+        } else {
+          console.log("Il reste encore des joueurs, la room est conservée.");
+        }
+  
+        // 4) Renvoyer la réponse
         res.status(200).json({ success: true });
       } else {
         console.log("Aucune modification effectuée");
         res.status(404).json({ error: "Non trouvé" });
       }
-
     } catch (error) {
       console.error("Erreur API:", error.message);
       res.status(500).json({ 
@@ -229,7 +241,7 @@ const validatePassword = (password) => {
         details: error.message
       });
     }
-  });
+  });  
 
 //Permet la suppression d'un room
 router.post('/addUserToRoom', async (req, res) => {
@@ -283,7 +295,7 @@ router.get('/getWinner', async (req, res) => {
       }
 
       // 3) Renvoyer la réponse au front
-      res.send({ status: 200, winner: temp });
+      res.send({ status: 200, winner: temp, coinsEarned: 15 });
     } catch (error) {
       console.error("Erreur lors de l'attribution des pièces :", error);
       res.status(500).send({ status: 500, error: "Erreur interne du serveur" });

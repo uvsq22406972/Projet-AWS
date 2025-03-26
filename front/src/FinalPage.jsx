@@ -56,7 +56,7 @@ const FinalPage = ({ setCurrentPage }) => {
         const response = await axios.get('/api/getUsersFromRoom', { params: { room } });
         const usersInRoom = response.data;
         
-        if (!usersInRoom || usersInRoom.length === 1) {
+        if (!usersInRoom || usersInRoom.length === 0) {
           // Si la salle est vide, on la supprime
           await axios.delete('/api/rooms', { data: { room } });
         }
