@@ -251,27 +251,13 @@ router.post('/modifyLives', async (req,res) =>{
 })
 
 //permet le changement de vie au démarage de la partie
-router.post('/loseLife', async (req, res) => {
-  try {
-    // Décrémente la vie de l'utilisateur de manière atomique
-    const stillAlive = await rooms.loseLife(req.body.room, req.body.user);
-
-    // Vérifie l'état de la partie après la décrémentation
-    const gameContinues = await rooms.checkGameOver(req.body.room);
-
-    if (gameContinues) {
-      res.status(200).json({ 
-        message: stillAlive ? "Vie perdue, la partie continue" : "Aucune vie restante", 
-        stillAlive: stillAlive 
-      });
-    } else {
-      res.status(200).json({ message: "Game over" });
-    }
-  } catch (error) {
-    console.error("Erreur dans /loseLife :", error);
-    res.status(500).json({ error: "Erreur serveur", details: error.message });
+router.post('/loseLife', async (req,res) =>{
+  const temp = await rooms.loseLife(req.body.room,req.body.user);
+  if(await rooms.checkGameOver(req.body.room)) {
+    res.send({status : 200})
   }
-});
+  else res.send({status : 401})
+})
 
 //Récupere le winner dans une room
 router.get('/getWinner', async (req,res) =>{

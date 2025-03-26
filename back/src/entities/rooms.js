@@ -256,28 +256,32 @@ class Rooms {
    //Perds une vie a l'utilisateur donnée
    async loseLife(roomName, userId) {
     try {
+     
       const col1 = this.db.useDb("ProjetAWS").collection("Rooms");
   
-      // Décrémente de façon atomique la vie de l'utilisateur
-      const result = await col1.updateOne(
-        { id: roomName, "users.id": userId },
-        { $inc: { "users.$.lives": -1 } }
-      );
-  
-      if (result.matchedCount === 0) {
+      //la room
+      const room = await col1.findOne({ id: roomName });
+      if (!room) {
+        throw new Error(`Room ${roomName} non trouvée.`);
+      }
+      //L'user da,s la room
+      const user = room.users.find(user => 
+        user.id === userId);
+      if (!user) {
         throw new Error(`Utilisateur ${userId} non trouvé dans la room ${roomName}.`);
       }
+        const result = await col1.updateOne(
+          { id: roomName, "users.id": userId }, // Filtre : trouver la room et l'utilisateur
+          { $set: { "users.$.lives": user.lives - 1 } } // Réduire les vies de 1 pour cet utilisateur
+        );
   
-      // Récupérer l'état mis à jour pour loguer ou vérifier
-      const room = await col1.findOne({ id: roomName });
-      const user = room.users.find(u => u.id === userId);
-      console.log(`Vies de l'utilisateur ${userId} mises à jour à ${user.lives} dans la room ${roomName}`);
+        console.log(`Vies de l'utilisateur ${userId} mises à jour à ${user.lives - 1} dans la room ${roomName}`);
+        return (user.lives-1) >= 1;
   
-      // Retourne true si l'utilisateur a encore au moins 1 vie
-      return user.lives >= 1;
+  
     } catch (error) {
       console.error("Erreur survenue lors de la perte de vie :", error);
-      throw error;
+      throw error; // Propager l'erreur pour une gestion externe
     }
   }
 
