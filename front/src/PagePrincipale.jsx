@@ -190,7 +190,7 @@ function PagePrincipale({onUserClick, onLoginClick, setIsConnected, setCurrentPa
           </div>
           {/* Hover menu choix utilisateur */}
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
-            <span className="text-white me-4">{userCoins} Pièces</span>
+            <span className="text-white me-4">{userCoins} &nbsp;🪙</span>
             {compte.avatar ? (
               <img 
                 src={compte.avatar} 

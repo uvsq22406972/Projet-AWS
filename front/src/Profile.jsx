@@ -56,6 +56,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
   const [deletePassword, setDeletePassword] = useState('');
   const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [userCoins, setUserCoins] = useState(0); 
 
   //Couleur du clavier
   const [keyboardColor, setKeyboardColor] = useState("#FFFFFF");
@@ -163,6 +164,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
       }
   
       setCompte(selectedAccount || {});
+      setUserCoins(selectedAccount.coins);
     } catch (error) {
       console.error('Erreur lors de la récupération des infos du compte :', error);
     }
@@ -1232,6 +1234,7 @@ function Profile({ onBackToPagePrincipaleClick, setIsConnected, setCurrentPage }
             bran.fun
           </div>
           <div className="ms-auto me-4 position-relative user-hover-area d-flex align-items-center">
+            <span className="text-white me-4">{userCoins} &nbsp;🪙</span>
             {compte.avatar ? (
               <img 
                 src={compte.avatar} 
