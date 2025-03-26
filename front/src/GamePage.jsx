@@ -37,6 +37,7 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   const [currentKeyboardColor, setCurrentKeyboardColor] = useState(localStorage.getItem("keyboardColor") || keyboardColor);
   const [countdown, setCountdown] = useState(3);
   const [gameStarted, setGameStarted] = useState(false);
+  const loseLifeSentRef = useRef(false);
   
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const [blackenedLetters, setBlackenedLetters] = useState(new Set());
@@ -172,8 +173,8 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
   useEffect(() => {
     if (gameOver) return;
 
-    if (timer === 0) {
-      // Réinitialiser le timer
+    if (timer === 0 && !loseLifeSentRef.current) {
+      loseLifeSentRef.current = true;
       const message = {
         type: "lose_life",
         room: localStorage.getItem("room"),
@@ -181,22 +182,17 @@ const GamePage = ({setCurrentPage, initialLives, initialTime, livesLostThreshold
       };
       console.log(JSON.stringify(message));
       ws.current.send(JSON.stringify(message));
-
     }
-
+  
     const interval = setInterval(() => {
       setTimer(prevTimer => {
         if (prevTimer > 0) return prevTimer - 1;
         return 0;
       });
     }, 1000);
-
-    setTimerInterval(interval);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [timer, gameOver, initialTime,currentPlayer]);
+  
+    return () => clearInterval(interval);
+  }, [timer, gameOver, currentPlayer]);
 
   const handleInputChange = (e) => {
     const newValue = e.target.value;
