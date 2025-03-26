@@ -26,7 +26,7 @@ const RulesModal = ({ onClose }) => {
       title: "Vies et élimination",
       content: (
         <p>
-          Chaque joueur commence avec trois vies. Lorsqu’un joueur perd toutes ses vies, il est éliminé. Le dernier joueur encore en lice est déclaré vainqueur.
+          Chaque joueur commence avec X vies. Lorsqu’un joueur perd toutes ses vies, il est éliminé. Le dernier joueur encore en lice est déclaré vainqueur.
         </p>
       ),
     },
